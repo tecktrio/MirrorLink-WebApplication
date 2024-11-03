@@ -1,0 +1,8 @@
+export const Navigate_To_Dashboard = '/dashboard'
+export const Navigate_To_Contact = '/contact'
+export const Navigate_To_Login = '/login'
+export const Navigate_To_Register = '/register'
+export const Navigate_To_Sitelist = '/sitelist'
+export const Navigate_To_Mirrorlist = '/mirrorlist'
+export const Navigate_To_Contentlist = '/contentlist'
+export const Navigate_To_Update_Content = '/updatecontent'
