@@ -11,7 +11,7 @@ export const GlobalContextProvider = ({ children }) => {
     'SELECTED_SITE_ID':'',
     'SELECTED_MIRROR_ID':'',
     'SELECTED_CONTENT_ID':''
-  });
+  }); 
 
   return (
     <GlobalContext.Provider value={{ DATA, SETDATA}}>

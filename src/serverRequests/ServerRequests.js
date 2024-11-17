@@ -1,6 +1,6 @@
 // Request URL s and other Main urls for the application to communicate with server
 
-const IS_REMOTE_SERVER = true
+const IS_REMOTE_SERVER = false
 
 let SERVER_URL;
 let SERVER_WEBSOCKET_URL;
