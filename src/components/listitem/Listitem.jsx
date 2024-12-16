@@ -1,17 +1,43 @@
-import React from 'react'
-import { useNavigate } from 'react-router-dom'
-
-export default function Listitem({title, description, goto, onDelete}) {
-  const navigate = useNavigate()
+import React from "react";
+import { useNavigate } from "react-router-dom";
+import Cookie from 'js-cookie'
+import { Navigate_To_Update_Content } from "../../constants";
+export default function Listitem({ title, description, goto, onDelete,onPlay }) {
+  const navigate = useNavigate();
   return (
-    <div className='border  rounded-lg p-5 border-gray-400 m-2 cursor-pointer hover:shadow-md w-full' onClick={()=>navigate(goto)}>
-      <div>
-      <p className='text-gray-700 text-sm'>{title}</p>
-        <p className='text-gray-500 text-xs '>{description}</p>
-        
+    <div
+      className=" flex  rounded-lg py-3 border-b-2  mt-3 cursor-pointer  w-full"
+      // {goto?{onClick={() =>navigate(goto)}}:""}
+    >
+     
+      {/* <div> */}
+      <div className=" mr-5">
+        <div className="bg-gray-700 h-10 w-10 rounded-md"></div>
       </div>
-      {onDelete?<div className='flex justify-end'><p onClick={onDelete} className='bg-red-500 text-white rounded-md px-3 py-1'>delete</p></div>:""}
-       
+      <div className="w-8/12">
+        <p className="text-black text-sm font-semibold">{title}</p>
+        <p className="text-black text-xs ">{description}</p>
+      </div>
+
+      {/* </div> */}
+      {onDelete ? (
+        <div className="flex ml-10 justify-end">
+          <p
+            onClick={onDelete}
+            className="bg-red-500 text-white rounded-md px-5 py-2"
+          >
+            Delete
+          </p>
+        </div>
+      ) : (
+        ""
+      )}
+
+      {onPlay?
+
+<button onClick={()=>{navigate(Navigate_To_Update_Content);Cookie.set('content_id', onPlay)}} className='text-white   py-2 px-5 ml-10 rounded-md bg-purple-500'>View</button>
+
+      :""}
     </div>
-  )
+  );
 }

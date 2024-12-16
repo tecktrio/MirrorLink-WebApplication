@@ -4,7 +4,7 @@ import Labelwithdescription from '../../components/labelwithdescription/Labelwit
 import Uploadbutton from '../../components/uploadbutton/Uploadbutton'
 import Submitbutton from '../../components/submitbutton/Submitbutton'
 import { FormDataContext } from '../../Contexts/FormDataContexts'
-import { ADD_CONTENT_IN_MIRROR } from '../../serverRequests/ServerRequests'
+import { CREATE_CONTENT } from '../../serverRequests/ServerRequests'
 import { GlobalContext } from '../../Contexts/GlobalContext'
 import { LoadingStateContext } from '../../Contexts/LoadingStateContext'
 import Loadinpage from '../loadingpage/Loadinpage'
@@ -32,7 +32,7 @@ export default function Addcontentpage() {
     let login_key = getCookie('login_key')
     let site_id = getCookie('site_id')
     let mirror_id = getCookie('mirror_id')
-    ADD_CONTENT_IN_MIRROR(login_key, contentTitle, ContentDescription, mirror_id,site_id, content).then(() => {
+    CREATE_CONTENT(login_key, contentTitle, ContentDescription, content).then(() => {
       console.log("UPLOADED SUCCESSFULLY")
       navigate('/manage_contents')
       setErrorMessage('')
@@ -57,9 +57,12 @@ export default function Addcontentpage() {
         <Loadinpage /> :
         <form onSubmit={HandleSubmit}>
           <p className='text-red-600'>{ErrorMessage}</p>
+          <div className='flex'>
           <Inputtextbox label={'Content Title'} description={'Enter your Content title to identify it in future'} placeholder={'example content'} updatedata={setcontenttitle} />
           <Inputtextbox label={'Content Decription'} description={'Description for your content'} placeholder={'example description'} updatedata={setcontentdescription} />
-          <Labelwithdescription label={'Upload your content'} description={'You can upload your content from here. Supportted format mp4, jpg, png'} />
+         
+          </div>
+           <Labelwithdescription label={'Upload your content'} description={'You can upload your content from here. Supportted format mp4, jpg, png'} />
           <Uploadbutton label={'Upload'} update={HandleFile} />
 
           <div className='flex justify-end p-2' >

@@ -2,6 +2,6 @@ import React from 'react'
 
 export default function Uploadbutton({label, update}) {
   return (
-    <input className='bg-black rounded-lg p-3' type='file' onChange={update}/>
+    <input className='bg-purple-600 rounded-lg p-3' type='file' onChange={update}/>
   )
 }

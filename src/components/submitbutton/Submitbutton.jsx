@@ -8,10 +8,10 @@ export default function Submitbutton({ text, goto, disabled }) {
     <>
       {!disabled?
         <div onClick={() => { navigate(goto) }}>
-          <button className='bg-black py-2 p-5 text-white rounded-lg shadow-lg' >{text}</button>
+          <button className='bg-purple-800 p-5  text-white rounded-lg shadow-lg w-full' >{text}</button>
         </div> :
         <div >
-          <button className='bg-gray-400 py-2 p-5 text-gray-200 rounded-lg ' >{text}</button>
+          <button className='bg-gray-400 py-2  text-gray-200 rounded-lg w-full ' >{text}</button>
         </div>}
     </>
 

@@ -38,7 +38,7 @@ function MAKE_LOGIN(username, password) {
             }).then(response => response.json())
                 .then((data) => {
                     if (data.status_code == 401) {
-                        reject(false)
+                        reject(new Error('Request failed due to invalid data'))
                     }
                     else {
 
@@ -49,12 +49,12 @@ function MAKE_LOGIN(username, password) {
                     }
                 }).catch((error) => {
                     console.log(error)
-                    reject(false)
+                    reject(new Error('Request failed due to invalid data'))
                 })
         }
 
         catch {
-            reject(false)
+            reject(new Error('Request failed due to invalid data'))
 
         }
     })
@@ -84,7 +84,7 @@ function MAKE_REGISTER(username, password, email, contact, profile_image_url, ad
             }).then(response => response.json())
                 .then((data) => {
                     if (data.status_code == 401) {
-                        reject(false)
+                        reject(new Error('Request failed due to invalid data'))
                     }
                     else {
                         const key = data.login_key;
@@ -94,12 +94,12 @@ function MAKE_REGISTER(username, password, email, contact, profile_image_url, ad
                     }
                 }).catch((error) => {
                     console.log(error)
-                    reject(false)
+                    reject(new Error('Request failed due to invalid data'))
                 })
         }
 
         catch {
-            reject(false)
+            reject(new Error('Request failed due to invalid data'))
 
         }
     })
@@ -133,14 +133,13 @@ function ESTABLISH_WEBSOCKET_CONNECTION() {
 
             socket.onclose = (e) => {
                 console.log('MirrorLink Server Socet DisConnected!', e)
-                reject(false)
+                reject(new Error('Request failed due to invalid data'))
             }
 
         }
     })
-
-
 }
+
 function GET_AVAILABLE_SITES(login_key) {
     return new Promise((resolve, reject) => {
         try {
@@ -158,7 +157,7 @@ function GET_AVAILABLE_SITES(login_key) {
                 .then((data) => {
                     console.log(data)
                     if (data.status_code == 401) {
-                        reject(false)
+                        reject(new Error('Request failed due to invalid data'))
                     }
                     else {
                         // console.log(data.data)
@@ -166,35 +165,41 @@ function GET_AVAILABLE_SITES(login_key) {
                     }
                 }).catch((error) => {
                     console.log(error)
-                    reject(false)
+                    reject(new Error('Request failed due to invalid data'))
                 })
         }
         catch {
-            reject(false)
+            reject(new Error('Request failed due to invalid data'))
         }
     })
 }
 
 function GET_AVAILABLE_MIRRORS_ON_SITE(login_key , site_id ) {
 
+    console.log("site_id",site_id )
+
     return new Promise((resolve, reject) => {
+
+        let data = {
+            
+                "service": "GetMySiteMirrors",
+                "site_id":site_id,
+                'login_key':login_key
+            
+        }
         try {
             fetch(ADMINISTRATOR_ROOT_URL, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(
-                    {
-                        'service': 'GetMyMirrors',
-                        'login_key':login_key,
-                        'site_id':site_id,
-                    })
+                body: JSON.stringify(data
+                  )
             }).then(response => response.json())
                 .then((data) => {
                     console.log(data)
                     if (data.status_code == 401) {
-                        reject(false)
+                        reject(new Error('Request failed due to invalid data'))
                     }
                     else {
                         // console.log(data.data)
@@ -202,16 +207,16 @@ function GET_AVAILABLE_MIRRORS_ON_SITE(login_key , site_id ) {
                     }
                 }).catch((error) => {
                     console.log(error)
-                    reject(false)
+                    reject(new Error('Request failed due to invalid data'))
                 })
         }
         catch {
-            reject(false)
+            reject(new Error('Request failed due to invalid data'))
         }
     })
 }
 
-function GET_AVAILABLE_CONTENTS_ON_SITE(login_key, site_id, mirror_id) {
+function GET_ALL_CONTENTS(login_key) {
     return new Promise((resolve, reject) => {
         try {
             fetch(ADMINISTRATOR_ROOT_URL, {
@@ -222,15 +227,13 @@ function GET_AVAILABLE_CONTENTS_ON_SITE(login_key, site_id, mirror_id) {
                 body: JSON.stringify(
                     {
                         'service': 'GetMyContents',
-                        'login_key':login_key,
-                        'site_id':site_id,
-                        'mirror_id':mirror_id,
+                        'login_key':login_key
                     })
             }).then(response => response.json())
                 .then((data) => {
                     console.log(data)
                     if (data.status_code == 401) {
-                        reject(false)
+                        reject(new Error('Request failed due to invalid data'))
                     }
                     else {
                         // console.log(data.data)
@@ -238,14 +241,51 @@ function GET_AVAILABLE_CONTENTS_ON_SITE(login_key, site_id, mirror_id) {
                     }
                 }).catch((error) => {
                     console.log(error)
-                    reject(false)
+                    reject(new Error('Request failed due to invalid data'))
                 })
         }
         catch {
-            reject(false)
+            reject(new Error('Request failed due to invalid data'))
         }
     })
-}function GET_MIRROR(login_key, mirror_id) {
+}
+
+function GET_AVAILABLE_CONTENTS_ON_SITE(login_key, mirror_id) {
+    return new Promise((resolve, reject) => {
+        try {
+            fetch(ADMINISTRATOR_ROOT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(
+                    {
+                        'service': 'GetContentsForThisMirror',
+                        'login_key':login_key,
+                        'mirror_id':mirror_id,
+                    })
+            }).then(response => response.json())
+                .then((data) => {
+                    console.log(data)
+                    if (data.status_code == 401) {
+                        reject(new Error('Request failed due to invalid data'))
+                    }
+                    else {
+                        // console.log(data.data)
+                        resolve(data)
+                    }
+                }).catch((error) => {
+                    console.log(error)
+                    reject(new Error('Request failed due to invalid data'))
+                })
+        }
+        catch {
+            reject(new Error('Request failed due to invalid data'))
+        }
+    })
+}
+
+function GET_MIRROR(login_key, mirror_id) {
     return new Promise((resolve, reject) => {
         try {
             fetch(ADMINISTRATOR_ROOT_URL, {
@@ -263,7 +303,7 @@ function GET_AVAILABLE_CONTENTS_ON_SITE(login_key, site_id, mirror_id) {
                 .then((data) => {
                     console.log(data)
                     if (data.status_code == 401) {
-                        reject(false)
+                        reject(new Error('Request failed due to invalid data'))
                     }
                     else {
                         // console.log(data.data)
@@ -271,14 +311,84 @@ function GET_AVAILABLE_CONTENTS_ON_SITE(login_key, site_id, mirror_id) {
                     }
                 }).catch((error) => {
                     console.log(error)
-                    reject(false)
+                    reject(new Error('Request failed due to invalid data'))
                 })
         }
         catch {
-            reject(false)
+            reject(new Error('Request failed due to invalid data'))
         }
     })
 }
+
+function GET_ALL_MIRRORS(login_key) {
+    return new Promise((resolve, reject) => {
+        try {
+            fetch(ADMINISTRATOR_ROOT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(
+                    {
+                        'service': 'GetMyMirrors',
+                        'login_key':login_key,
+                    })
+            }).then(response => response.json())
+                .then((data) => {
+                    console.log(data)
+                    if (data.status_code == 401) {
+                        reject(new Error('Request failed due to invalid data'))
+                    }
+                    else {
+                        // console.log(data.data)
+                        resolve(data)
+                    }
+                }).catch((error) => {
+                    console.log(error)
+                    reject(new Error('Request failed due to invalid data'))
+                })
+        }
+        catch {
+            reject(new Error('Request failed due to invalid data'))
+        }
+    })
+}
+
+function GET_ALL_UNASSIGNED_MIRRORS(login_key) {
+    return new Promise((resolve, reject) => {
+        try {
+            fetch(ADMINISTRATOR_ROOT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(
+                    {
+                        'service': 'GetMyUnassignedMirrors',
+                        'login_key':login_key,
+                    })
+            }).then(response => response.json())
+                .then((data) => {
+                    console.log(data)
+                    if (data.status_code == 401) {
+                        reject(new Error('Request failed due to invalid data'))
+                    }
+                    else {
+                        // console.log(data.data)
+                        resolve(data)
+                    }
+                }).catch((error) => {
+                    console.log(error)
+                    reject(new Error('Request failed due to invalid data'))
+                })
+        }
+        catch {
+            reject(new Error('Request failed due to invalid data'))
+        }
+    })
+}
+
+
 
 function GET_CONTENT_DETAILS(login_key, content_id){
     return new Promise((resolve, reject) => {
@@ -297,7 +407,7 @@ function GET_CONTENT_DETAILS(login_key, content_id){
                 .then((data) => {
                     // console.log(data)
                     if (data.status_code == 401) {
-                        reject()
+                        reject(new Error('Request failed due to invalid data'))
                     }
                     else {
                         // console.log(data.data)
@@ -305,11 +415,11 @@ function GET_CONTENT_DETAILS(login_key, content_id){
                     }
                 }).catch((error) => {
                     console.log(error)
-                    reject()
+                    reject(new Error('Request failed due to invalid data'))
                 })
         }
         catch {
-            reject()
+            reject(new Error('Request failed due to invalid data'))
         }
        
     })
@@ -334,7 +444,7 @@ function ADD_SITE_IN_ACCOUNT(login_key, sitename, site_description) {
                 .then((data) => {
                     // console.log(data)
                     if (data.status_code == 401) {
-                        reject()
+                        reject(new Error('Request failed due to invalid data'))
                     }
                     else {
                         // console.log(data.data)
@@ -342,28 +452,29 @@ function ADD_SITE_IN_ACCOUNT(login_key, sitename, site_description) {
                     }
                 }).catch((error) => {
                     console.log(error)
-                    reject()
+                    reject(new Error('Request failed due to invalid data'))
                 })
         }
         catch {
-            reject()
+            reject(new Error('Request failed due to invalid data'))
         }
        
     })
 }
-function ADD_MIRROR_IN_SITE(login_key, mirrorname, mirrordescription, username, password, site_id, height, width) {
+function CREATE_MIRROR(login_key, name, description, username, password, height, width) {
 
     return new Promise((resolve, reject) => {
         const request_data = {
             "service": "AddMirror",
-            "mirror_name": mirrorname,
-            "mirror_description": mirrordescription,
+            "mirror_name": name,
+            "mirror_description": description,
             "username": username,
             "password": password,
-            "site_id": site_id,
-            "height":height,
             "width":width,
-            "login_key":login_key
+            "login_key":login_key,
+            "height":height,
+            "contents":[]
+
         }
         
     
@@ -378,7 +489,7 @@ function ADD_MIRROR_IN_SITE(login_key, mirrorname, mirrordescription, username, 
                     .then((data) => {
                         // console.log(data)
                         if (data.status_code == 401) {
-                            reject()
+                            reject(new Error('Request failed due to invalid data'))
                         }
                         else {
                             console.log(data.data)
@@ -386,17 +497,18 @@ function ADD_MIRROR_IN_SITE(login_key, mirrorname, mirrordescription, username, 
                         }
                     }).catch((error) => {
                         console.log(error)
-                        reject()
+                        reject(new Error('Request failed due to invalid data'))
                     })
             }
             catch {
-                reject()
+                reject(new Error('Request failed due to invalid data'))
             }
            
        
     })
 }
-function ADD_CONTENT_IN_MIRROR(login_key,content_title, content_description, mirror_id, site_id, content) {
+
+function CREATE_CONTENT(login_key,content_title, content_description, content) {
 
     return new Promise((resolve, reject) => {
 
@@ -410,8 +522,6 @@ function ADD_CONTENT_IN_MIRROR(login_key,content_title, content_description, mir
                 "service": "AddContent",
                 "content_title": content_title,
                 "content_description": content_description,
-                "site_id": site_id,
-                "mirror_id": mirror_id,
                 "content": fileData,
                 "login_key":login_key,
                 "file_extention":fileExtension,
@@ -428,7 +538,7 @@ function ADD_CONTENT_IN_MIRROR(login_key,content_title, content_description, mir
                     .then((data) => {
                         // console.log(data)
                         if (data.status_code == 401) {
-                            reject()
+                            reject(new Error('Request failed due to invalid data'))
                         }
                         else {
                             // console.log(data.data)
@@ -436,11 +546,11 @@ function ADD_CONTENT_IN_MIRROR(login_key,content_title, content_description, mir
                         }
                     }).catch((error) => {
                         console.log(error)
-                        reject()
+                        reject(new Error('Request failed due to invalid data'))
                     })
             }
             catch {
-                reject()
+                reject(new Error('Request failed due to invalid data'))
             }
 
         }
@@ -469,7 +579,7 @@ function DELETE_MIRROR(login_key,mirror_id) {
                     .then((data) => {
                         // console.log(data)
                         if (data.status_code == 401) {
-                            reject()
+                            reject(new Error('Request failed due to invalid data'))
                         }
                         else {
                             // console.log(data.data)
@@ -477,11 +587,11 @@ function DELETE_MIRROR(login_key,mirror_id) {
                         }
                     }).catch((error) => {
                         console.log(error)
-                        reject()
+                        reject(new Error('Request failed due to invalid data'))
                     })
             }
             catch {
-                reject()
+                reject(new Error('Request failed due to invalid data'))
             }
         })
 }
@@ -504,7 +614,7 @@ function DELETE_SITE(login_key,site_id) {
                     .then((data) => {
                         // console.log(data)
                         if (data.status_code == 401) {
-                            reject()
+                            reject(new Error('Request failed due to invalid data'))
                         }
                         else {
                             // console.log(data.data)
@@ -512,11 +622,11 @@ function DELETE_SITE(login_key,site_id) {
                         }
                     }).catch((error) => {
                         console.log(error)
-                        reject()
+                        reject(new Error('Request failed due to invalid data'))
                     })
             }
             catch {
-                reject()
+                reject(new Error('Request failed due to invalid data'))
             }
         })
 }
@@ -539,7 +649,7 @@ function DELETE_CONTENT(login_key,content_id) {
                     .then((data) => {
                         // console.log(data)
                         if (data.status_code == 401) {
-                            reject()
+                            reject(new Error('Request failed due to invalid data'))
                         }
                         else {
                             // console.log(data.data)
@@ -547,11 +657,87 @@ function DELETE_CONTENT(login_key,content_id) {
                         }
                     }).catch((error) => {
                         console.log(error)
-                        reject()
+                        reject(new Error('Request failed due to invalid data'))
                     })
             }
             catch {
-                reject()
+                reject(new Error('Request failed due to invalid data'))
+            }
+        })
+}
+
+function ASSIGN_MIRROR_TO_SITE(login_key,mirrors,site_id) {
+
+    console.log(site_id,)
+
+    return new Promise((resolve, reject) => {
+            const request_data = {
+                "service": "AssignMirrorToSite",
+                "mirrors": mirrors,
+                "site_id":site_id,
+                "login_key":login_key
+            }
+            try {
+                fetch(ADMINISTRATOR_ROOT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(request_data)
+                }).then(response => response.json())
+                    .then((data) => {
+                        // console.log(data)
+                        if (data.status_code == 401) {
+                            reject(new Error('Request failed due to invalid data'))
+                        }
+                        else {
+                            // console.log(data.data)
+                            resolve()
+                        }
+                    }).catch((error) => {
+                        console.log(error)
+                        reject(new Error('Request failed due to invalid data'))
+                    })
+            }
+            catch {
+                reject(new Error('Request failed due to invalid data'))
+            }
+        })
+}
+
+function ASSIGN_CONTENT_TO_MIRROR(login_key,content_ids, mirror_id) {
+
+    return new Promise((resolve, reject) => {
+            const request_data = {
+                "service": "AssignContentToMirror",
+                "content_ids": content_ids,
+                "mirror_id":mirror_id,
+                "login_key":login_key
+            }
+            try {
+                fetch(ADMINISTRATOR_ROOT_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(request_data)
+                }).then(response => response.json())
+                    .then((data) => {
+                        // console.log(data)
+                        if (data.status_code == 401) {
+                            reject(new Error('Request failed due to invalid data'))
+                        }
+                        else {
+                            // console.log(data.data)
+                            resolve()
+                        }
+                    }).catch((error) => {
+                        console.log(error)
+                        reject(new Error('Request failed due to invalid data'))
+                    })
+            }
+            catch {
+                reject(new Error('Request failed due to invalid data'))
             }
         })
 }
@@ -563,12 +749,16 @@ export {
     GET_AVAILABLE_SITES,
     GET_AVAILABLE_MIRRORS_ON_SITE,
     ADD_SITE_IN_ACCOUNT,
-    ADD_MIRROR_IN_SITE,
+    CREATE_MIRROR,
     GET_AVAILABLE_CONTENTS_ON_SITE,
-    ADD_CONTENT_IN_MIRROR,
+    CREATE_CONTENT,
     MAKE_REGISTER,
     GET_CONTENT_DETAILS,GET_MIRROR,
     DELETE_CONTENT,
     DELETE_MIRROR,
-    DELETE_SITE
+    DELETE_SITE,
+    GET_ALL_MIRRORS,ASSIGN_MIRROR_TO_SITE,
+    GET_ALL_UNASSIGNED_MIRRORS,
+    GET_ALL_CONTENTS,
+    ASSIGN_CONTENT_TO_MIRROR
 }

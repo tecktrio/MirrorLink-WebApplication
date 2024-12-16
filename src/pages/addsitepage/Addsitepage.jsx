@@ -33,10 +33,13 @@ export default function Addsitepage() {
   }
   return (
     <form onSubmit={HandleSubmit}>
+      <div className='flex'>
       <Inputtextbox label={'Site Name'} description={'Enter your site name to identify it in future'} placeholder={'example site'} updatedata={setsitename}/>
       <Inputtextbox label={'Site Decription'} description={'Description for your site'} placeholder={'example site'} updatedata={setSiteDescription}/>
-      <Labelwithdescription label={'Site Image'} description={'Upload a site image'} />
-      <Uploadbutton label={'Upload'} />
+     
+      </div>
+      {/* <Labelwithdescription label={'Site Image'} description={'Upload a site image'} />
+      <Uploadbutton label={'Upload'} /> */}
 
       <div className='flex justify-end p-2' >
         <Submitbutton text="Add" />

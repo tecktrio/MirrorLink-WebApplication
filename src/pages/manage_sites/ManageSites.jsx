@@ -16,6 +16,8 @@ export default function ManageSites() {
       let login_key = getCookie("login_key")
       DELETE_SITE(login_key,id).then((res)=>{
         window.location.reload()
+      }).catch((err)=>{
+        console.log(err)
       })
 
     }
@@ -40,10 +42,10 @@ export default function ManageSites() {
             <div className='my-2 flex'>
               <Labelwithdescription label={'Available Sites'} description={'List of sites that are added into your account.'}/>
             </div>
-            <div>
+            <div className=''>
               {sitelist?.map((data, key)=>{
                 return (
-                  <div >
+                  <div className='  mr-5'>
                   <Listitem title={data.site_name} description={data.site_description} onDelete={()=>deleteSite(data._id)} />
     
                     </div>

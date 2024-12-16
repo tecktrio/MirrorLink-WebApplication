@@ -1,4 +1,4 @@
-export const Navigate_To_Dashboard = '/dashboard'
+export const Navigate_To_Dashboard = '/'
 export const Navigate_To_Contact = '/contact'
 export const Navigate_To_Login = '/login'
 export const Navigate_To_Register = '/register'

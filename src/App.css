@@ -1,5 +1,6 @@
 .App {
   text-align: center;
+  background-color: black;
 }
 
 .App-logo {
@@ -35,4 +36,17 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+
+/* Hide scrollbar but enable scrolling */
+.no-scrollbar {
+  overflow-y: scroll; /* Allow vertical scrolling */
+  scrollbar-width: none; /* For Firefox */
+  -ms-overflow-style: none; /* For IE and Edge */
+}
+
+/* Hide scrollbar for Webkit-based browsers (Chrome, Safari, etc.) */
+.no-scrollbar::-webkit-scrollbar {
+  display: none; /* Hide scrollbar */
 }

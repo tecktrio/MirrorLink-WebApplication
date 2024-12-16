@@ -7,30 +7,42 @@ import { Navigate_To_Contentlist, Navigate_To_Mirrorlist, Navigate_To_Update_Con
 import { GlobalContext } from '../../Contexts/GlobalContext'
 import Addbutton from '../../components/addbutton/Addbutton'
 import { CookieContext } from '../../Contexts/CookieContext'
+import ContentListingModal from '../../components/Modal/ContentListingModal'
+import SelectContent from '../SelectContent/SelectContent'
 
 export default function Contentlistingpage() {
 
   const [contentlist, setContentList] = useState([])
   const {getCookie, setCookie} = useContext(CookieContext)
   const navigate = useNavigate()
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const openModal = () => setIsModalOpen(true);
+  const closeModal = () => setIsModalOpen(false);
+  let login_key = getCookie('login_key')
+  let mirror_id = getCookie('mirror_id')
   useEffect(()=>{
-    let login_key = getCookie('login_key')
-    let site_id = getCookie('site_id')
-    let mirror_id = getCookie('mirror_id')
 
-    GET_AVAILABLE_CONTENTS_ON_SITE(login_key, site_id, mirror_id).then((res)=>{
+
+    GET_AVAILABLE_CONTENTS_ON_SITE(login_key, mirror_id).then((res)=>{
       console.log(res.data)
       setContentList(res.data)
+    }).catch((error)=>{
+      console.log(error)
     })
 
   },[])
   return (
     <div className='flex justify-center'>
       <div className='w-full'>
-        <div className='flex justify-end m-2'>
+        {/* <div className='flex justify-end m-2'>
         <Addbutton label={'Add Content'} goto={"/addcontent"}/>
 
+        </div> */}
+        <div className="flex justify-end m-2">
+          {/* <Addbutton label={'Add Mirror'} goto={"/addmirror"}/> */}
+
+          <button onClick={openModal} className='bg-purple-600 p-3 rounded-md text-white'>Add Content</button>
         </div>
 
         <div className='my-2'>
@@ -48,7 +60,19 @@ export default function Contentlistingpage() {
           
         </div>
       </div>
+      <ContentListingModal isOpen={isModalOpen} onClose={closeModal}>
+        <div className="p-5 h-full">
+          {/* <h2 className="font-semibold">Select the Contents to Add</h2>
+          <p>
+            The below list contains all the Contents 
+          </p> */}
+          <div className="h-full overflow-scroll no-scrollbar py-3">
+            <SelectContent mirror_id={mirror_id} handleclose={closeModal}/>
+          </div>
+        </div>
 
+        {/* <button onClick={closeModal}>Close</button> */}
+      </ContentListingModal>
     </div>
   )
 }
