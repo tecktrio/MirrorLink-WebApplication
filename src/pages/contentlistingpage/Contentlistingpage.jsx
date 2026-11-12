@@ -92,9 +92,10 @@ export default function Contentlistingpage() {
     const connectWS = () => {
       try {
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-        const wsHost = window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
-          ? `${window.location.hostname}:8000`
-          : '32.236.228.113:8000'
+        let wsHost = window.location.host
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          wsHost = '32.236.228.113:8000'
+        }
         const wsUrl = `${wsProtocol}//${wsHost}/mirror?mirror_id=${mirror_id}`
 
         ws = new WebSocket(wsUrl)

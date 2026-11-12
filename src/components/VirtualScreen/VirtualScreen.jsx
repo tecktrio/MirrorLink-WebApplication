@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { SERVER_URL } from "../../serverRequests/ServerRequests";
 
 export default function VirtualScreen({
   mirror,
@@ -116,7 +117,7 @@ export default function VirtualScreen({
     const mName = mirror?.mirror_name || screenTitle || "";
     const mId = mirror?.mirror_id;
 
-    fetch("http://32.236.228.113:8000/Mirror", {
+    fetch(`${SERVER_URL}Mirror`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

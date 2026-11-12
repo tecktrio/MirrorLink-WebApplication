@@ -1,10 +1,16 @@
 // Request URL s and other Main urls for the application to communicate with server
 
-const SERVER_IP = "32.236.228.113";
-const SERVER_URL = `http://${SERVER_IP}:8000/`;
-const SERVER_WEBSOCKET_URL = `ws://${SERVER_IP}:8000/controller?`;
+// Request URLs and communication endpoints for server
+const RAW_API_URL = process.env.REACT_APP_API_URL || "https://mirrorlink.bigburry.com/api";
+const CLEAN_API_URL = RAW_API_URL.replace(/\/+$/, "");
+
+export const SERVER_URL = `${CLEAN_API_URL}/`;
+const wsProtocol = CLEAN_API_URL.startsWith("https") ? "wss:" : "ws:";
+const urlHost = CLEAN_API_URL.replace(/^https?:\/\//, "").split("/")[0];
+export const SERVER_WEBSOCKET_URL = `${wsProtocol}//${urlHost}/controller?`;
+
 let socket;
-const ADMINISTRATOR_ROOT_URL = SERVER_URL + 'Administrator'
+const ADMINISTRATOR_ROOT_URL = `${SERVER_URL}Administrator`;
 
 
 // call this funtion as a promise by passing only the username and password
