@@ -12,10 +12,9 @@ export default function VirtualScreen({
 }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [internalIndex, setInternalIndex] = useState(currentIndex);
-  const [screenUsername, setScreenUsername] = useState(mirror?.username || "");
-  const [screenPassword, setScreenPassword] = useState(mirror?.password || "");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [sessionMessage, setSessionMessage] = useState("");
+  const [copiedUrl, setCopiedUrl] = useState(false);
   const videoRef = useRef(null);
   const fullscreenVideoRef = useRef(null);
 
@@ -31,16 +30,22 @@ export default function VirtualScreen({
   const displayResolution = `${mirrorW} × ${mirrorH} px`;
   const screenTitle = mirror?.mirror_name || "Mirror Display Screen";
 
+  const mirrorHost = window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? window.location.hostname : "32.236.228.113";
+  const mirrorViewerUrl = `http://${mirrorHost}:8085/?mirror_name=${encodeURIComponent(mirror?.mirror_name || screenTitle)}`;
+
+  const handleCopyUrl = (e) => {
+    if (e) e.stopPropagation();
+    try {
+      navigator.clipboard.writeText(mirrorViewerUrl);
+      setCopiedUrl(true);
+      setTimeout(() => setCopiedUrl(false), 2500);
+    } catch (err) {}
+  };
+
   // Sync internal index when parent currentIndex changes externally
   useEffect(() => {
     setInternalIndex(currentIndex);
   }, [currentIndex]);
-
-  // Pre-fill credentials when mirror info arrives
-  useEffect(() => {
-    if (mirror?.username) setScreenUsername(mirror.username);
-    if (mirror?.password) setScreenPassword(mirror.password);
-  }, [mirror?.username, mirror?.password]);
 
   // Ensure current display content is an active content
   const resolvedContent = (playableList && playableList.length > 0)
@@ -108,42 +113,40 @@ export default function VirtualScreen({
     if (e && e.preventDefault) e.preventDefault();
     setIsLoggingIn(true);
     setSessionMessage("");
-    const u = screenUsername.trim() || mirror?.username || "";
-    const p = screenPassword.trim() || mirror?.password || "";
+    const mName = mirror?.mirror_name || screenTitle || "";
     const mId = mirror?.mirror_id;
 
-    fetch("http://127.0.0.1:8000/Mirror", {
+    fetch("http://32.236.228.113:8000/Mirror", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         service: "login",
-        username: u,
-        password: p,
+        mirror_name: mName,
         mirror_id: mId,
       }),
     })
       .then((res) => res.json())
       .then(() => {
         setIsLoggingIn(false);
-        setSessionMessage("Presentation running! Virtual mirror logged in.");
+        setSessionMessage("Stream broadcast active! Display synced.");
         setTimeout(() => setSessionMessage(""), 4000);
         if (onStartPresentation) {
-          onStartPresentation(u, p);
+          onStartPresentation();
         }
       })
       .catch((err) => {
         setIsLoggingIn(false);
-        setSessionMessage("Presentation active locally.");
+        setSessionMessage("Stream active locally.");
         setTimeout(() => setSessionMessage(""), 3000);
       });
   };
 
   // Automatically start mirror presentation session on mount
   useEffect(() => {
-    if (mirror?.username || mirror?.mirror_id) {
+    if (mirror?.mirror_name || mirror?.mirror_id) {
       handleStartPresentation();
     }
-  }, [mirror?.mirror_id]);
+  }, [mirror?.mirror_name, mirror?.mirror_id]);
 
   return (
     <>
@@ -303,13 +306,13 @@ export default function VirtualScreen({
           </div>
         </div>
 
-        {/* Mirror Display Credentials & Presentation Launcher */}
+        {/* Mirror Stream Broadcast Status & Direct Viewer URL */}
         <div className="bg-neutral-50/90 border border-neutral-200/90 rounded-2xl p-3.5 space-y-2.5">
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-1.5">
               <span className={`w-2 h-2 rounded-full ${isPaused ? "bg-amber-500" : "bg-emerald-500 animate-pulse"}`} />
               <span className="text-[11px] font-bold text-black uppercase tracking-wider">
-                Mirror Display Login & Presenter
+                Live Stream Broadcast
               </span>
             </div>
             <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold border ${
@@ -321,36 +324,82 @@ export default function VirtualScreen({
             </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-            <div>
-              <label className="block text-[10px] font-semibold text-neutral-500 mb-0.5">
-                Screen ID / Username
-              </label>
-              <input
-                type="text"
-                value={screenUsername}
-                onChange={(e) => setScreenUsername(e.target.value)}
-                placeholder="Screen ID"
-                className="w-full px-2.5 py-1.5 bg-white border border-neutral-300 focus:border-black rounded-lg text-xs font-mono font-medium text-black outline-none transition-colors"
-              />
+          <div className="bg-white border border-neutral-200/80 rounded-xl p-3 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <span className="block text-[10px] uppercase font-bold text-neutral-400 tracking-wider">
+                Stream / Mirror Name
+              </span>
+              <p className="text-xs font-mono font-bold text-black truncate mt-0.5">
+                {screenTitle}
+              </p>
             </div>
-            <div>
-              <label className="block text-[10px] font-semibold text-neutral-500 mb-0.5">
-                Access Key / Password
-              </label>
-              <input
-                type="password"
-                value={screenPassword}
-                onChange={(e) => setScreenPassword(e.target.value)}
-                placeholder="Access Key"
-                className="w-full px-2.5 py-1.5 bg-white border border-neutral-300 focus:border-black rounded-lg text-xs font-mono font-medium text-black outline-none transition-colors"
-              />
+            <div className="text-right shrink-0">
+              <span className="block text-[10px] uppercase font-bold text-neutral-400 tracking-wider">
+                Resolution
+              </span>
+              <p className="text-xs font-mono font-medium text-neutral-700 mt-0.5">
+                {displayResolution}
+              </p>
+            </div>
+          </div>
+
+          {/* Mirror Viewer Direct Stream URL */}
+          <div className="bg-white border border-neutral-200/80 rounded-xl p-2.5 space-y-1.5">
+            <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-neutral-400">
+              <span className="flex items-center gap-1.5">
+                <svg className="w-3 h-3 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+                <span>Live Mirror URL</span>
+              </span>
+              <span className="text-emerald-700 font-mono font-semibold bg-emerald-50 px-1.5 py-0.5 rounded text-[9px] border border-emerald-200">
+                Port 8085
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="flex-1 bg-neutral-50 px-2.5 py-1.5 rounded-lg border border-neutral-200 text-[11px] font-mono text-neutral-800 truncate select-all">
+                {mirrorViewerUrl}
+              </div>
+              <button
+                type="button"
+                onClick={handleCopyUrl}
+                className="px-2.5 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-black border border-neutral-300 rounded-lg text-xs font-semibold cursor-pointer transition-colors shrink-0 flex items-center gap-1"
+                title="Copy stream URL"
+              >
+                {copiedUrl ? (
+                  <>
+                    <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                    </svg>
+                    <span className="text-emerald-700 text-[11px]">Copied</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    <span className="text-[11px]">Copy</span>
+                  </>
+                )}
+              </button>
+              <a
+                href={mirrorViewerUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-2.5 py-1.5 bg-black hover:bg-neutral-800 text-white rounded-lg text-xs font-semibold cursor-pointer transition-colors shrink-0 flex items-center gap-1 shadow-2xs"
+                title="Open stream in viewer window"
+              >
+                <span className="text-[11px]">Open</span>
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
             </div>
           </div>
 
           <div className="flex items-center justify-between gap-2 pt-0.5">
             <p className="text-[10px] text-neutral-500 truncate">
-              {sessionMessage || (isPaused ? "Presentation is currently paused." : "Default mirror display is logged in and presenting live.")}
+              {sessionMessage || (isPaused ? "Presentation is currently paused." : "Default virtual mirror is broadcasting live.")}
             </p>
             <button
               type="button"
@@ -359,9 +408,9 @@ export default function VirtualScreen({
               className="px-3.5 py-1.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-semibold shrink-0 cursor-pointer transition-colors shadow-2xs flex items-center gap-1.5 disabled:opacity-50"
             >
               <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
+                <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
               </svg>
-              <span>{isLoggingIn ? "Logging in..." : "Start Presentation"}</span>
+              <span>{isLoggingIn ? "Syncing..." : "Sync Stream"}</span>
             </button>
           </div>
         </div>

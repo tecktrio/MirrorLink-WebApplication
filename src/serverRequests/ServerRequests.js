@@ -1,23 +1,8 @@
 // Request URL s and other Main urls for the application to communicate with server
 
-const IS_REMOTE_SERVER = false
-
-let SERVER_URL;
-let SERVER_WEBSOCKET_URL;
-const SERVER_ROOT_REMOTE_URL = "https://mirrorlinkserver.developingkerala.com/"
-const SERVER_ROOT_LOCAL_URL = "http://127.0.0.1:8000/"
-// const CONTROLLER_HTTP_URL = "https://mirrorlinkserver.developingkerala.com/AdministratorLogin"
-const CONTROLLER_WEBSOCKET_REMOTE_URL = "wss://mirrorlinkserver.developingkerala.com/ws/controller?"
-const CONTROLLER_WEBSOCKET_LOCAL_URL = "ws://127.0.0.1:8000/controller?"
-
-if (IS_REMOTE_SERVER) {
-    SERVER_URL = SERVER_ROOT_REMOTE_URL
-    SERVER_WEBSOCKET_URL = CONTROLLER_WEBSOCKET_REMOTE_URL
-}
-else {
-    SERVER_URL = SERVER_ROOT_LOCAL_URL
-    SERVER_WEBSOCKET_URL = CONTROLLER_WEBSOCKET_LOCAL_URL
-}
+const SERVER_IP = "32.236.228.113";
+const SERVER_URL = `http://${SERVER_IP}:8000/`;
+const SERVER_WEBSOCKET_URL = `ws://${SERVER_IP}:8000/controller?`;
 let socket;
 const ADMINISTRATOR_ROOT_URL = SERVER_URL + 'Administrator'
 

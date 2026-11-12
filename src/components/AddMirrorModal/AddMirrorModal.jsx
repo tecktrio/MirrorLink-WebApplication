@@ -21,8 +21,6 @@ export default function AddMirrorModal({
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [selectedOptionId, setSelectedOptionId] = useState("landscape");
   const [width, setWidth] = useState("1920");
   const [height, setHeight] = useState("1080");
@@ -33,8 +31,6 @@ export default function AddMirrorModal({
     if (!isOpen) {
       setName("");
       setDescription("");
-      setUsername("");
-      setPassword("");
       setSelectedOptionId("landscape");
       setWidth("1920");
       setHeight("1080");
@@ -57,14 +53,6 @@ export default function AddMirrorModal({
       setErrorMessage("Mirror Name is required.");
       return;
     }
-    if (!username.trim()) {
-      setErrorMessage("Screen ID / Username is required.");
-      return;
-    }
-    if (!password.trim()) {
-      setErrorMessage("Access Key / Password is required.");
-      return;
-    }
 
     const parsedW = parseInt(width, 10);
     const parsedH = parseInt(height, 10);
@@ -82,8 +70,8 @@ export default function AddMirrorModal({
       loginKey,
       name.trim(),
       description.trim(),
-      username.trim(),
-      password.trim(),
+      name.trim(),
+      "",
       String(parsedH),
       String(parsedW),
       siteId || null
@@ -96,7 +84,7 @@ export default function AddMirrorModal({
       .catch((err) => {
         console.error("Create mirror error:", err);
         setErrorMessage(
-          err.message || "Failed to register mirror screen. Please try again."
+          err.message || "Failed to register mirror screen. Ensure mirror name is unique."
         );
         setIsSubmitting(false);
       });
@@ -150,9 +138,14 @@ export default function AddMirrorModal({
 
           {/* Mirror Name */}
           <div>
-            <label className="block text-xs font-bold text-black mb-1">
-              Mirror Name <span className="text-red-500">*</span>
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-bold text-black">
+                Mirror Name <span className="text-red-500">*</span>
+              </label>
+              <span className="text-[10px] text-neutral-400 font-medium">
+                Unique Stream Identifier
+              </span>
+            </div>
             <input
               type="text"
               value={name}
@@ -160,6 +153,9 @@ export default function AddMirrorModal({
               placeholder="e.g. Lobby Entrance Screen"
               className="w-full px-3.5 py-2.5 bg-neutral-50 hover:bg-neutral-100/70 focus:bg-white border border-neutral-300 focus:border-black rounded-xl text-xs font-medium text-black outline-none transition-colors"
             />
+            <p className="text-[11px] text-neutral-500 mt-1">
+              This name uniquely identifies the screen. Viewers connect directly using this mirror name without credentials.
+            </p>
           </div>
 
           {/* Mirror Description */}
@@ -174,34 +170,6 @@ export default function AddMirrorModal({
               placeholder="e.g. Vertical 55-inch display at front desk"
               className="w-full px-3.5 py-2.5 bg-neutral-50 hover:bg-neutral-100/70 focus:bg-white border border-neutral-300 focus:border-black rounded-xl text-xs font-medium text-black outline-none transition-colors"
             />
-          </div>
-
-          {/* Login Credentials for Mirror Viewer */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-            <div>
-              <label className="block text-xs font-bold text-black mb-1">
-                Screen ID / Username <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="e.g. screen_01"
-                className="w-full px-3.5 py-2.5 bg-neutral-50 hover:bg-neutral-100/70 focus:bg-white border border-neutral-300 focus:border-black rounded-xl text-xs font-medium text-black outline-none transition-colors font-mono"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-bold text-black mb-1">
-                Access Key / Password <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••••••"
-                className="w-full px-3.5 py-2.5 bg-neutral-50 hover:bg-neutral-100/70 focus:bg-white border border-neutral-300 focus:border-black rounded-xl text-xs font-medium text-black outline-none transition-colors"
-              />
-            </div>
           </div>
 
           {/* Display Resolution */}

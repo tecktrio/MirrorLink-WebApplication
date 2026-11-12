@@ -178,15 +178,38 @@ export default function MirrorListing({ site_id, site_name = "Selected Site", on
                   </span>
                 </div>
 
-                {/* Mirror Meta info */}
-                <div className="mt-4 pt-3 border-t border-neutral-100 grid grid-cols-2 gap-2 text-[11px] text-neutral-500">
-                  <div>
-                    <span className="font-semibold text-neutral-700">Display Key: </span>
-                    <span className="font-mono bg-neutral-100 px-1.5 py-0.5 rounded text-black">{mirror.username || "—"}</span>
+                {/* Mirror Meta info & Stream URL */}
+                <div className="mt-4 pt-3 border-t border-neutral-100 space-y-2 text-[11px] text-neutral-500">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <span className="font-semibold text-neutral-700">Stream Name: </span>
+                      <span className="font-mono bg-neutral-100 px-1.5 py-0.5 rounded text-black">{mirror.mirror_name}</span>
+                    </div>
+                    <div>
+                      <span className="font-semibold text-neutral-700">Resolution: </span>
+                      <span className="font-medium text-black">{mirror.mirror_width || 1920} × {mirror.mirror_height || 1080}</span>
+                    </div>
                   </div>
-                  <div>
-                    <span className="font-semibold text-neutral-700">Resolution: </span>
-                    <span className="font-medium text-black">{mirror.mirror_width || 1920} × {mirror.mirror_height || 1080}</span>
+
+                  {/* Direct Stream URL Bar */}
+                  <div className="flex items-center justify-between gap-1.5 bg-neutral-50 px-2.5 py-1.5 rounded-xl border border-neutral-200/80">
+                    <span className="font-mono text-[10px] text-neutral-700 truncate select-all">
+                      {`http://${window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? window.location.hostname : '32.236.228.113'}:8085/?mirror_name=${encodeURIComponent(mirror.mirror_name)}`}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const host = window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? window.location.hostname : '32.236.228.113';
+                        navigator.clipboard.writeText(`http://${host}:8085/?mirror_name=${encodeURIComponent(mirror.mirror_name)}`);
+                        setStatusMsg(`Stream URL copied for "${mirror.mirror_name}"`);
+                        setTimeout(() => setStatusMsg(''), 2500);
+                      }}
+                      className="px-2 py-0.5 bg-white hover:bg-neutral-100 border border-neutral-300 rounded text-[10px] font-semibold text-black shrink-0 transition-colors cursor-pointer shadow-2xs"
+                      title="Copy direct stream URL"
+                    >
+                      Copy URL
+                    </button>
                   </div>
                 </div>
               </div>

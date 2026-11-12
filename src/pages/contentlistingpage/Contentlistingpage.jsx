@@ -34,6 +34,7 @@ export default function Contentlistingpage() {
     mirror_height: 1080
   })
   const [message, setMessage] = useState('')
+  const [copiedUrl, setCopiedUrl] = useState(false)
   const [draggedIndex, setDraggedIndex] = useState(null)
   const [dragOverIndex, setDragOverIndex] = useState(null)
   const { getCookie } = useContext(CookieContext)
@@ -42,6 +43,17 @@ export default function Contentlistingpage() {
   const wsRef = useRef(null)
 
   const mirror_id = getCookie('mirror_id')
+  const mirrorHost = window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? window.location.hostname : '32.236.228.113'
+  const currentMirrorName = liveStatus?.mirror_name || 'Display Screen'
+  const mirrorViewerUrl = `http://${mirrorHost}:8085/?mirror_name=${encodeURIComponent(currentMirrorName)}`
+
+  const handleCopyUrl = () => {
+    try {
+      navigator.clipboard.writeText(mirrorViewerUrl)
+      setCopiedUrl(true)
+      setTimeout(() => setCopiedUrl(false), 2500)
+    } catch (e) {}
+  }
 
   const openModal = () => setIsModalOpen(true)
   const closeModal = () => setIsModalOpen(false)
@@ -80,9 +92,9 @@ export default function Contentlistingpage() {
     const connectWS = () => {
       try {
         const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-        const wsHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
-          ? '127.0.0.1:8000'
-          : window.location.host
+        const wsHost = window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1'
+          ? `${window.location.hostname}:8000`
+          : '32.236.228.113:8000'
         const wsUrl = `${wsProtocol}//${wsHost}/mirror?mirror_id=${mirror_id}`
 
         ws = new WebSocket(wsUrl)
@@ -606,6 +618,69 @@ export default function Contentlistingpage() {
           <span>{message}</span>
         </div>
       )}
+
+      {/* Live Mirror Stream URL Banner */}
+      <div className="bg-white border border-neutral-200/90 rounded-2xl p-4 shadow-2xs flex flex-col md:flex-row md:items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-10 h-10 rounded-2xl bg-black text-white flex items-center justify-center shrink-0 shadow-xs">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+            </svg>
+          </div>
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-400">
+                Mirror Display Stream URL
+              </span>
+              <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-bold border border-emerald-200">
+                Live Viewer URL • Port 8085
+              </span>
+            </div>
+            <p className="text-xs text-neutral-500 truncate mt-0.5">
+              Open this live URL on any smart TV, remote monitor, or browser to connect and stream this display.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 w-full md:w-auto">
+          <div className="flex-1 md:w-80 px-3 py-2 bg-neutral-50 border border-neutral-200 rounded-xl font-mono text-xs text-neutral-800 truncate select-all">
+            {mirrorViewerUrl}
+          </div>
+          <button
+            onClick={handleCopyUrl}
+            className="px-3.5 py-2 bg-neutral-100 hover:bg-neutral-200 text-black border border-neutral-300 rounded-xl text-xs font-semibold cursor-pointer transition-colors shrink-0 flex items-center gap-1.5"
+            title="Copy Stream URL"
+          >
+            {copiedUrl ? (
+              <>
+                <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                </svg>
+                <span className="text-emerald-700 font-bold">Copied!</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+                <span>Copy URL</span>
+              </>
+            )}
+          </button>
+          <a
+            href={mirrorViewerUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-semibold shrink-0 cursor-pointer transition-colors shadow-2xs flex items-center gap-1.5"
+            title="Launch viewer in new browser tab"
+          >
+            <span>Launch Screen</span>
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+            </svg>
+          </a>
+        </div>
+      </div>
 
       {/* Two Column Layout: Virtual Screen (Left) and Playlist Sequence (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">

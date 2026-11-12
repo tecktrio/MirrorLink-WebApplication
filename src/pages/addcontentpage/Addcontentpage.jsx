@@ -7,6 +7,7 @@ import { LoadingStateContext } from '../../Contexts/LoadingStateContext'
 import Loadinpage from '../loadingpage/Loadinpage'
 import { useNavigate } from 'react-router-dom'
 import { CookieContext } from '../../Contexts/CookieContext'
+import ImageCropperModal from '../../components/ImageCropperModal/ImageCropperModal'
 
 export default function Addcontentpage() {
   const { getCookie, setCookie } = useContext(CookieContext)
@@ -14,9 +15,13 @@ export default function Addcontentpage() {
   const [contentTitle, setcontenttitle] = useState('')
   const [ContentDescription, setcontentdescription] = useState('')
   const [content, setcontent] = useState(null)
+  const [originalContent, setOriginalContent] = useState(null)
   const [previewUrl, setPreviewUrl] = useState('')
   const [duration, setDuration] = useState(5)
   const [fileDimensions, setFileDimensions] = useState(null)
+  const [isCropperOpen, setIsCropperOpen] = useState(false)
+  const [videoFitMode, setVideoFitMode] = useState("cover") // "cover" or "contain"
+  const [videoAlignment, setVideoAlignment] = useState("center center")
   const [mirrors, setMirrors] = useState([])
   const [selectedMirrorId, setSelectedMirrorId] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -63,21 +68,35 @@ export default function Addcontentpage() {
       setPreviewUrl(fileUrl)
 
       if (file.type.startsWith('image/')) {
+        setOriginalContent(file)
         const img = new Image()
         img.onload = () => {
-          setFileDimensions({ width: img.naturalWidth, height: img.naturalHeight })
+          const dims = { width: img.naturalWidth, height: img.naturalHeight }
+          setFileDimensions(dims)
+          if (dims.width !== targetWidth || dims.height !== targetHeight) {
+            setIsCropperOpen(true)
+          }
         }
         img.src = fileUrl
       } else if (file.type.startsWith('video/')) {
+        setOriginalContent(null)
         const vid = document.createElement('video')
         vid.onloadedmetadata = () => {
           setFileDimensions({ width: vid.videoWidth, height: vid.videoHeight })
         }
         vid.src = fileUrl
       } else {
+        setOriginalContent(null)
         setFileDimensions(null)
       }
     }
+  }
+
+  const handleCropComplete = (croppedFile, newPreviewUrl, dims) => {
+    setcontent(croppedFile)
+    setPreviewUrl(newPreviewUrl)
+    setFileDimensions(dims)
+    setErrorMessage('')
   }
 
   const isExactMatch = fileDimensions && fileDimensions.width === targetWidth && fileDimensions.height === targetHeight
@@ -96,14 +115,20 @@ export default function Addcontentpage() {
       setErrorMessage('Please select a mirror for this content.')
       return
     }
-    if (fileDimensions && !isExactMatch) {
-      setErrorMessage(`Uploaded media dimensions (${fileDimensions.width} × ${fileDimensions.height} px) do not match mirror resolution (${targetWidth} × ${targetHeight} px). Uploaded contents must match mirror dimensions.`)
+    const isImage = content?.type.startsWith('image/')
+    const isVideo = content?.type.startsWith('video/')
+
+    if (isImage && fileDimensions && !isExactMatch) {
+      setErrorMessage(`Uploaded image dimensions (${fileDimensions.width} × ${fileDimensions.height} px) do not match mirror resolution (${targetWidth} × ${targetHeight} px). Please use the image cropper.`)
       return
     }
 
     setIsSubmitting(true)
     setStatusText("Uploading media to mirror playlist...")
     setErrorMessage('')
+
+    const uploadW = isVideo ? targetWidth : (fileDimensions ? fileDimensions.width : targetWidth)
+    const uploadH = isVideo ? targetHeight : (fileDimensions ? fileDimensions.height : targetHeight)
 
     let login_key = getCookie('login_key') || 'adminpassword'
     CREATE_CONTENT(
@@ -113,8 +138,8 @@ export default function Addcontentpage() {
       content,
       selectedMirrorId,
       duration,
-      fileDimensions ? fileDimensions.width : null,
-      fileDimensions ? fileDimensions.height : null
+      uploadW,
+      uploadH
     )
       .then(() => {
         setCookie('mirror_id', selectedMirrorId)
@@ -264,39 +289,251 @@ export default function Addcontentpage() {
 
             {/* Thumbnail Preview with Resolution Comparison */}
             {previewUrl && (
-              <div className='mt-3 p-3 bg-neutral-50 border border-neutral-200 rounded-xl flex items-center justify-between gap-3 flex-wrap'>
-                <div className='flex items-center gap-3'>
-                  {content?.type.startsWith('image/') ? (
+              <div className='mt-3 p-3 bg-neutral-50 border border-neutral-200 rounded-xl space-y-3'>
+                {content?.type.startsWith('image/') ? (
+                  <div className='flex items-center gap-3'>
                     <img src={previewUrl} alt="Preview" className='w-16 h-16 object-cover rounded-lg border border-neutral-200' />
-                  ) : (
-                    <div className='w-16 h-16 rounded-lg bg-black text-white flex items-center justify-center'>
-                      <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                        <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z' />
+                    <div className='text-xs'>
+                      <p className='font-bold text-neutral-800'>{content?.name}</p>
+                      <p className='text-neutral-500'>{(content?.size / (1024 * 1024)).toFixed(2)} MB</p>
+                    </div>
+                  </div>
+                ) : (
+                  /* Video Output Preview shaped to mirror dimensions (Portrait / Landscape) */
+                  <div className="w-full flex flex-col items-center gap-2.5">
+                    <div className="flex items-center justify-between w-full max-w-sm px-1 text-xs">
+                      <div className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="font-bold text-black">
+                          {isPortrait ? "Portrait Video Crop Preview" : "Video Screen Output Preview"}
+                        </span>
+                      </div>
+                      <span className="font-mono text-[10px] font-bold text-neutral-700 bg-neutral-100 px-2 py-0.5 rounded">
+                        {targetWidth} × {targetHeight} px
+                      </span>
+                    </div>
+
+                    {/* Simulated Display Screen Bezel matching mirror aspect ratio */}
+                    <div
+                      className="relative rounded-2xl overflow-hidden bg-black border-4 border-neutral-900 shadow-xl flex items-center justify-center transition-all duration-200"
+                      style={
+                        isPortrait
+                          ? {
+                              height: "320px",
+                              width: `${Math.max(140, Math.round(320 * (targetWidth / targetHeight)))}px`,
+                              maxWidth: "100%",
+                            }
+                          : {
+                              width: "100%",
+                              maxWidth: "380px",
+                              aspectRatio: `${targetWidth} / ${targetHeight}`,
+                              maxHeight: "220px",
+                            }
+                      }
+                    >
+                      {/* Display Top Bezel Chin */}
+                      <div className="absolute top-2 left-1/2 -translate-x-1/2 w-8 h-1 bg-neutral-800 rounded-full z-20 pointer-events-none opacity-60" />
+
+                      {/* Video Element Cropped into Screen Dimensions */}
+                      <video
+                        src={previewUrl}
+                        controls
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        className={`w-full h-full ${
+                          videoFitMode === "contain" ? "object-contain" : "object-cover"
+                        } bg-black block`}
+                        style={{
+                          objectPosition: videoAlignment,
+                        }}
+                      />
+
+                      {/* Live Crop Badge Overlay */}
+                      <div className="absolute bottom-2 left-2 right-2 bg-black/80 backdrop-blur-xs text-white text-[9px] font-mono px-2 py-1 rounded-md z-20 flex items-center justify-between pointer-events-none border border-white/10">
+                        <span className="truncate">
+                          {videoFitMode === "contain" ? "Letterbox Fit" : (isPortrait ? "Portrait Cropped" : "Full Screen Crop")}
+                        </span>
+                        <span className="shrink-0">{targetWidth} × {targetHeight}</span>
+                      </div>
+                    </div>
+
+                    {/* Video Crop Controls: Crop to Fill vs Letterbox Fit & Positioning */}
+                    <div className="flex items-center justify-center gap-2 flex-wrap text-xs pt-0.5">
+                      <div className="inline-flex rounded-lg bg-neutral-100 p-0.5 border border-neutral-200">
+                        <button
+                          type="button"
+                          onClick={() => setVideoFitMode("cover")}
+                          className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors cursor-pointer ${
+                            videoFitMode === "cover"
+                              ? "bg-black text-white shadow-2xs"
+                              : "text-neutral-600 hover:text-black"
+                          }`}
+                        >
+                          Crop to Fill {isPortrait ? "Portrait" : "Screen"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setVideoFitMode("contain")}
+                          className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-colors cursor-pointer ${
+                            videoFitMode === "contain"
+                              ? "bg-black text-white shadow-2xs"
+                              : "text-neutral-600 hover:text-black"
+                          }`}
+                        >
+                          Fit (Letterbox)
+                        </button>
+                      </div>
+
+                      {videoFitMode === "cover" && (
+                        <div className="inline-flex rounded-lg bg-neutral-100 p-0.5 border border-neutral-200">
+                          {isPortrait ? (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => setVideoAlignment("left center")}
+                                className={`px-2 py-1 rounded-md text-[10px] font-semibold transition-colors cursor-pointer ${
+                                  videoAlignment === "left center"
+                                    ? "bg-white text-black shadow-2xs font-bold"
+                                    : "text-neutral-500 hover:text-black"
+                                }`}
+                                title="Align video crop to left side"
+                              >
+                                Left
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setVideoAlignment("center center")}
+                                className={`px-2 py-1 rounded-md text-[10px] font-semibold transition-colors cursor-pointer ${
+                                  videoAlignment === "center center"
+                                    ? "bg-white text-black shadow-2xs font-bold"
+                                    : "text-neutral-500 hover:text-black"
+                                }`}
+                                title="Align video crop to center"
+                              >
+                                Center
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setVideoAlignment("right center")}
+                                className={`px-2 py-1 rounded-md text-[10px] font-semibold transition-colors cursor-pointer ${
+                                  videoAlignment === "right center"
+                                    ? "bg-white text-black shadow-2xs font-bold"
+                                    : "text-neutral-500 hover:text-black"
+                                }`}
+                                title="Align video crop to right side"
+                              >
+                                Right
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => setVideoAlignment("center top")}
+                                className={`px-2 py-1 rounded-md text-[10px] font-semibold transition-colors cursor-pointer ${
+                                  videoAlignment === "center top"
+                                    ? "bg-white text-black shadow-2xs font-bold"
+                                    : "text-neutral-500 hover:text-black"
+                                }`}
+                                title="Align video crop to top"
+                              >
+                                Top
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setVideoAlignment("center center")}
+                                className={`px-2 py-1 rounded-md text-[10px] font-semibold transition-colors cursor-pointer ${
+                                  videoAlignment === "center center"
+                                    ? "bg-white text-black shadow-2xs font-bold"
+                                    : "text-neutral-500 hover:text-black"
+                                }`}
+                                title="Align video crop to center"
+                              >
+                                Center
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setVideoAlignment("center bottom")}
+                                className={`px-2 py-1 rounded-md text-[10px] font-semibold transition-colors cursor-pointer ${
+                                  videoAlignment === "center bottom"
+                                    ? "bg-white text-black shadow-2xs font-bold"
+                                    : "text-neutral-500 hover:text-black"
+                                }`}
+                                title="Align video crop to bottom"
+                              >
+                                Bottom
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {content?.type.startsWith('image/') ? (
+                  fileDimensions && (
+                    isExactMatch ? (
+                      <div className='w-full flex items-center justify-between gap-2 flex-wrap bg-emerald-50 border border-emerald-300 rounded-xl p-2.5'>
+                        <div className='text-xs font-semibold text-emerald-800 flex items-center gap-1.5'>
+                          <span>✓ Verified: {fileDimensions.width} × {fileDimensions.height} px matches mirror dimensions</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setIsCropperOpen(true)}
+                          className="px-2.5 py-1 bg-white hover:bg-neutral-100 text-black border border-neutral-300 rounded-lg text-xs font-semibold cursor-pointer transition-colors"
+                        >
+                          Adjust Crop
+                        </button>
+                      </div>
+                    ) : (
+                      <div className='w-full p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-left space-y-2'>
+                        <div className='flex items-center justify-between gap-2 flex-wrap'>
+                          <div className='text-xs font-bold text-amber-900'>
+                            Resolution Mismatch ({fileDimensions.width} × {fileDimensions.height} px)
+                          </div>
+                          <span className='text-[10px] font-mono text-amber-800 bg-amber-200/70 px-2 py-0.5 rounded font-bold'>
+                            Target: {targetWidth} × {targetHeight} px
+                          </span>
+                        </div>
+                        <p className='text-[11px] text-amber-800 leading-normal'>
+                          This mirror requires images sized at <strong>{targetWidth} × {targetHeight} px</strong>. Crop this image to fit the mirror screen.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setIsCropperOpen(true)}
+                          className='w-full py-2.5 bg-black hover:bg-neutral-800 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-2 shadow-2xs'
+                        >
+                          <svg className='w-4 h-4 text-emerald-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z' />
+                          </svg>
+                          <span>Crop Image to Mirror Size ({targetWidth} × {targetHeight} px)</span>
+                        </button>
+                      </div>
+                    )
+                  )
+                ) : (
+                  /* Video Output Ready Banner */
+                  <div className="w-full p-3 rounded-2xl bg-neutral-900 text-white border border-neutral-800 text-left flex items-start gap-3">
+                    <div className="w-7 h-7 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center shrink-0 mt-0.5">
+                      <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+                        <polygon points="5 3 19 12 5 21 5 3" />
                       </svg>
                     </div>
-                  )}
-                  <div className='text-xs'>
-                    <p className='font-bold text-neutral-800'>{content?.name}</p>
-                    <p className='text-neutral-500'>{(content?.size / (1024 * 1024)).toFixed(2)} MB</p>
+                    <div className="text-xs space-y-0.5 flex-1 min-w-0">
+                      <div className="font-bold text-white flex items-center justify-between gap-2 flex-wrap">
+                        <span>Video Output Ready</span>
+                        <span className="text-[10px] font-mono text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-800/60">
+                          Auto Fit • No Crop Needed
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-neutral-400 leading-normal">
+                        Videos stream natively in their original aspect ratio and automatically scale to fit the <strong>{targetWidth} × {targetHeight} px</strong> display.
+                      </p>
+                    </div>
                   </div>
-                </div>
-
-                {fileDimensions && (
-                  isExactMatch ? (
-                    <div className='px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300'>
-                      <span>✓ Resolution Match: {fileDimensions.width} × {fileDimensions.height} px matches mirror dimensions</span>
-                    </div>
-                  ) : (
-                    <div className='w-full p-3 rounded-xl bg-red-50 border border-red-200 text-left space-y-1'>
-                      <div className='text-xs font-bold text-red-800'>Resolution Mismatch — Upload Blocked</div>
-                      <p className='text-[11px] text-red-700'>
-                        Uploaded media is <strong className='font-mono'>{fileDimensions.width} × {fileDimensions.height} px</strong>, but this mirror requires exactly <strong className='font-mono'>{targetWidth} × {targetHeight} px</strong>.
-                      </p>
-                      <p className='text-[11px] text-red-600 font-medium'>
-                        Please upload media matching mirror dimensions ({targetWidth} × {targetHeight} px).
-                      </p>
-                    </div>
-                  )
                 )}
               </div>
             )}
@@ -313,13 +550,24 @@ export default function Addcontentpage() {
             </button>
             <div className='w-48'>
               <Submitbutton
-                text={isSubmitting ? "Uploading..." : (fileDimensions && !isExactMatch ? "Resolution Mismatch" : "Add to Mirror")}
-                disabled={!content || isSubmitting || (fileDimensions && !isExactMatch)}
+                text={isSubmitting ? "Uploading..." : (fileDimensions && !isExactMatch && content?.type.startsWith('image/') ? "Crop Image" : (content?.type.startsWith('video/') ? "Add Video to Mirror" : "Add to Mirror"))}
+                disabled={!content || isSubmitting || (fileDimensions && !isExactMatch && content?.type.startsWith('image/'))}
+                onClick={fileDimensions && !isExactMatch && content?.type.startsWith('image/') ? (e) => { e.preventDefault(); setIsCropperOpen(true); } : undefined}
               />
             </div>
           </div>
         </form>
       )}
+
+      {/* Interactive Image Cropper Modal */}
+      <ImageCropperModal
+        isOpen={isCropperOpen}
+        onClose={() => setIsCropperOpen(false)}
+        imageFile={originalContent || content}
+        targetWidth={targetWidth}
+        targetHeight={targetHeight}
+        onCropComplete={handleCropComplete}
+      />
     </>
   )
 }
