@@ -3,113 +3,177 @@ import Inputtextbox from '../../components/inputtextbox/Inputtextbox'
 import Submitbutton from '../../components/submitbutton/Submitbutton'
 import { FormDataContext } from '../../Contexts/FormDataContexts'
 import { ESTABLISH_WEBSOCKET_CONNECTION, MAKE_LOGIN, MAKE_REGISTER } from '../../serverRequests/ServerRequests'
-import { useNavigate } from 'react-router-dom'
-import { Navigate_To_Dashboard, Navigate_To_Sitelist } from '../../constants'
+import { useNavigate, Link } from 'react-router-dom'
+import { Navigate_To_Dashboard } from '../../constants'
 import { DebugLevelLoginContext } from '../../Contexts/DebugLevelContext'
 import { LoadingStateContext } from '../../Contexts/LoadingStateContext'
 import Loadinpage from '../loadingpage/Loadinpage'
-import Labelwithdescription from '../../components/labelwithdescription/Labelwithdescription'
 
 export default function RegisterPage() {
-  const { DEBUG_LEVEL, SET_DEBBUG_LEVEL } = useContext(DebugLevelLoginContext)
+  const { DEBUG_LEVEL } = useContext(DebugLevelLoginContext)
   const { isLoading, setIsLoading } = useContext(LoadingStateContext)
   const { formdata, setformdata } = useContext(FormDataContext)
-  const [username, setusername] = useState(formdata.username)
-  const [password, setpassword] = useState(formdata.password)
-  const [email, setemail] = useState(formdata.email)
-  const [contact, setcontact] = useState(formdata.contact)
-  const [profile_image_url, set_profile_image_url] = useState(formdata.profile_image_url)
-  const [address_line_1, set_address_line_1] = useState(formdata.address_line_1)
-  const [address_line_2, set_address_line_2] = useState(formdata.address_line_2)
-  const [address_line_3, set_address_line_3] = useState(formdata.address_line_3)
+  const [username, setusername] = useState(formdata?.username || '')
+  const [password, setpassword] = useState(formdata?.password || '')
+  const [email, setemail] = useState(formdata?.email || '')
+  const [contact, setcontact] = useState(formdata?.contact || '')
+  const [profile_image_url, set_profile_image_url] = useState(formdata?.profile_image_url || '')
+  const [address_line_1, set_address_line_1] = useState(formdata?.address_line_1 || '')
+  const [address_line_2, set_address_line_2] = useState(formdata?.address_line_2 || '')
+  const [address_line_3, set_address_line_3] = useState(formdata?.address_line_3 || '')
   const [message, setmessage] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   const navigate = useNavigate()
 
   const HandleLogin = async (e) => {
+    e.preventDefault();
+    if (!username.trim() || !password.trim() || !email.trim()) {
+      setmessage("Username, Password, and Email are required.")
+      return
+    }
+
     setformdata({
       ...formdata,
-      'username': username,
-      'password': password,
-      'email': email,
-      'contact': contact,
-      'profile_image_url':profile_image_url,
-      'address_line_1':address_line_1,
-      'address_line_2':address_line_2,
-      'address_line_3':address_line_3,
+      username,
+      password,
+      email,
+      contact,
+      profile_image_url,
+      address_line_1,
+      address_line_2,
+      address_line_3,
     })
-    setIsLoading(true)
-    e.preventDefault();
-    // Assuming MAKE_LOGIN is an async function that handles login
-    MAKE_REGISTER(username, password, email, contact, profile_image_url, address_line_1, address_line_2, address_line_3).then((data) => {
 
-      if (DEBUG_LEVEL == 3) { console.log('Register Successfull') }
-      MAKE_LOGIN(username, password).then((res) => {
-        ESTABLISH_WEBSOCKET_CONNECTION().then((data) => {
-          if (DEBUG_LEVEL == 3) { console.log('socket is ready to rock') }
-          setIsLoading(false)
-          navigate(Navigate_To_Sitelist)
-        }).catch((error) => {
-          setIsLoading(false)
-          setmessage("Something Went Wrong, Check your Connection.")
-        })
+    setIsSubmitting(true)
+    setmessage("")
+
+    MAKE_REGISTER(username, password, email, contact, profile_image_url, address_line_1, address_line_2, address_line_3)
+      .then(() => {
+        if (DEBUG_LEVEL === 3) console.log('Register Successful')
+        MAKE_LOGIN(username, password)
+          .then(() => {
+            setIsSubmitting(false)
+            navigate(Navigate_To_Dashboard)
+          })
+          .catch((err) => {
+            console.error(err)
+            setIsSubmitting(false)
+            navigate('/login')
+          })
       })
-      .catch((err)=>console.log(err))
-
-    })
       .catch((error) => {
-        console.log(error)
-        setIsLoading(false)
-        setmessage("Invalid Login Credentials")
+        console.error(error)
+        setIsSubmitting(false)
+        setmessage("Registration failed. Username or email may already be registered.")
       })
-
-  };
-
+  }
 
   return (
     <>
-      {isLoading ?
-        <Loadinpage /> :
-        <div className='flex w-full my-5'>
+      {isLoading ? (
+        <Loadinpage />
+      ) : (
+        <div className="min-h-screen bg-black flex items-center justify-center p-6 py-12">
+          <div className="w-full max-w-xl bg-white border border-neutral-200 rounded-3xl p-8 sm:p-10 shadow-2xl">
+            {/* Header */}
+            <div className="text-center mb-8">
+              <div className="w-14 h-14 rounded-2xl bg-black flex items-center justify-center text-white mx-auto shadow-md mb-4">
+                <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-black text-black tracking-tight">
+                Create Administrator Account
+              </h2>
+              <p className="text-xs text-neutral-500 mt-1 font-medium">
+                Set up your master console credentials for MirrorLink
+              </p>
+            </div>
 
-          <div className=' w-full'>
-            {/* <p className='text-2xl mx'>Login</p> */}
-            <form onSubmit={HandleLogin}>
-              <div className='text-left'>
-                <Inputtextbox icon={'user.png'} label="Administrator Username" description="Kindly Enter Your Valid Administrator Username" placeholder="Enter username" updatedata={setusername} />
-                <Inputtextbox icon={'lock.png'} label="Administrator Password" description="Enter your Secret Password." placeholder="Enter password" updatedata={setpassword} />
-                <p className='text-red-600 mx-2'>{message}</p>
-                <Inputtextbox icon={'contact-book.png'} label="Contact" description="Make sure you enter your whatsup number." placeholder="Enter Whatsup Number" updatedata={setcontact} />
-                <p className='text-red-600 mx-2'>{message}</p>
-                <Inputtextbox icon={'envelope.png'} label="Email ID" description="Enter you business Email Id." placeholder="Enter Email ID" updatedata={setemail} />
-                <p className='text-red-600 mx-2'>{message}</p>
-                <Inputtextbox icon={'envelope.png'} label="Profile Image URL" description="Enter your profile image url ." placeholder="URL" updatedata={set_profile_image_url} />
-                <p className='text-red-600 mx-2'>{message}</p>
-                <Inputtextbox icon={'envelope.png'} label="Street/Village" description="Whats your street of village" placeholder="Street/village" updatedata={set_address_line_1} />
-                <p className='text-red-600 mx-2'>{message}</p>
-                <Inputtextbox icon={'envelope.png'} label="City/Town" description="City or Town neary by." placeholder="City/ Town" updatedata={set_address_line_2} />
-                <p className='text-red-600 mx-2'>{message}</p>
-                <Inputtextbox icon={'envelope.png'} label="State, Pincode" description="Which is your state and mention the pincode." placeholder="State and Pincode" updatedata={set_address_line_3} />
-                <p className='text-red-600 mx-2'>{message}</p>
+            {message && (
+              <div className="mb-5 p-3.5 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-xl text-center">
+                {message}
+              </div>
+            )}
 
-
-
-                <div className='flex justify-end p-2' >
-                  <Submitbutton text="Register" />
-                </div>
+            <form onSubmit={HandleLogin} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Inputtextbox
+                  label="Username"
+                  placeholder="e.g. john_admin"
+                  value={username}
+                  updatedata={setusername}
+                  required={true}
+                />
+                <Inputtextbox
+                  type="password"
+                  label="Password"
+                  placeholder="••••••••••••"
+                  value={password}
+                  updatedata={setpassword}
+                  required={true}
+                />
               </div>
 
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <Inputtextbox
+                  label="Email Address"
+                  placeholder="admin@example.com"
+                  value={email}
+                  updatedata={setemail}
+                  required={true}
+                />
+                <Inputtextbox
+                  label="Contact Phone"
+                  placeholder="+1 (555) 000-0000"
+                  value={contact}
+                  updatedata={setcontact}
+                  required={false}
+                />
+              </div>
 
-              <input />
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-100">
+                <Inputtextbox
+                  label="Address / Street"
+                  placeholder="123 Main St"
+                  value={address_line_1}
+                  updatedata={set_address_line_1}
+                  required={false}
+                />
+                <Inputtextbox
+                  label="City / Town"
+                  placeholder="New York"
+                  value={address_line_2}
+                  updatedata={set_address_line_2}
+                  required={false}
+                />
+                <Inputtextbox
+                  label="State & ZIP"
+                  placeholder="NY 10001"
+                  value={address_line_3}
+                  updatedata={set_address_line_3}
+                  required={false}
+                />
+              </div>
+
+              <div className="pt-4">
+                <Submitbutton
+                  text={isSubmitting ? "Creating account..." : "Complete Registration"}
+                  disabled={isSubmitting}
+                />
+              </div>
             </form>
 
-            <div>
-              <Labelwithdescription label={'Already a User?'} description={'Click here to login if you are already a user of Mirrorlink'} goto={'/login'} />
+            <div className="mt-6 text-center text-xs text-neutral-500">
+              Already have an account?{" "}
+              <Link to="/login" className="font-semibold text-black hover:text-neutral-700 underline underline-offset-2">
+                Sign in here
+              </Link>
             </div>
           </div>
-
         </div>
-      }
+      )}
     </>
   )
 }

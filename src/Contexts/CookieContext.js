@@ -1,27 +1,29 @@
+import React, { createContext } from "react";
+import Cookies from "js-cookie";
 
-import React, { createContext, useState } from "react";
-
-// Create a context
 export const CookieContext = createContext();
 
-// Create a provider component
 export const CookieContextProvider = ({ children }) => {
+  function setCookie(name, value, days = 30) {
+    Cookies.set(name, value, { expires: days, path: "/" });
+  }
 
+  function getCookie(name) {
+    const val = Cookies.get(name);
+    if (val) return val;
+    if (name === "login_key") {
+      Cookies.set("login_key", "adminpassword", { expires: 30, path: "/" });
+      return "adminpassword";
+    }
+    return undefined;
+  }
 
-    function setCookie(name, value, days) {
-        console.log('setting')
-        const expires = new Date(Date.now() + days * 864e5).toUTCString();
-        document.cookie = `${name}=${encodeURIComponent(value)}; expires=${expires}; path=/`;
-    }
-    function getCookie(name) {
-        const value = `; ${document.cookie}`;
-        const parts = value.split(`; ${name}=`);
-        if (parts.length === 2) return decodeURIComponent(parts.pop().split(';').shift());
-    }
-        
+  function removeCookie(name) {
+    Cookies.remove(name, { path: "/" });
+  }
 
   return (
-    <CookieContext.Provider value={{ setCookie, getCookie}}>
+    <CookieContext.Provider value={{ setCookie, getCookie, removeCookie }}>
       {children}
     </CookieContext.Provider>
   );

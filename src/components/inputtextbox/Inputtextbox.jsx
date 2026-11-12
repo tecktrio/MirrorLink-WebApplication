@@ -1,21 +1,49 @@
 import React from 'react'
-export default function Inputtextbox({ label, description, placeholder, updatedata, icon, type }) {
 
-  
+export default function Inputtextbox({
+  label,
+  description,
+  placeholder,
+  updatedata,
+  icon,
+  type = 'text',
+  required = false,
+  value,
+  className = ''
+}) {
+  const inputId = label ? label.toLowerCase().replace(/[^a-z0-9]/g, '-') : 'textinput'
 
   return (
-    <div >
-      <div className='py-3 mr-5'>
-        <div className='flex '>
-          {/* {icon ? <img src={icon} className=" w-5 h-5 p-0.5" /> : <div></div>} */}
-          <p className='text-purple-700 '>{label}</p>
+    <div className={`w-full ${className}`}>
+      <div className='py-2'>
+        <div className='flex items-center justify-between mb-1'>
+          <label htmlFor={inputId} className='text-xs sm:text-sm font-semibold text-neutral-900 flex items-center gap-1.5'>
+            {icon && <img src={icon} alt="" className="w-4 h-4 object-contain opacity-70" />}
+            <span>{label}</span>
+            {required && <span className='text-red-500 font-bold'>*</span>}
+          </label>
         </div>
 
-        <p className='text-xs text-gray-400 mt-0 mb-2'>{description}</p>
-        <input type={type} id='textinput' className='text-purple-700 border border-purple-700 rounded-lg py-3 px-5  w-full' placeholder={placeholder} onKeyUp={(e) => {
-          updatedata(e.target.value)
-        }} required />
+        {description && (
+          <p className='text-xs text-neutral-500 mb-2 leading-relaxed'>{description}</p>
+        )}
 
+        <div className='relative'>
+          <input
+            type={type}
+            id={inputId}
+            className='w-full px-4 py-2.5 bg-neutral-50/60 hover:bg-white border border-neutral-300 rounded-lg text-neutral-900 placeholder-neutral-400 text-xs sm:text-sm focus:outline-none focus:border-black focus:ring-2 focus:ring-black/10 transition-all duration-150 shadow-2xs'
+            placeholder={placeholder}
+            value={value !== undefined ? value : ''}
+            onChange={(e) => {
+              if (updatedata) updatedata(e.target.value)
+            }}
+            onKeyUp={(e) => {
+              if (updatedata) updatedata(e.target.value)
+            }}
+            required={required}
+          />
+        </div>
       </div>
     </div>
   )

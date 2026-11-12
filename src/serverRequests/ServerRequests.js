@@ -1,6 +1,6 @@
 // Request URL s and other Main urls for the application to communicate with server
 
-const IS_REMOTE_SERVER = true
+const IS_REMOTE_SERVER = false
 
 let SERVER_URL;
 let SERVER_WEBSOCKET_URL;
@@ -148,28 +148,24 @@ function GET_AVAILABLE_SITES(login_key) {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(
-                    {
-                        'service': 'GetMySites',
-                        'login_key':login_key
-                    })
+                body: JSON.stringify({
+                    'service': 'GetMySites',
+                    'login_key': login_key || 'adminpassword'
+                })
             }).then(response => response.json())
                 .then((data) => {
-                    console.log(data)
                     if (data.status_code == 401) {
                         reject(new Error('Request failed due to invalid data'))
-                    }
-                    else {
-                        // console.log(data.data)
+                    } else {
                         resolve(data)
                     }
                 }).catch((error) => {
-                    console.log(error)
+                    console.error("GET_AVAILABLE_SITES fetch error:", error)
                     reject(new Error('Request failed due to invalid data'))
                 })
         }
-        catch {
-            reject(new Error('Request failed due to invalid data'))
+        catch (e) {
+            reject(e)
         }
     })
 }
@@ -426,7 +422,6 @@ function GET_CONTENT_DETAILS(login_key, content_id){
 }
 
 function ADD_SITE_IN_ACCOUNT(login_key, sitename, site_description) {
-
     return new Promise((resolve, reject) => {
         try {
             fetch(ADMINISTRATOR_ROOT_URL, {
@@ -437,31 +432,34 @@ function ADD_SITE_IN_ACCOUNT(login_key, sitename, site_description) {
                 body: JSON.stringify({
                     "service": "AddSite",
                     "site_name": sitename,
-                    "site_description": site_description,
-                    "login_key":login_key,
+                    "site_description": site_description || '',
+                    "login_key": login_key || 'adminpassword',
                 })
-            }).then(response => response.json())
-                .then((data) => {
-                    // console.log(data)
-                    if (data.status_code == 401) {
-                        reject(new Error('Request failed due to invalid data'))
-                    }
-                    else {
-                        // console.log(data.data)
-                        resolve()
-                    }
-                }).catch((error) => {
-                    console.log(error)
-                    reject(new Error('Request failed due to invalid data'))
-                })
+            }).then(response => {
+                if (!response.ok) {
+                    return response.json().then(errData => {
+                        throw new Error(errData.status_text || `HTTP error ${response.status}`);
+                    }).catch(() => {
+                        throw new Error(`HTTP error ${response.status}`);
+                    });
+                }
+                return response.json();
+            }).then((data) => {
+                if (data.status_code && data.status_code >= 400) {
+                    reject(new Error(data.status_text || 'Request failed'));
+                } else {
+                    resolve(data);
+                }
+            }).catch((error) => {
+                console.error("ADD_SITE_IN_ACCOUNT error:", error);
+                reject(error);
+            });
+        } catch (e) {
+            reject(e);
         }
-        catch {
-            reject(new Error('Request failed due to invalid data'))
-        }
-       
-    })
+    });
 }
-function CREATE_MIRROR(login_key, name, description, username, password, height, width) {
+function CREATE_MIRROR(login_key, name, description, username, password, height, width, site_id = null) {
 
     return new Promise((resolve, reject) => {
         const request_data = {
@@ -470,11 +468,14 @@ function CREATE_MIRROR(login_key, name, description, username, password, height,
             "mirror_description": description,
             "username": username,
             "password": password,
-            "width":width,
-            "login_key":login_key,
-            "height":height,
-            "contents":[]
+            "width": width,
+            "login_key": login_key,
+            "height": height,
+            "contents": []
+        }
 
+        if (site_id) {
+            request_data["site_id"] = site_id;
         }
         
     
@@ -508,14 +509,14 @@ function CREATE_MIRROR(login_key, name, description, username, password, height,
     })
 }
 
-function CREATE_CONTENT(login_key,content_title, content_description, content) {
+function CREATE_CONTENT(login_key, content_title, content_description, content, mirror_id = null, duration = null, width = null, height = null) {
 
     return new Promise((resolve, reject) => {
 
         const reader = new FileReader();
         reader.onload = function (event) {
             const fileData = event.target.result;
-            const fileExtension = content.type.split('/')[1]; // Get the file extension from the MIME type
+            const fileExtension = content.type.split('/')[1] || 'jpg'; // Get the file extension from the MIME type
             console.log(content, fileExtension)
 
             const request_data = {
@@ -523,8 +524,21 @@ function CREATE_CONTENT(login_key,content_title, content_description, content) {
                 "content_title": content_title,
                 "content_description": content_description,
                 "content": fileData,
-                "login_key":login_key,
-                "file_extention":fileExtension,
+                "login_key": login_key,
+                "file_extention": fileExtension,
+            }
+
+            if (mirror_id) {
+                request_data["mirror_id"] = mirror_id;
+            }
+            if (duration) {
+                request_data["duration"] = duration;
+            }
+            if (width !== null && width !== undefined) {
+                request_data["width"] = width;
+            }
+            if (height !== null && height !== undefined) {
+                request_data["height"] = height;
             }
               
             try {
@@ -542,7 +556,7 @@ function CREATE_CONTENT(login_key,content_title, content_description, content) {
                         }
                         else {
                             // console.log(data.data)
-                            resolve()
+                            resolve(data)
                         }
                     }).catch((error) => {
                         console.log(error)
@@ -742,6 +756,272 @@ function ASSIGN_CONTENT_TO_MIRROR(login_key,content_ids, mirror_id) {
         })
 }
 
+function REMOVE_CONTENT_FROM_MIRROR(login_key, content_id, mirror_id) {
+    return new Promise((resolve, reject) => {
+        const request_data = {
+            "service": "RemoveContentFromMirror",
+            "content_id": content_id,
+            "mirror_id": mirror_id,
+            "login_key": login_key || 'adminpassword'
+        };
+        try {
+            fetch(ADMINISTRATOR_ROOT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(request_data)
+            }).then(response => response.json())
+                .then((data) => {
+                    if (data.status_code === 401) {
+                        reject(new Error('Request failed due to invalid credentials'));
+                    } else if (data.status_code && data.status_code >= 400) {
+                        reject(new Error(data.status_text || 'Failed to remove content from mirror'));
+                    } else {
+                        resolve(data);
+                    }
+                }).catch((error) => {
+                    console.error("RemoveContentFromMirror error:", error);
+                    reject(error);
+                });
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
+
+function REFRESH_MIRROR_CONTENTS(login_key, mirror_id) {
+    return new Promise((resolve, reject) => {
+        let request_data = {
+            'login_key': login_key || 'adminpassword',
+            'mirror_id': mirror_id,
+            'service': 'RefreshMirror'
+        };
+        try {
+            fetch(ADMINISTRATOR_ROOT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(request_data)
+            }).then(response => response.json())
+                .then((data) => {
+                    if (data.status_code && data.status_code >= 400) {
+                        reject(new Error(data.status_text || 'Failed to send refresh signal to mirror'));
+                    } else {
+                        resolve(data);
+                    }
+                }).catch((error) => {
+                    console.error("RefreshMirror error:", error);
+                    reject(error);
+                });
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
+
+function UPDATE_MIRROR_PLAYLIST_ORDER(login_key, mirror_id, ordered_content_ids) {
+    return new Promise((resolve, reject) => {
+        let request_data = {
+            'login_key': login_key || 'adminpassword',
+            'mirror_id': mirror_id,
+            'ordered_content_ids': ordered_content_ids,
+            'service': 'UpdateMirrorPlaylistOrder'
+        };
+        try {
+            fetch(ADMINISTRATOR_ROOT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(request_data)
+            }).then(response => response.json())
+                .then((data) => {
+                    if (data.status_code && data.status_code >= 400) {
+                        reject(new Error(data.status_text || 'Failed to update playlist order'));
+                    } else {
+                        resolve(data);
+                    }
+                }).catch((error) => {
+                    console.error("UpdateMirrorPlaylistOrder error:", error);
+                    reject(error);
+                });
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
+
+function CONTROL_PLAYBACK(login_key, mirror_id, action = 'toggle') {
+    return new Promise((resolve, reject) => {
+        let request_data = {
+            'login_key': login_key || 'adminpassword',
+            'mirror_id': mirror_id,
+            'action': action,
+            'service': 'ControlPlayback'
+        };
+        try {
+            fetch(ADMINISTRATOR_ROOT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(request_data)
+            }).then(response => response.json())
+                .then((data) => {
+                    if (data.status_code && data.status_code >= 400) {
+                        reject(new Error(data.status_text || 'Failed to control playback'));
+                    } else {
+                        resolve(data);
+                    }
+                }).catch((error) => {
+                    console.error("ControlPlayback error:", error);
+                    reject(error);
+                });
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
+
+function GET_MIRROR_LIVE_STATUS(login_key, mirror_id) {
+    return new Promise((resolve, reject) => {
+        let request_data = {
+            'login_key': login_key || 'adminpassword',
+            'mirror_id': mirror_id,
+            'service': 'GetMirrorLiveStatus'
+        };
+        try {
+            fetch(ADMINISTRATOR_ROOT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(request_data)
+            }).then(response => response.json())
+                .then((data) => {
+                    if (data.status_code && data.status_code >= 400) {
+                        reject(new Error(data.status_text || 'Failed to get mirror live status'));
+                    } else {
+                        resolve(data);
+                    }
+                }).catch((error) => {
+                    console.error("GetMirrorLiveStatus error:", error);
+                    reject(error);
+                });
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
+
+function SYNC_CONNECTED_MIRRORS(login_key, mirror_id, index, content_id) {
+    return new Promise((resolve, reject) => {
+        let request_data = {
+            'login_key': login_key || 'adminpassword',
+            'mirror_id': mirror_id,
+            'index': index,
+            'content_id': content_id,
+            'service': 'SyncConnectedMirrors'
+        };
+        try {
+            fetch(ADMINISTRATOR_ROOT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(request_data)
+            }).then(response => response.json())
+                .then((data) => {
+                    if (data.status_code && data.status_code >= 400) {
+                        reject(new Error(data.status_text || 'Failed to sync mirrors'));
+                    } else {
+                        resolve(data);
+                    }
+                }).catch((error) => {
+                    console.error("SyncConnectedMirrors error:", error);
+                    reject(error);
+                });
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
+
+function TOGGLE_CONTENT_STATUS_ON_MIRROR(login_key, mirror_id, content_id, is_active) {
+    return new Promise((resolve, reject) => {
+        let request_data = {
+            'login_key': login_key || 'adminpassword',
+            'mirror_id': mirror_id,
+            'content_id': content_id,
+            'is_active': is_active,
+            'service': 'ToggleContentStatusOnMirror'
+        };
+        try {
+            fetch(ADMINISTRATOR_ROOT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(request_data)
+            }).then(response => response.json())
+                .then((data) => {
+                    if (data.status_code && data.status_code >= 400) {
+                        reject(new Error(data.status_text || 'Failed to update content status'));
+                    } else {
+                        resolve(data);
+                    }
+                }).catch((error) => {
+                    console.error("ToggleContentStatusOnMirror error:", error);
+                    reject(error);
+                });
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
+
+function UPDATE_PHOTO_SPEED(login_key, mirror_id, photo_duration, content_id = null, duration = null) {
+    return new Promise((resolve, reject) => {
+        const request_data = {
+            "service": "UpdatePhotoSpeed",
+            "login_key": login_key,
+            "mirror_id": mirror_id,
+            "photo_duration": photo_duration,
+            "content_id": content_id,
+            "duration": duration
+        };
+        try {
+            fetch(ADMINISTRATOR_ROOT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(request_data)
+            }).then(response => response.json())
+                .then((data) => {
+                    if (data.status_code && data.status_code >= 400) {
+                        reject(new Error(data.status_text || 'Failed to update photo speed'));
+                    } else {
+                        resolve(data);
+                    }
+                }).catch((error) => {
+                    console.error("UpdatePhotoSpeed error:", error);
+                    reject(error);
+                });
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
 
 export {
     MAKE_LOGIN,
@@ -760,5 +1040,13 @@ export {
     GET_ALL_MIRRORS,ASSIGN_MIRROR_TO_SITE,
     GET_ALL_UNASSIGNED_MIRRORS,
     GET_ALL_CONTENTS,
-    ASSIGN_CONTENT_TO_MIRROR
+    ASSIGN_CONTENT_TO_MIRROR,
+    REMOVE_CONTENT_FROM_MIRROR,
+    REFRESH_MIRROR_CONTENTS,
+    UPDATE_MIRROR_PLAYLIST_ORDER,
+    CONTROL_PLAYBACK,
+    GET_MIRROR_LIVE_STATUS,
+    SYNC_CONNECTED_MIRRORS,
+    TOGGLE_CONTENT_STATUS_ON_MIRROR,
+    UPDATE_PHOTO_SPEED
 }

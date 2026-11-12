@@ -1,16 +1,20 @@
 import React from "react";
-import "./MirrorListingModal.css"; // Add optional styles for the modal
+import "./MirrorListingModal.css";
 
 const MirrorListingModal = ({ isOpen, onClose, children }) => {
-  if (!isOpen) return null; // Don't render if the modal is not open
+  if (!isOpen) return null;
 
   return (
     <div className="modal-overlay" onClick={onClose}>
-      <div className="modal-content h-1/2 p-44" onClick={(e) => e.stopPropagation()}>
-        <button className="modal-close" onClick={onClose}>
-          &times;
+      <div className="modal-content w-full max-w-2xl max-h-[85vh] p-6 rounded-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
+        <button className="modal-close" onClick={onClose} title="Close">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
         </button>
-        {children}
+        <div className="overflow-y-auto flex-1 pr-1">
+          {children}
+        </div>
       </div>
     </div>
   );

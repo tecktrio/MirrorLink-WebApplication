@@ -1,19 +1,27 @@
 import React from 'react'
 import { useNavigate } from 'react-router-dom'
-export default function Labelwithdescription({ label, description, placeholder, updatedata, icon , goto}) {
-const navigate = useNavigate()
+
+export default function Labelwithdescription({ label, description, icon, goto, className = '' }) {
+  const navigate = useNavigate()
+
   return (
-    <div >
-      <div className='' onClick={()=>goto?navigate(goto):''}>
-        <div className='flex '>
-          {icon ? <img src={icon} className=" w-5 h-5 p-0.5" /> : <div></div>}
-          <p className='text-purple-800 '>{label}</p>
-        </div>
-
-        <p className='text-xs text-gray-400 mt-0 mb-2'>{description}</p>
-        
-
+    <div
+      onClick={() => (goto ? navigate(goto) : '')}
+      className={`my-2 ${goto ? 'cursor-pointer group' : ''} ${className}`}
+    >
+      <div className='flex items-center gap-2'>
+        {icon && (
+          <img src={icon} alt="" className="w-5 h-5 object-contain" />
+        )}
+        <h3 className='text-lg font-bold text-black tracking-tight group-hover:text-neutral-600 transition-colors'>
+          {label}
+        </h3>
       </div>
+      {description && (
+        <p className='text-xs text-neutral-500 mt-1 max-w-2xl leading-relaxed'>
+          {description}
+        </p>
+      )}
     </div>
   )
 }

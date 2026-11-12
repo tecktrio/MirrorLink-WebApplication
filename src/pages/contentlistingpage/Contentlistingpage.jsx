@@ -1,78 +1,740 @@
-import React, { useContext, useEffect, useState } from 'react'
-import { GET_AVAILABLE_CONTENTS_ON_SITE, GET_AVAILABLE_MIRRORS_ON_SITE, GET_AVAILABLE_SITES } from '../../serverRequests/ServerRequests'
-import Labelwithdescription from '../../components/labelwithdescription/Labelwithdescription'
+import React, { useContext, useEffect, useState, useRef } from 'react'
+import {
+  GET_AVAILABLE_CONTENTS_ON_SITE,
+  REMOVE_CONTENT_FROM_MIRROR,
+  REFRESH_MIRROR_CONTENTS,
+  UPDATE_MIRROR_PLAYLIST_ORDER,
+  CONTROL_PLAYBACK,
+  GET_MIRROR_LIVE_STATUS,
+  SYNC_CONNECTED_MIRRORS,
+  TOGGLE_CONTENT_STATUS_ON_MIRROR,
+  UPDATE_PHOTO_SPEED
+} from '../../serverRequests/ServerRequests'
 import Listitem from '../../components/listitem/Listitem'
+import SearchBar from '../../components/SearchBar/SearchBar'
+import VirtualScreen from '../../components/VirtualScreen/VirtualScreen'
 import { useNavigate } from 'react-router-dom'
-import { Navigate_To_Contentlist, Navigate_To_Mirrorlist, Navigate_To_Update_Content } from '../../constants'
-import { GlobalContext } from '../../Contexts/GlobalContext'
-import Addbutton from '../../components/addbutton/Addbutton'
 import { CookieContext } from '../../Contexts/CookieContext'
-import ContentListingModal from '../../components/Modal/ContentListingModal'
-import SelectContent from '../SelectContent/SelectContent'
+import AddContentModal from '../../components/AddContentModal/AddContentModal'
 
 export default function Contentlistingpage() {
-
   const [contentlist, setContentList] = useState([])
-  const {getCookie, setCookie} = useContext(CookieContext)
+  const [filteredList, setFilteredList] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [controllingPlayback, setControllingPlayback] = useState(false)
+  const [syncing, setSyncing] = useState(false)
+  const [photoSpeed, setPhotoSpeed] = useState(5)
+  const [liveStatus, setLiveStatus] = useState({
+    active_content_id: null,
+    active_content_index: 0,
+    playback_state: 'playing',
+    is_online: false,
+    mirror_width: 1920,
+    mirror_height: 1080
+  })
+  const [message, setMessage] = useState('')
+  const [draggedIndex, setDraggedIndex] = useState(null)
+  const [dragOverIndex, setDragOverIndex] = useState(null)
+  const { getCookie } = useContext(CookieContext)
   const navigate = useNavigate()
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const wsRef = useRef(null)
 
-  const openModal = () => setIsModalOpen(true);
-  const closeModal = () => setIsModalOpen(false);
-  let login_key = getCookie('login_key')
-  let mirror_id = getCookie('mirror_id')
-  useEffect(()=>{
+  const mirror_id = getCookie('mirror_id')
 
+  const openModal = () => setIsModalOpen(true)
+  const closeModal = () => setIsModalOpen(false)
 
-    GET_AVAILABLE_CONTENTS_ON_SITE(login_key, mirror_id).then((res)=>{
-      console.log(res.data)
-      setContentList(res.data)
-    }).catch((error)=>{
-      console.log(error)
-    })
+  const fetchContents = () => {
+    let login_key = getCookie('login_key') || 'adminpassword'
+    if (mirror_id) {
+      setLoading(true)
+      GET_AVAILABLE_CONTENTS_ON_SITE(login_key, mirror_id)
+        .then((res) => {
+          const data = res?.data || []
+          if (res?.photo_duration) {
+            setPhotoSpeed(res.photo_duration)
+          }
+          setContentList(data)
+          setFilteredList(data)
+          setLoading(false)
+        })
+        .catch((error) => {
+          console.error('Error fetching contents for mirror:', error)
+          setContentList([])
+          setFilteredList([])
+          setLoading(false)
+        })
+    } else {
+      setLoading(false)
+    }
+  }
 
-  },[])
-  return (
-    <div className='flex justify-center'>
-      <div className='w-full'>
-        {/* <div className='flex justify-end m-2'>
-        <Addbutton label={'Add Content'} goto={"/addcontent"}/>
+  // Real-time WebSocket connection to mirror channel (Virtual Screen as a live Mirror)
+  useEffect(() => {
+    if (!mirror_id) return
+    let ws = null
+    let reconnectTimer = null
 
-        </div> */}
-        <div className="flex justify-end m-2">
-          {/* <Addbutton label={'Add Mirror'} goto={"/addmirror"}/> */}
+    const connectWS = () => {
+      try {
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+        const wsHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+          ? '127.0.0.1:8000'
+          : window.location.host
+        const wsUrl = `${wsProtocol}//${wsHost}/mirror?mirror_id=${mirror_id}`
 
-          <button onClick={openModal} className='bg-purple-600 p-3 rounded-md text-white'>Add Content</button>
-        </div>
+        ws = new WebSocket(wsUrl)
+        wsRef.current = ws
 
-        <div className='my-2'>
-          <Labelwithdescription label={'Available Contents'} description={'List of Contents that are available for this Mirror.'}/>
-        </div>
-        <div>
-          {contentlist?.map((data, key)=>{
-            return (
-              <div onClick={()=>{navigate(Navigate_To_Update_Content);setCookie('content_id', data._id,1)}} key={key}>
-              <Listitem title={data.content_title} description={data.content_description}/>
-                </div>
-            )
-          })
+        ws.onopen = () => {
+          console.log("[Virtual Screen WS] Connected to live mirror room:", mirror_id)
         }
-          
-        </div>
-      </div>
-      <ContentListingModal isOpen={isModalOpen} onClose={closeModal}>
-        <div className="p-5 h-full">
-          {/* <h2 className="font-semibold">Select the Contents to Add</h2>
-          <p>
-            The below list contains all the Contents 
-          </p> */}
-          <div className="h-full overflow-scroll no-scrollbar py-3">
-            <SelectContent mirror_id={mirror_id} handleclose={closeModal}/>
+
+        ws.onmessage = (event) => {
+          try {
+            const msg = JSON.parse(event.data)
+            const payload = msg.data !== undefined ? msg.data : msg
+            const service = msg.service || (payload && payload.service)
+
+            if (service === 'SyncSlide') {
+              const targetIdx = Number(payload.index)
+              setLiveStatus((prev) => ({
+                ...prev,
+                active_content_index: targetIdx,
+                active_content_id: payload.content_id
+              }))
+            } else if (service === 'PlaybackControl') {
+              const action = payload.action
+              setLiveStatus((prev) => ({
+                ...prev,
+                playback_state: action === 'pause' || action === 'paused' ? 'paused' : 'playing'
+              }))
+            } else if (service === 'ReloadContents' || service === 'ReloadMirror') {
+              fetchContents()
+            } else if (service === 'UpdateSettings' || service === 'SetPhotoSpeed') {
+              if (payload.photo_duration) {
+                setPhotoSpeed(Number(payload.photo_duration))
+              }
+            }
+          } catch (e) {
+            console.warn("[Virtual Screen WS] Message parse error:", e)
+          }
+        }
+
+        ws.onclose = () => {
+          reconnectTimer = setTimeout(connectWS, 3000)
+        }
+
+        ws.onerror = () => {
+          try { ws.close() } catch (e) {}
+        }
+      } catch (err) {
+        console.warn("[Virtual Screen WS] Error:", err)
+      }
+    }
+
+    connectWS()
+
+    // Periodic heartbeat to keep server mirror status active
+    const heartbeatInterval = setInterval(() => {
+      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+        try {
+          wsRef.current.send(JSON.stringify({
+            service: 'Heartbeat',
+            mirror_id: mirror_id
+          }))
+        } catch (e) {}
+      }
+    }, 15000)
+
+    return () => {
+      clearInterval(heartbeatInterval)
+      if (reconnectTimer) clearTimeout(reconnectTimer)
+      if (ws) {
+        ws.onclose = null
+        ws.close()
+        wsRef.current = null
+      }
+    }
+  }, [mirror_id])
+
+  // Periodic poll for live presentation status of this mirror
+  useEffect(() => {
+    let login_key = getCookie('login_key') || 'adminpassword'
+    if (!mirror_id) return
+
+    const pollLiveStatus = () => {
+      GET_MIRROR_LIVE_STATUS(login_key, mirror_id)
+        .then((res) => {
+          if (res?.data) {
+            setLiveStatus((prev) => ({
+              ...prev,
+              ...res.data,
+              playback_state: res.data.playback_state || 'playing'
+            }))
+            if (res.data.photo_duration) {
+              setPhotoSpeed(res.data.photo_duration)
+            }
+          }
+        })
+        .catch(() => {})
+    }
+
+    pollLiveStatus()
+    const timer = setInterval(pollLiveStatus, 1200)
+    return () => clearInterval(timer)
+  }, [mirror_id])
+
+  const handleTogglePlayPause = () => {
+    let login_key = getCookie('login_key') || 'adminpassword'
+    if (!mirror_id) return
+
+    const nextAction = liveStatus.playback_state === 'paused' ? 'play' : 'pause'
+    setControllingPlayback(true)
+    CONTROL_PLAYBACK(login_key, mirror_id, nextAction)
+      .then((res) => {
+        setControllingPlayback(false)
+        const updatedState = res.playback_state || nextAction
+        setLiveStatus((prev) => ({ ...prev, playback_state: updatedState }))
+        setMessage(
+          updatedState === 'paused'
+            ? 'Playback paused on connected mirror(s).'
+            : 'Playback resumed on connected mirror(s).'
+        )
+        setTimeout(() => setMessage(''), 3500)
+      })
+      .catch((err) => {
+        setControllingPlayback(false)
+        console.error("Playback control error:", err)
+        alert("Failed to toggle playback: " + (err.message || 'Server error'))
+      })
+  }
+
+  const handleSyncMirrors = () => {
+    let login_key = getCookie('login_key') || 'adminpassword'
+    if (!mirror_id) return
+
+    setSyncing(true)
+    SYNC_CONNECTED_MIRRORS(login_key, mirror_id, liveStatus.active_content_index, liveStatus.active_content_id)
+      .then(() => {
+        setSyncing(false)
+        setMessage('Sync signal broadcast! All connected mirror displays are synchronized in lockstep.')
+        setTimeout(() => setMessage(''), 4000)
+      })
+      .catch((err) => {
+        setSyncing(false)
+        console.error("Mirror sync error:", err)
+        alert("Failed to sync mirrors: " + (err.message || 'Server error'))
+      })
+  }
+
+  const handleToggleActive = (content_id, current_is_active, content_title) => {
+    let login_key = getCookie('login_key') || 'adminpassword'
+    if (!mirror_id) return
+
+    const nextActive = !current_is_active
+    setContentList((prev) =>
+      prev.map((item) => (item._id === content_id ? { ...item, is_active: nextActive } : item))
+    )
+    setFilteredList((prev) =>
+      prev.map((item) => (item._id === content_id ? { ...item, is_active: nextActive } : item))
+    )
+
+    TOGGLE_CONTENT_STATUS_ON_MIRROR(login_key, mirror_id, content_id, nextActive)
+      .then(() => {
+        setMessage(
+          `"${content_title || 'Media'}" is now ${nextActive ? 'Active' : 'Temporarily Disabled'} on this mirror.`
+        )
+        setTimeout(() => setMessage(''), 3500)
+      })
+      .catch((err) => {
+        setContentList((prev) =>
+          prev.map((item) => (item._id === content_id ? { ...item, is_active: current_is_active } : item))
+        )
+        setFilteredList((prev) =>
+          prev.map((item) => (item._id === content_id ? { ...item, is_active: current_is_active } : item))
+        )
+        console.error("Error toggling content status:", err)
+        alert("Failed to update content status: " + (err.message || 'Server error'))
+      })
+  }
+
+  const handleUpdateItemDuration = (contentId, duration, contentTitle) => {
+    let login_key = getCookie('login_key') || 'adminpassword'
+    if (!mirror_id) return
+
+    setContentList((prev) =>
+      prev.map((c) => (c._id === contentId ? { ...c, duration } : c))
+    )
+    setFilteredList((prev) =>
+      prev.map((c) => (c._id === contentId ? { ...c, duration } : c))
+    )
+
+    UPDATE_PHOTO_SPEED(login_key, mirror_id, null, contentId, duration)
+      .then(() => {
+        setMessage(`Time to stay for "${contentTitle || 'Photo'}" set to ${duration}s.`)
+        setTimeout(() => setMessage(''), 3000)
+      })
+      .catch((err) => {
+        console.error("Error updating photo duration:", err)
+      })
+  }
+
+  const handleRemoveFromMirror = (content_id, content_title) => {
+    if (!window.confirm(`Are you sure you want to remove "${content_title || 'this media'}" from this mirror's playlist?`)) {
+      return
+    }
+
+    let login_key = getCookie('login_key') || 'adminpassword'
+    REMOVE_CONTENT_FROM_MIRROR(login_key, content_id, mirror_id)
+      .then(() => {
+        setContentList((prev) => prev.filter((item) => item._id !== content_id))
+        setFilteredList((prev) => prev.filter((item) => item._id !== content_id))
+        setMessage(`"${content_title || 'Content'}" removed from this mirror.`)
+        setTimeout(() => setMessage(''), 3500)
+      })
+      .catch((err) => {
+        console.error("Error removing content from mirror:", err)
+        alert("Failed to remove content from mirror. Please try again.")
+      })
+  }
+
+  const handleRefreshMirror = () => {
+    let login_key = getCookie('login_key') || 'adminpassword'
+    if (!mirror_id) {
+      alert("No mirror selected.")
+      return
+    }
+    setRefreshing(true)
+    REFRESH_MIRROR_CONTENTS(login_key, mirror_id)
+      .then((res) => {
+        setRefreshing(false)
+        setMessage('Refresh signal sent! Mirror is reloading with new content.')
+        setTimeout(() => setMessage(''), 4500)
+      })
+      .catch((err) => {
+        setRefreshing(false)
+        console.error("Error refreshing mirror:", err)
+        alert("Failed to refresh mirror: " + (err.message || 'Server error'))
+      })
+  }
+
+  const persistReorderedPlaylist = (newItems) => {
+    setContentList(newItems)
+    setFilteredList(newItems)
+    const orderedIds = newItems.map((item) => item._id)
+    let login_key = getCookie('login_key') || 'adminpassword'
+    UPDATE_MIRROR_PLAYLIST_ORDER(login_key, mirror_id, orderedIds)
+      .then(() => {
+        setMessage('Playlist sequence updated! Click "Refresh Mirror Display" to broadcast immediately.')
+        setTimeout(() => setMessage(''), 4000)
+      })
+      .catch((err) => {
+        console.error("Error updating playlist order:", err)
+        alert("Failed to save playlist order. Please try again.")
+      })
+  }
+
+  const handleDragStart = (e, index) => {
+    setDraggedIndex(index)
+    e.dataTransfer.effectAllowed = 'move'
+    try {
+      e.dataTransfer.setData('text/plain', String(index))
+    } catch (err) {}
+  }
+
+  const handleDragOver = (e, index) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+    if (dragOverIndex !== index) {
+      setDragOverIndex(index)
+    }
+  }
+
+  const handleDragLeave = () => {
+    setDragOverIndex(null)
+  }
+
+  const handleDrop = (e, targetIndex) => {
+    e.preventDefault()
+    setDragOverIndex(null)
+    if (draggedIndex === null || draggedIndex === targetIndex) return
+
+    const updated = [...contentlist]
+    const [movedItem] = updated.splice(draggedIndex, 1)
+    updated.splice(targetIndex, 0, movedItem)
+
+    setDraggedIndex(null)
+    persistReorderedPlaylist(updated)
+  }
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null)
+    setDragOverIndex(null)
+  }
+
+  const handleMoveUp = (index) => {
+    if (index <= 0) return
+    const updated = [...contentlist]
+    const temp = updated[index - 1]
+    updated[index - 1] = updated[index]
+    updated[index] = temp
+    persistReorderedPlaylist(updated)
+  }
+
+  const handleMoveDown = (index) => {
+    if (index >= contentlist.length - 1) return
+    const updated = [...contentlist]
+    const temp = updated[index + 1]
+    updated[index + 1] = updated[index]
+    updated[index + 1] = updated[index]
+    updated[index] = temp
+    persistReorderedPlaylist(updated)
+  }
+
+  const handleSelectVirtualSlide = (index, contentId, isAuto = false) => {
+    let login_key = getCookie('login_key') || 'adminpassword'
+    if (!mirror_id) return
+    setLiveStatus((prev) => ({
+      ...prev,
+      active_content_index: index,
+      active_content_id: contentId
+    }))
+
+    // Send via live WebSocket to immediately notify all mirror tabs
+    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+      try {
+        wsRef.current.send(JSON.stringify({
+          service: 'UpdateActiveSlide',
+          mirror_id: mirror_id,
+          index: index,
+          content_id: contentId
+        }))
+      } catch (e) {}
+    }
+
+    // Broadcast synchronization to mirror displays
+    SYNC_CONNECTED_MIRRORS(login_key, mirror_id, index, contentId)
+      .then(() => {
+        if (!isAuto) {
+          setMessage(`Broadcasting slide #${index + 1} to connected mirror(s).`)
+          setTimeout(() => setMessage(''), 3000)
+        }
+      })
+      .catch((err) => {
+        console.error("Error setting slide:", err)
+      })
+  }
+
+  const handleStartPresentation = () => {
+    let login_key = getCookie('login_key') || 'adminpassword'
+    if (!mirror_id) return
+    CONTROL_PLAYBACK(login_key, mirror_id, 'play')
+      .then(() => {
+        setLiveStatus((prev) => ({
+          ...prev,
+          playback_state: 'playing'
+        }))
+        setMessage('Virtual mirror presentation started and live synced!')
+        setTimeout(() => setMessage(''), 3500)
+      })
+      .catch((err) => {
+        console.error("Error starting presentation:", err)
+      })
+  }
+
+  useEffect(() => {
+    fetchContents()
+  }, [mirror_id])
+
+  // Derive active slide index and content object for Virtual Screen preview (excluding disabled contents)
+  const activeContents = contentlist.filter((c) => c.is_active !== false)
+
+  const activeContentIndex = activeContents.findIndex((c) =>
+    (liveStatus.active_content_id && String(c._id) === String(liveStatus.active_content_id))
+  )
+
+  const resolvedIndex = activeContentIndex >= 0
+    ? activeContentIndex
+    : (liveStatus.active_content_index !== undefined && liveStatus.active_content_index >= 0 && liveStatus.active_content_index < activeContents.length
+        ? liveStatus.active_content_index
+        : 0)
+
+  const activeContent = activeContents.length > 0 ? activeContents[resolvedIndex] : null
+
+  return (
+    <div className='space-y-6'>
+      {/* Top Header Card */}
+      <div className='bg-white p-4 sm:p-6 rounded-2xl border border-neutral-200/90 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4'>
+        <div className='flex items-center gap-3 min-w-0'>
+          <button
+            onClick={() => navigate('/setup')}
+            className='w-9 h-9 rounded-xl bg-neutral-100 hover:bg-neutral-200 border border-neutral-200 flex items-center justify-center text-black transition-colors cursor-pointer shrink-0'
+            title='Back to Setup'
+          >
+            <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2.5' d='M15 19l-7-7 7-7' />
+            </svg>
+          </button>
+          <div className='min-w-0'>
+            <div className="flex items-center gap-1.5 text-[11px] font-medium text-neutral-400 mb-0.5">
+              <button onClick={() => navigate('/setup')} className="hover:text-black transition-colors cursor-pointer">Sites</button>
+              <span>/</span>
+              <button onClick={() => navigate('/setup')} className="hover:text-black transition-colors cursor-pointer">Mirrors</button>
+              <span>/</span>
+              <span className="text-black font-bold">Content Playlist</span>
+            </div>
+            <div className='flex items-center gap-2.5 flex-wrap'>
+              <h2 className='text-lg sm:text-xl font-bold text-black tracking-tight truncate'>
+                {liveStatus?.mirror_name ? `${liveStatus.mirror_name} Playlist Setup` : 'Mirror Playlist Setup'}
+              </h2>
+              {/* Online / Active status badge */}
+              <div
+                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold border shrink-0 ${
+                  liveStatus.playback_state === 'paused'
+                    ? 'bg-amber-50 text-amber-800 border-amber-200'
+                    : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+                }`}
+                title={liveStatus.playback_state === 'paused' ? 'Virtual Mirror playback is paused' : 'Default Virtual Mirror is connected and live'}
+              >
+                <span className="relative flex h-2 w-2">
+                  {liveStatus.playback_state !== 'paused' && (
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                  )}
+                  <span className={`relative inline-flex rounded-full h-2 w-2 ${
+                    liveStatus.playback_state === 'paused' ? 'bg-amber-500' : 'bg-emerald-500'
+                  }`}></span>
+                </span>
+                <span>
+                  {liveStatus.playback_state === 'paused' ? 'Connected (Paused)' : 'Connected (Live)'}
+                </span>
+              </div>
+            </div>
+            <p className='text-xs text-neutral-500 mt-0.5 line-clamp-1 sm:line-clamp-none'>
+              Live presentation sync, playback controls, and playlist media sequence
+            </p>
           </div>
         </div>
 
-        {/* <button onClick={closeModal}>Close</button> */}
-      </ContentListingModal>
+        <div className='flex items-stretch sm:items-center gap-2 flex-wrap sm:flex-nowrap w-full md:w-auto'>
+          {/* Pause / Play Toggle Button */}
+          <button
+            onClick={handleTogglePlayPause}
+            disabled={controllingPlayback}
+            className={`flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2.5 text-xs font-medium rounded-xl shadow-2xs transition-colors cursor-pointer whitespace-nowrap shrink-0 disabled:opacity-60 ${
+              liveStatus.playback_state === 'paused'
+                ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                : 'bg-neutral-100 hover:bg-neutral-200 text-black border border-neutral-300'
+            }`}
+            title={liveStatus.playback_state === 'paused' ? 'Resume presentation on connected mirror(s)' : 'Pause presentation on connected mirror(s)'}
+          >
+            {liveStatus.playback_state === 'paused' ? (
+              <>
+                <svg className='w-3.5 h-3.5 fill-current' viewBox='0 0 24 24'>
+                  <path d='M8 5v14l11-7z' />
+                </svg>
+                <span>{controllingPlayback ? 'Resuming...' : 'Resume Play'}</span>
+              </>
+            ) : (
+              <>
+                <svg className='w-3.5 h-3.5 fill-current' viewBox='0 0 24 24'>
+                  <path d='M6 19h4V5H6v14zm8-14v14h4V5h-4z' />
+                </svg>
+                <span>{controllingPlayback ? 'Pausing...' : 'Pause Mirror'}</span>
+              </>
+            )}
+          </button>
+
+          {/* Sync Displays Button */}
+          <button
+            onClick={handleSyncMirrors}
+            disabled={syncing}
+            className='flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2.5 bg-white hover:bg-neutral-100 text-black border border-neutral-300 text-xs font-medium rounded-xl shadow-2xs transition-colors cursor-pointer disabled:opacity-60 whitespace-nowrap shrink-0'
+            title='Synchronize all connected mirror displays to play the same slide together in lockstep'
+          >
+            <svg
+              className={`w-3.5 h-3.5 ${syncing ? 'animate-spin text-black' : 'text-neutral-700'}`}
+              fill='none'
+              stroke='currentColor'
+              viewBox='0 0 24 24'
+            >
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15' />
+            </svg>
+            <span>{syncing ? 'Syncing...' : 'Sync Displays'}</span>
+          </button>
+
+          {/* Refresh Mirror Button */}
+          <button
+            onClick={handleRefreshMirror}
+            disabled={refreshing}
+            className='flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2.5 bg-white hover:bg-neutral-100 text-black border border-neutral-300 text-xs font-medium rounded-xl shadow-2xs transition-colors cursor-pointer disabled:opacity-60 whitespace-nowrap shrink-0'
+            title='Send reload signal to mirror to restart slideshow with new contents'
+          >
+            <svg
+              className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin text-black' : 'text-neutral-700'}`}
+              fill='none'
+              stroke='currentColor'
+              viewBox='0 0 24 24'
+            >
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15' />
+            </svg>
+            <span>{refreshing ? 'Reloading...' : 'Refresh Display'}</span>
+          </button>
+
+          {/* Add Content to Mirror Button */}
+          <button
+            onClick={openModal}
+            className='flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2.5 bg-black hover:bg-neutral-800 text-white text-xs font-semibold rounded-xl shadow-2xs transition-colors cursor-pointer whitespace-nowrap shrink-0'
+            title='Upload images or videos directly to this mirror'
+          >
+            <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+              <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2.5' d='M12 4v16m8-8H4' />
+            </svg>
+            <span>Add Content</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Success Banner */}
+      {message && (
+        <div className='p-3.5 bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-semibold rounded-xl flex items-center gap-2 animate-fadeIn'>
+          <svg className='w-4 h-4 text-emerald-600 shrink-0' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M5 13l4 4L19 7' />
+          </svg>
+          <span>{message}</span>
+        </div>
+      )}
+
+      {/* Two Column Layout: Virtual Screen (Left) and Playlist Sequence (Right) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Virtual Screen Showcase - Adapts layout to mirror portrait/landscape dimensions */}
+        <div className={`lg:sticky lg:top-4 ${
+          Number(liveStatus?.mirror_height) > Number(liveStatus?.mirror_width)
+            ? 'lg:col-span-5 xl:col-span-4'
+            : 'lg:col-span-5 xl:col-span-5'
+        }`}>
+          <VirtualScreen
+            mirror={liveStatus}
+            activeContent={activeContent}
+            contentList={activeContents}
+            currentIndex={resolvedIndex}
+            playbackState={liveStatus.playback_state}
+            isOnline={true}
+            onSelectSlide={handleSelectVirtualSlide}
+            onStartPresentation={handleStartPresentation}
+          />
+        </div>
+
+        {/* Playlist Sequence and Controls */}
+        <div className={`space-y-4 ${
+          Number(liveStatus?.mirror_height) > Number(liveStatus?.mirror_width)
+            ? 'lg:col-span-7 xl:col-span-8'
+            : 'lg:col-span-7 xl:col-span-7'
+        }`}>
+          {/* Search & Filter */}
+          <div className='flex items-center justify-between gap-4 flex-wrap bg-white p-3.5 rounded-2xl border border-neutral-200/90 shadow-2xs'>
+            <SearchBar data={contentlist} setSearch={setFilteredList} placeholder='Search assigned media...' />
+            <span className='text-xs font-semibold text-neutral-500'>
+              {filteredList.length} item{filteredList.length !== 1 ? 's' : ''} in playlist
+            </span>
+          </div>
+
+          {/* Media Playlist List */}
+          <div>
+            {loading ? (
+              <div className='p-12 text-center text-neutral-400 bg-white rounded-2xl border border-neutral-200'>
+                Loading mirror contents...
+              </div>
+            ) : filteredList.length === 0 ? (
+              <div className='p-12 bg-white rounded-2xl border border-dashed border-neutral-300 text-center flex flex-col items-center justify-center'>
+                <div className='w-12 h-12 rounded-xl bg-neutral-100 text-black flex items-center justify-center mb-3'>
+                  <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z' />
+                  </svg>
+                </div>
+                <h4 className='text-sm font-bold text-black mb-1'>No Content for this Mirror</h4>
+                <p className='text-xs text-neutral-500 max-w-sm mb-4'>
+                  This mirror's playlist is currently empty. Upload photos or videos to start broadcasting.
+                </p>
+                <button
+                  onClick={openModal}
+                  className='px-4 py-2.5 bg-black hover:bg-neutral-800 text-white text-xs font-semibold rounded-xl shadow-2xs transition-colors cursor-pointer flex items-center gap-2'
+                >
+                  <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2.5' d='M12 4v16m8-8H4' />
+                  </svg>
+                  <span>Add Content to this Mirror</span>
+                </button>
+              </div>
+            ) : (
+              <div className='space-y-3'>
+                <div className='flex items-center justify-between text-xs text-neutral-500 px-1'>
+                  <span className='flex items-center gap-1.5'>
+                    <svg className='w-4 h-4 text-black shrink-0' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                      <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4' />
+                    </svg>
+                    <span>Drag and drop cards or use <strong>▲ / ▼</strong> to adjust order. Click an item to view on virtual screen.</span>
+                  </span>
+                </div>
+
+                <div className='space-y-2'>
+                  {filteredList.map((data, index) => (
+                    <div
+                      key={data._id || index}
+                      onClick={() => handleSelectVirtualSlide(index, data._id)}
+                      className="cursor-pointer"
+                      title="Click to sync and display on virtual screen"
+                    >
+                      <Listitem
+                        order={index + 1}
+                        isDraggable={true}
+                        isDragging={draggedIndex === index}
+                        isDragOver={dragOverIndex === index}
+                        isActive={data.is_active !== false}
+                        duration={data.duration || photoSpeed}
+                        onUpdateDuration={data.content_format?.toLowerCase() !== 'mp4' ? (dur) => handleUpdateItemDuration(data._id, dur, data.content_title) : null}
+                        onToggleActive={() => handleToggleActive(data._id, data.is_active !== false, data.content_title)}
+                        onDragStart={(e) => handleDragStart(e, index)}
+                        onDragOver={(e) => handleDragOver(e, index)}
+                        onDragLeave={handleDragLeave}
+                        onDrop={(e) => handleDrop(e, index)}
+                        onDragEnd={handleDragEnd}
+                        onMoveUp={() => handleMoveUp(index)}
+                        onMoveDown={() => handleMoveDown(index)}
+                        canMoveUp={index > 0}
+                        canMoveDown={index < filteredList.length - 1}
+                        title={data.content_title}
+                        description={data.content_description || "Assigned media playlist item"}
+                        onPlay={data._id}
+                        onDelete={() => handleRemoveFromMirror(data._id, data.content_title)}
+                        deleteLabel='Remove from Mirror'
+                        badge={data.content_format?.toUpperCase() || 'MEDIA'}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Add Content to Mirror Modal */}
+      <AddContentModal
+        isOpen={isModalOpen}
+        onClose={closeModal}
+        mirrorId={mirror_id}
+        mirrorName={liveStatus?.mirror_name || 'Mirror Display'}
+        mirrorWidth={liveStatus?.mirror_width || 1920}
+        mirrorHeight={liveStatus?.mirror_height || 1080}
+        onContentAdded={(newTitle) => {
+          fetchContents()
+          setMessage(`Added "${newTitle || 'Content'}" to mirror playlist.`)
+          setTimeout(() => setMessage(''), 3500)
+        }}
+      />
     </div>
   )
 }
