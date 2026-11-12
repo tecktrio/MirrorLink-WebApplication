@@ -505,10 +505,25 @@ function CREATE_CONTENT(login_key, content_title, content_description, content, 
     return new Promise((resolve, reject) => {
 
         const reader = new FileReader();
+
+        reader.onerror = function (err) {
+            console.error("FileReader error:", err);
+            reject(new Error('Failed to read file for upload'));
+        };
+
         reader.onload = function (event) {
             const fileData = event.target.result;
-            const fileExtension = content.type.split('/')[1] || 'jpg'; // Get the file extension from the MIME type
-            console.log(content, fileExtension)
+            
+            // Extract accurate file extension
+            let fileExtension = 'jpg';
+            if (content.name && content.name.includes('.')) {
+                fileExtension = content.name.split('.').pop().toLowerCase();
+            } else if (content.type && content.type.includes('/')) {
+                fileExtension = content.type.split('/')[1].toLowerCase();
+            }
+
+            if (fileExtension === 'quicktime') fileExtension = 'mov';
+            console.log("Uploading media:", content.name, "Format:", fileExtension, "Size:", (content.size / 1024 / 1024).toFixed(2), "MB");
 
             const request_data = {
                 "service": "AddContent",
@@ -517,7 +532,7 @@ function CREATE_CONTENT(login_key, content_title, content_description, content, 
                 "content": fileData,
                 "login_key": login_key,
                 "file_extention": fileExtension,
-            }
+            };
 
             if (mirror_id) {
                 request_data["mirror_id"] = mirror_id;
@@ -532,37 +547,38 @@ function CREATE_CONTENT(login_key, content_title, content_description, content, 
                 request_data["height"] = height;
             }
               
-            try {
-                fetch(ADMINISTRATOR_ROOT_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(request_data)
-                }).then(response => response.json())
-                    .then((data) => {
-                        // console.log(data)
-                        if (data.status_code == 401) {
-                            reject(new Error('Request failed due to invalid data'))
-                        }
-                        else {
-                            // console.log(data.data)
-                            resolve(data)
-                        }
-                    }).catch((error) => {
-                        console.log(error)
-                        reject(new Error('Request failed due to invalid data'))
-                    })
-            }
-            catch {
-                reject(new Error('Request failed due to invalid data'))
-            }
-
-        }
+            fetch(ADMINISTRATOR_ROOT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(request_data)
+            })
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.status_text || `Upload error HTTP ${response.status}`);
+                    }).catch(e => {
+                        throw new Error(e.message || `Upload server error HTTP ${response.status}`);
+                    });
+                }
+                return response.json();
+            })
+            .then((data) => {
+                if (data.status_code === 400 || data.status_code === 401 || data.status_code === 403) {
+                    reject(new Error(data.status_text || 'Request failed due to invalid data'));
+                } else {
+                    resolve(data);
+                }
+            })
+            .catch((error) => {
+                console.error("CREATE_CONTENT error:", error);
+                reject(error);
+            });
+        };
 
         reader.readAsDataURL(content);
-
-    })
+    });
 }
 
 function DELETE_MIRROR(login_key,mirror_id) {
