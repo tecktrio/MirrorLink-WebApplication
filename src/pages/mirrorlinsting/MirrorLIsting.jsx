@@ -194,14 +194,15 @@ export default function MirrorListing({ site_id, site_name = "Selected Site", on
                   {/* Direct Stream URL Bar */}
                   <div className="flex items-center justify-between gap-1.5 bg-neutral-50 px-2.5 py-1.5 rounded-xl border border-neutral-200/80">
                     <span className="font-mono text-[10px] text-neutral-700 truncate select-all">
-                      {`http://${window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? window.location.hostname : '32.236.228.113'}:8085/?mirror_name=${encodeURIComponent(mirror.mirror_name)}`}
+                      {`${(process.env.REACT_APP_VIEWER_URL || 'https://mirror.bigburry.com').replace(/\/+$/, '')}?mirror_name=${encodeURIComponent(mirror.mirror_name)}`}
                     </span>
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        const host = window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? window.location.hostname : '32.236.228.113';
-                        navigator.clipboard.writeText(`http://${host}:8085/?mirror_name=${encodeURIComponent(mirror.mirror_name)}`);
+                        const viewerBase = (process.env.REACT_APP_VIEWER_URL || 'https://mirror.bigburry.com').replace(/\/+$/, '');
+                        const targetUrl = `${viewerBase}?mirror_name=${encodeURIComponent(mirror.mirror_name)}`;
+                        navigator.clipboard.writeText(targetUrl);
                         setStatusMsg(`Stream URL copied for "${mirror.mirror_name}"`);
                         setTimeout(() => setStatusMsg(''), 2500);
                       }}

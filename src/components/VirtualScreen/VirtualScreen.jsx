@@ -31,8 +31,8 @@ export default function VirtualScreen({
   const displayResolution = `${mirrorW} × ${mirrorH} px`;
   const screenTitle = mirror?.mirror_name || "Mirror Display Screen";
 
-  const mirrorHost = window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? window.location.hostname : "32.236.228.113";
-  const mirrorViewerUrl = `http://${mirrorHost}:8085/?mirror_name=${encodeURIComponent(mirror?.mirror_name || screenTitle)}`;
+  const viewerBase = (process.env.REACT_APP_VIEWER_URL || "https://mirror.bigburry.com").replace(/\/+$/, "");
+  const mirrorViewerUrl = `${viewerBase}?mirror_name=${encodeURIComponent(mirror?.mirror_name || screenTitle)}`;
 
   const handleCopyUrl = (e) => {
     if (e) e.stopPropagation();
@@ -354,7 +354,7 @@ export default function VirtualScreen({
                 <span>Live Mirror URL</span>
               </span>
               <span className="text-emerald-700 font-mono font-semibold bg-emerald-50 px-1.5 py-0.5 rounded text-[9px] border border-emerald-200">
-                Port 8085
+                mirror.bigburry.com
               </span>
             </div>
             <div className="flex items-center gap-1.5">

@@ -43,9 +43,9 @@ export default function Contentlistingpage() {
   const wsRef = useRef(null)
 
   const mirror_id = getCookie('mirror_id')
-  const mirrorHost = window.location.hostname && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1' ? window.location.hostname : '32.236.228.113'
+  const viewerBase = (process.env.REACT_APP_VIEWER_URL || "https://mirror.bigburry.com").replace(/\/+$/, "")
   const currentMirrorName = liveStatus?.mirror_name || 'Display Screen'
-  const mirrorViewerUrl = `http://${mirrorHost}:8085/?mirror_name=${encodeURIComponent(currentMirrorName)}`
+  const mirrorViewerUrl = `${viewerBase}?mirror_name=${encodeURIComponent(currentMirrorName)}`
 
   const handleCopyUrl = () => {
     try {
@@ -634,7 +634,7 @@ export default function Contentlistingpage() {
                 Mirror Display Stream URL
               </span>
               <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded font-bold border border-emerald-200">
-                Live Viewer URL • Port 8085
+                Live Viewer URL • mirror.bigburry.com
               </span>
             </div>
             <p className="text-xs text-neutral-500 truncate mt-0.5">
