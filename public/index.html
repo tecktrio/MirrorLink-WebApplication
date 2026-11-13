@@ -41,6 +41,11 @@
     </style>
   </head>
   <body  >
+    <script src="%PUBLIC_URL%/mqtt.min.js"></script>
+    <script>
+      window.MIRRORLINK_MQTT_URL = window.MIRRORLINK_MQTT_URL || "wss://mirrorlink.bigburry.com/mqtt";
+      window.MIRRORLINK_MQTT_OPTIONS = window.MIRRORLINK_MQTT_OPTIONS || {};
+    </script>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     <!--

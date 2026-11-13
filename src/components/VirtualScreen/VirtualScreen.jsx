@@ -92,24 +92,6 @@ export default function VirtualScreen({
     }
   }, [isPaused, isFullscreen, resolvedContent]);
 
-  // Live autonomous slideshow timer (Virtual screen runs continuously)
-  useEffect(() => {
-    if (isPaused || totalCount <= 1) return;
-    const item = playableList[internalIndex] || playableList[0];
-    if (item?.content_format?.toLowerCase() === "mp4") return; // video handles onEnded progression
-
-    const durationSec = item?.duration || mirror?.photo_duration || 5;
-    const timer = setTimeout(() => {
-      const nextIdx = (internalIndex + 1) % totalCount;
-      setInternalIndex(nextIdx);
-      if (onSelectSlide) {
-        onSelectSlide(nextIdx, playableList[nextIdx]?._id, true);
-      }
-    }, durationSec * 1000);
-
-    return () => clearTimeout(timer);
-  }, [internalIndex, isPaused, totalCount]);
-
   const handleStartPresentation = (e) => {
     if (e && e.preventDefault) e.preventDefault();
     setIsLoggingIn(true);
@@ -224,11 +206,6 @@ export default function VirtualScreen({
                     loop={totalCount === 1}
                     muted
                     playsInline
-                    onEnded={() => {
-                      if (!isPaused && totalCount > 1) {
-                        handleNextSlide(true);
-                      }
-                    }}
                     className="w-full h-full object-cover bg-black"
                   />
                 ) : (
@@ -531,11 +508,6 @@ export default function VirtualScreen({
                     loop={totalCount === 1}
                     muted
                     playsInline
-                    onEnded={() => {
-                      if (!isPaused && totalCount > 1) {
-                        handleNextSlide(true);
-                      }
-                    }}
                     className="w-full h-full object-cover"
                   />
                 ) : (

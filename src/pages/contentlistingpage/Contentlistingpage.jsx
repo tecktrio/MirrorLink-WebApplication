@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState, useRef } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import {
   GET_AVAILABLE_CONTENTS_ON_SITE,
   REMOVE_CONTENT_FROM_MIRROR,
@@ -40,7 +40,6 @@ export default function Contentlistingpage() {
   const { getCookie } = useContext(CookieContext)
   const navigate = useNavigate()
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const wsRef = useRef(null)
 
   const mirror_id = getCookie('mirror_id')
   const viewerBase = (process.env.REACT_APP_VIEWER_URL || "https://mirror.bigburry.com").replace(/\/+$/, "")
@@ -83,121 +82,45 @@ export default function Contentlistingpage() {
     }
   }
 
-  // Real-time WebSocket connection to mirror channel (Virtual Screen as a live Mirror)
+  // Subscribe the web virtual screen to the same MQTT topic as physical displays.
   useEffect(() => {
-    if (!mirror_id) return
-    let ws = null
-    let reconnectTimer = null
-
-    const connectWS = () => {
+    if (!mirror_id || !window.mqtt) return
+    const brokerUrl = process.env.REACT_APP_MQTT_URL || window.MIRRORLINK_MQTT_URL || "wss://mirrorlink.bigburry.com/mqtt"
+    const client = window.mqtt.connect(brokerUrl, {
+      ...(window.MIRRORLINK_MQTT_OPTIONS || {}),
+      reconnectPeriod: 3000,
+      connectTimeout: 10000
+    })
+    client.on("connect", () => client.subscribe(`mirror/${mirror_id}`, { qos: 1 }))
+    client.on("message", (_topic, payload) => {
       try {
-        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-        let wsHost = window.location.host
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-          wsHost = '32.236.228.113:8000'
+        const message = JSON.parse(payload.toString())
+        const data = message.data || {}
+        if (message.event === "slide_change") {
+          setLiveStatus(prev => ({ ...prev, active_content_index: Number(data.index) || 0, active_content_id: data.content_id || null }))
+        } else if (message.event === "playback_control") {
+          setLiveStatus(prev => ({ ...prev, playback_state: data.action === "paused" ? "paused" : "playing" }))
+        } else if (message.event === "update_playlist") {
+          fetchContents()
+        } else if (message.event === "standby") {
+          setLiveStatus(prev => ({ ...prev, active_content_id: null, active_content_index: 0 }))
         }
-        const wsUrl = `${wsProtocol}//${wsHost}/mirror?mirror_id=${mirror_id}`
-
-        ws = new WebSocket(wsUrl)
-        wsRef.current = ws
-
-        ws.onopen = () => {
-          console.log("[Virtual Screen WS] Connected to live mirror room:", mirror_id)
-        }
-
-        ws.onmessage = (event) => {
-          try {
-            const msg = JSON.parse(event.data)
-            const payload = msg.data !== undefined ? msg.data : msg
-            const service = msg.service || (payload && payload.service)
-
-            if (service === 'SyncSlide') {
-              const targetIdx = Number(payload.index)
-              setLiveStatus((prev) => ({
-                ...prev,
-                active_content_index: targetIdx,
-                active_content_id: payload.content_id
-              }))
-            } else if (service === 'PlaybackControl') {
-              const action = payload.action
-              setLiveStatus((prev) => ({
-                ...prev,
-                playback_state: action === 'pause' || action === 'paused' ? 'paused' : 'playing'
-              }))
-            } else if (service === 'ReloadContents' || service === 'ReloadMirror') {
-              fetchContents()
-            } else if (service === 'UpdateSettings' || service === 'SetPhotoSpeed') {
-              if (payload.photo_duration) {
-                setPhotoSpeed(Number(payload.photo_duration))
-              }
-            }
-          } catch (e) {
-            console.warn("[Virtual Screen WS] Message parse error:", e)
-          }
-        }
-
-        ws.onclose = () => {
-          reconnectTimer = setTimeout(connectWS, 3000)
-        }
-
-        ws.onerror = () => {
-          try { ws.close() } catch (e) {}
-        }
-      } catch (err) {
-        console.warn("[Virtual Screen WS] Error:", err)
-      }
-    }
-
-    connectWS()
-
-    // Periodic heartbeat to keep server mirror status active
-    const heartbeatInterval = setInterval(() => {
-      if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-        try {
-          wsRef.current.send(JSON.stringify({
-            service: 'Heartbeat',
-            mirror_id: mirror_id
-          }))
-        } catch (e) {}
-      }
-    }, 15000)
-
-    return () => {
-      clearInterval(heartbeatInterval)
-      if (reconnectTimer) clearTimeout(reconnectTimer)
-      if (ws) {
-        ws.onclose = null
-        ws.close()
-        wsRef.current = null
-      }
-    }
+      } catch (err) { console.warn("[Virtual Screen MQTT] Invalid event:", err) }
+    })
+    client.on("error", err => console.warn("[Virtual Screen MQTT] Connection error:", err))
+    return () => { client.end(true) }
   }, [mirror_id])
 
-  // Periodic poll for live presentation status of this mirror
+  // Fetch dimensions and current playback state once; MQTT carries live changes.
   useEffect(() => {
-    let login_key = getCookie('login_key') || 'adminpassword'
+    const login_key = getCookie('login_key') || 'adminpassword'
     if (!mirror_id) return
-
-    const pollLiveStatus = () => {
-      GET_MIRROR_LIVE_STATUS(login_key, mirror_id)
-        .then((res) => {
-          if (res?.data) {
-            setLiveStatus((prev) => ({
-              ...prev,
-              ...res.data,
-              playback_state: res.data.playback_state || 'playing'
-            }))
-            if (res.data.photo_duration) {
-              setPhotoSpeed(res.data.photo_duration)
-            }
-          }
-        })
-        .catch(() => {})
-    }
-
-    pollLiveStatus()
-    const timer = setInterval(pollLiveStatus, 1200)
-    return () => clearInterval(timer)
+    GET_MIRROR_LIVE_STATUS(login_key, mirror_id).then((res) => {
+      if (res?.data) {
+        setLiveStatus(prev => ({ ...prev, ...res.data, playback_state: res.data.playback_state || 'playing' }))
+        if (res.data.photo_duration) setPhotoSpeed(res.data.photo_duration)
+      }
+    }).catch(() => {})
   }, [mirror_id])
 
   const handleTogglePlayPause = () => {
@@ -415,18 +338,6 @@ export default function Contentlistingpage() {
       active_content_index: index,
       active_content_id: contentId
     }))
-
-    // Send via live WebSocket to immediately notify all mirror tabs
-    if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
-      try {
-        wsRef.current.send(JSON.stringify({
-          service: 'UpdateActiveSlide',
-          mirror_id: mirror_id,
-          index: index,
-          content_id: contentId
-        }))
-      } catch (e) {}
-    }
 
     // Broadcast synchronization to mirror displays
     SYNC_CONNECTED_MIRRORS(login_key, mirror_id, index, contentId)
