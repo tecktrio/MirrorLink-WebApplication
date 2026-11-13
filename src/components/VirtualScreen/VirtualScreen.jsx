@@ -30,6 +30,12 @@ export default function VirtualScreen({
   const orientation = isPortrait ? "Portrait" : (isSquare ? "Square" : "Landscape");
   const displayResolution = `${mirrorW} × ${mirrorH} px`;
   const screenTitle = mirror?.mirror_name || "Mirror Display Screen";
+  const isVideoContent = (item) => {
+    const format = String(item?.content_format || "").toLowerCase();
+    const url = String(item?.content_url || "").toLowerCase().split("?")[0];
+    return format.includes("video") || ["mp4", "m4v", "mov", "webm", "ogg", "mkv", "avi"].includes(format) ||
+      /\.(mp4|m4v|mov|webm|ogg|mkv|avi)$/.test(url);
+  };
 
   const viewerBase = (process.env.REACT_APP_VIEWER_URL || "https://mirror.bigburry.com").replace(/\/+$/, "");
   const mirrorViewerUrl = `${viewerBase}?mirror_name=${encodeURIComponent(mirror?.mirror_name || screenTitle)}`;
@@ -56,7 +62,6 @@ export default function VirtualScreen({
   const handlePrevSlide = useCallback((isAuto = false) => {
     if (totalCount === 0) return;
     const prevIdx = (internalIndex - 1 + totalCount) % totalCount;
-    setInternalIndex(prevIdx);
     if (onSelectSlide) {
       onSelectSlide(prevIdx, playableList[prevIdx]?._id, isAuto);
     }
@@ -65,7 +70,6 @@ export default function VirtualScreen({
   const handleNextSlide = useCallback((isAuto = false) => {
     if (totalCount === 0) return;
     const nextIdx = (internalIndex + 1) % totalCount;
-    setInternalIndex(nextIdx);
     if (onSelectSlide) {
       onSelectSlide(nextIdx, playableList[nextIdx]?._id, isAuto);
     }
@@ -197,7 +201,7 @@ export default function VirtualScreen({
             ) : (
               <>
                 {/* Active Media Renderer (Image or Video) */}
-                {resolvedContent.content_format?.toLowerCase() === "mp4" ? (
+                {isVideoContent(resolvedContent) ? (
                   <video
                     ref={videoRef}
                     key={resolvedContent.content_url || resolvedContent._id}
@@ -499,7 +503,7 @@ export default function VirtualScreen({
               className="relative w-full h-full max-h-[82vh] bg-black rounded-xl overflow-hidden shadow-2xl flex items-center justify-center border border-neutral-800"
             >
               {resolvedContent && (
-                resolvedContent.content_format?.toLowerCase() === "mp4" ? (
+                isVideoContent(resolvedContent) ? (
                   <video
                     ref={fullscreenVideoRef}
                     key={resolvedContent.content_url || resolvedContent._id}

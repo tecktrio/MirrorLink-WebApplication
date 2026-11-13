@@ -97,6 +97,20 @@ export default function Contentlistingpage() {
         const message = JSON.parse(payload.toString())
         const data = message.data || {}
         if (message.event === "slide_change") {
+          const incomingContent = data.content
+            ? { ...data.content, _id: data.content._id || data.content_id }
+            : null
+          if (incomingContent?._id && incomingContent.content_url) {
+            setContentList(prev => {
+              const existingIndex = prev.findIndex(item => String(item._id) === String(incomingContent._id))
+              if (existingIndex >= 0) {
+                const next = [...prev]
+                next[existingIndex] = { ...next[existingIndex], ...incomingContent }
+                return next
+              }
+              return [...prev, incomingContent]
+            })
+          }
           setLiveStatus(prev => ({ ...prev, active_content_index: Number(data.index) || 0, active_content_id: data.content_id || null }))
         } else if (message.event === "playback_control") {
           setLiveStatus(prev => ({ ...prev, playback_state: data.action === "paused" ? "paused" : "playing" }))
@@ -333,11 +347,6 @@ export default function Contentlistingpage() {
   const handleSelectVirtualSlide = (index, contentId, isAuto = false) => {
     let login_key = getCookie('login_key') || 'adminpassword'
     if (!mirror_id) return
-    setLiveStatus((prev) => ({
-      ...prev,
-      active_content_index: index,
-      active_content_id: contentId
-    }))
 
     // Broadcast synchronization to mirror displays
     SYNC_CONNECTED_MIRRORS(login_key, mirror_id, index, contentId)
