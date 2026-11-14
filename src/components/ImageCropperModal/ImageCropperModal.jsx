@@ -16,6 +16,7 @@ export default function ImageCropperModal({
   imageFile,
   targetWidth = 1920,
   targetHeight = 1080,
+  title = "Crop Image to Mirror Resolution",
   onCropComplete,
 }) {
   const containerRef = useRef(null);
@@ -299,35 +300,35 @@ export default function ImageCropperModal({
 
   return (
     <div
-      className="fixed inset-0 z-60 bg-black/85 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 select-none animate-in fade-in duration-150"
+      className="fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-5 select-none animate-in fade-in duration-150"
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
     >
       <div
-        className="bg-neutral-900 text-white rounded-3xl w-full max-w-3xl shadow-2xl border border-neutral-700/80 overflow-hidden flex flex-col max-h-[96vh]"
+        className="bg-white text-neutral-900 rounded-2xl w-full max-w-3xl shadow-2xl border border-neutral-200 overflow-hidden flex flex-col max-h-[96vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="px-5 py-4 border-b border-neutral-800 flex items-center justify-between gap-4 shrink-0">
+        <div className="px-5 py-4 border-b border-neutral-200 flex items-center justify-between gap-4 shrink-0">
           <div>
             <div className="flex items-center gap-2">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
-              <h3 className="text-base font-bold text-white tracking-tight">
-                Crop Image to Mirror Resolution
+              <h3 className="text-base font-bold text-black tracking-tight">
+                {title}
               </h3>
             </div>
-            <p className="text-xs text-neutral-400 mt-0.5 flex items-center gap-2 flex-wrap">
-              <span>Target Mirror Format:</span>
-              <strong className="text-white font-mono bg-neutral-800 px-2 py-0.5 rounded text-[11px]">
+            <p className="text-xs text-neutral-500 mt-0.5 flex items-center gap-2 flex-wrap">
+              <span>Output size:</span>
+              <strong className="text-neutral-800 font-mono bg-neutral-100 px-2 py-0.5 rounded text-[11px]">
                 {tWidth} × {tHeight} px
               </strong>
-              <span className="text-neutral-400 font-medium text-[11px]">({orientationLabel})</span>
+              <span className="text-neutral-500 font-medium text-[11px]">({orientationLabel})</span>
             </p>
           </div>
 
           <button
             onClick={onClose}
-            className="w-8 h-8 rounded-full bg-neutral-800 hover:bg-neutral-700 text-neutral-400 hover:text-white flex items-center justify-center transition-colors cursor-pointer shrink-0"
+            className="w-8 h-8 rounded-full bg-neutral-100 hover:bg-neutral-200 text-neutral-500 hover:text-black flex items-center justify-center transition-colors cursor-pointer shrink-0"
             title="Cancel crop"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -342,7 +343,7 @@ export default function ImageCropperModal({
           onWheel={handleWheel}
           onPointerDown={handlePointerDown}
           onPointerMove={handlePointerMove}
-          className="relative flex-1 bg-black min-h-[360px] sm:min-h-[420px] flex items-center justify-center overflow-hidden cursor-grab active:cursor-grabbing"
+          className="relative flex-1 bg-neutral-100 min-h-[360px] sm:min-h-[420px] flex items-center justify-center overflow-hidden cursor-grab active:cursor-grabbing"
         >
           {/* Transforming Image */}
           {imageSrc && (
@@ -427,16 +428,16 @@ export default function ImageCropperModal({
         </div>
 
         {/* Toolbar & Controls */}
-        <div className="p-4 bg-neutral-900 border-t border-neutral-800 space-y-3 shrink-0">
+        <div className="p-4 bg-white border-t border-neutral-200 space-y-3 shrink-0">
           {/* Zoom Slider and Transform Buttons */}
           <div className="flex items-center justify-between gap-3 flex-wrap">
             {/* Zoom Controls */}
             <div className="flex items-center gap-2 flex-1 min-w-[200px]">
-              <span className="text-[11px] font-semibold text-neutral-400 shrink-0">Zoom</span>
+              <span className="text-[11px] font-semibold text-neutral-500 shrink-0">Zoom</span>
               <button
                 type="button"
                 onClick={() => setZoom((z) => Math.max(z - 0.1, minZoom))}
-                className="w-7 h-7 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 flex items-center justify-center text-xs font-bold cursor-pointer transition-colors"
+                className="w-7 h-7 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-700 flex items-center justify-center text-xs font-bold cursor-pointer transition-colors"
                 title="Zoom out"
               >
                 −
@@ -448,17 +449,17 @@ export default function ImageCropperModal({
                 step={0.01}
                 value={zoom}
                 onChange={(e) => setZoom(parseFloat(e.target.value))}
-                className="flex-1 accent-emerald-500 h-1.5 bg-neutral-800 rounded-lg cursor-pointer"
+                className="flex-1 accent-black h-1.5 bg-neutral-200 rounded-lg cursor-pointer"
               />
               <button
                 type="button"
                 onClick={() => setZoom((z) => Math.min(z + 0.1, maxZoom))}
-                className="w-7 h-7 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-300 flex items-center justify-center text-xs font-bold cursor-pointer transition-colors"
+                className="w-7 h-7 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-700 flex items-center justify-center text-xs font-bold cursor-pointer transition-colors"
                 title="Zoom in"
               >
                 +
               </button>
-              <span className="text-[11px] font-mono text-neutral-400 w-12 text-right">
+              <span className="text-[11px] font-mono text-neutral-500 w-12 text-right">
                 {Math.round(zoom * 100)}%
               </span>
             </div>
@@ -468,7 +469,7 @@ export default function ImageCropperModal({
               <button
                 type="button"
                 onClick={fitCover}
-                className="px-2.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-medium cursor-pointer transition-colors"
+                className="px-2.5 py-1.5 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-xs font-medium cursor-pointer transition-colors"
                 title="Fill the entire crop area without black bars"
               >
                 Fill
@@ -476,7 +477,7 @@ export default function ImageCropperModal({
               <button
                 type="button"
                 onClick={fitContain}
-                className="px-2.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-medium cursor-pointer transition-colors"
+                className="px-2.5 py-1.5 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-xs font-medium cursor-pointer transition-colors"
                 title="Fit full image inside the frame"
               >
                 Fit
@@ -484,7 +485,7 @@ export default function ImageCropperModal({
               <button
                 type="button"
                 onClick={rotateClockwise}
-                className="px-2.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-medium cursor-pointer transition-colors flex items-center gap-1"
+                className="px-2.5 py-1.5 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-700 text-xs font-medium cursor-pointer transition-colors flex items-center gap-1"
                 title="Rotate 90 degrees clockwise"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -496,11 +497,11 @@ export default function ImageCropperModal({
           </div>
 
           {/* Action Footer */}
-          <div className="pt-2 border-t border-neutral-800 flex items-center justify-between gap-3">
-            <div className="text-[11px] text-neutral-400">
-              Output: <span className="font-mono font-bold text-white">{tWidth} × {tHeight} px</span>
+          <div className="pt-2 border-t border-neutral-200 flex items-center justify-between gap-3">
+            <div className="text-[11px] text-neutral-500">
+              Output: <span className="font-mono font-bold text-neutral-900">{tWidth} × {tHeight} px</span>
               {naturalSize.width > 0 && (
-                <span className="text-neutral-500 ml-2">
+                <span className="text-neutral-400 ml-2">
                   (Source: {naturalSize.width} × {naturalSize.height} px)
                 </span>
               )}
@@ -511,7 +512,7 @@ export default function ImageCropperModal({
                 type="button"
                 onClick={onClose}
                 disabled={isProcessing}
-                className="px-4 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-neutral-300 hover:text-white text-xs font-semibold cursor-pointer transition-colors"
+                className="px-4 py-2 rounded-xl bg-white hover:bg-neutral-100 text-neutral-700 border border-neutral-300 text-xs font-semibold cursor-pointer transition-colors"
               >
                 Cancel
               </button>
@@ -519,11 +520,11 @@ export default function ImageCropperModal({
                 type="button"
                 onClick={handleApplyCrop}
                 disabled={isProcessing || !imageObj}
-                className="px-5 py-2 rounded-xl bg-white hover:bg-neutral-100 text-black text-xs font-bold cursor-pointer transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50"
+                className="px-5 py-2 rounded-xl bg-black hover:bg-neutral-800 text-white text-xs font-bold cursor-pointer transition-colors shadow-sm flex items-center gap-2 disabled:opacity-50"
               >
                 {isProcessing ? (
                   <>
-                    <span className="w-3.5 h-3.5 border-2 border-black border-t-transparent rounded-full animate-spin" />
+                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                     <span>Rendering...</span>
                   </>
                 ) : (

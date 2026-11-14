@@ -24,8 +24,6 @@ export default function Dashboard() {
         <div className="ml-console-header-inner">
           <Link to="/setup" className="ml-console-brand"><span>M</span><strong>MirrorLink</strong></Link>
           <nav className="ml-console-nav" aria-label="Control panel">
-            <Link to="/setup">Sites</Link>
-            <Link to="/manage_mirrors">Mirrors</Link>
             <Link to="/manage_contents">Content</Link>
             <Link to="/subscription">Subscription</Link>
           </nav>

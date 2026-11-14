@@ -59,13 +59,14 @@ export default function ManageContents() {
             Manage your shared video, image, and menu library.
           </p>
         </div>
-        <div className='flex items-center gap-2 w-full sm:w-auto'>
-          {tab !== 'menus' && <Addbutton label='Upload / Create Content' goto='/addcontent' className='w-full sm:w-auto justify-center' />}
-        </div>
       </div>
 
       <div className='bg-white border rounded-2xl p-2 flex gap-2'>{[['videos','Videos'],['images','Images'],['menus','Menus']].map(([id,label])=><button key={id} onClick={()=>{setTab(id);setQuery('')}} className={`px-4 py-2 rounded-xl text-sm font-semibold ${tab===id?'bg-black text-white':'hover:bg-neutral-100'}`}>{label}</button>)}</div>
       {tab === 'menus' ? <ManageMenus embedded /> : <>
+      <div className='flex flex-wrap items-center justify-between gap-3'>
+        <div><h3 className='text-lg font-bold'>{tab === 'videos' ? 'Videos' : 'Images'}</h3><p className='text-sm text-neutral-500'>Browse and manage your {tab} library.</p></div>
+        <Addbutton label='Upload Content' goto='/addcontent' className='justify-center' />
+      </div>
       <input value={query} onChange={e=>setQuery(e.target.value)} placeholder={`Search ${tab}...`} className='w-full bg-white border rounded-xl px-4 py-3'/>
 
       {/* List */}
@@ -85,9 +86,6 @@ export default function ManageContents() {
             <p className='text-xs text-neutral-500 max-w-sm mb-4'>
               {contentlist.length === 0 ? "You have not uploaded any media files yet." : `No ${tab} match your search.`}
             </p>
-            {contentlist.length === 0 && (
-              <Addbutton label='Upload / Create Content' goto='/addcontent' />
-            )}
           </div>
         ) : (
           <div className='space-y-2'>
