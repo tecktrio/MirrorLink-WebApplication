@@ -1,0 +1,14 @@
+.ml-login-page{background:linear-gradient(180deg,#fff 0%,#fff 72%,#f8f8f8 100%)}
+.ml-login-page .ml-auth-layout{position:relative;min-height:calc(100vh - 140px);gap:clamp(48px,9vw,140px)}
+.ml-login-page .ml-auth-intro{max-width:590px}
+.ml-login-page .ml-auth-intro h1{max-width:560px}
+.ml-login-page .ml-auth-card{align-self:center;width:100%;padding:40px;border-color:#e6e6e6;box-shadow:0 28px 80px #0000000d}
+.ml-login-page .ml-auth-card h2{font-size:32px;margin-top:31px}
+.ml-login-page .ml-auth-field input{height:50px;border-radius:3px}
+.ml-login-page .ml-auth-field input:focus{border-color:#080808;box-shadow:0 0 0 3px #0808080c}
+.ml-login-page .ml-auth-submit{justify-content:space-between;padding:0 17px;margin-top:12px}
+.ml-login-page .ml-auth-foot{margin-top:24px}
+.ml-login-page .ml-footer{background:#fff}
+.ml-login-forgot{display:flex;justify-content:flex-end;margin:-7px 0 11px;font-size:10px}.ml-login-forgot a{color:#555;text-decoration:underline;text-underline-offset:3px}.ml-login-error{border-left-color:#a52b22;background:#fff7f6;color:#8e2b25}
+@media(max-width:850px){.ml-login-page .ml-auth-layout{gap:5vw}}
+@media(max-width:650px){.ml-login-page .ml-auth-layout{padding-top:48px;min-height:0}.ml-login-page .ml-auth-card{padding:29px 23px}.ml-login-page .ml-auth-card h2{font-size:27px;margin-top:24px}}

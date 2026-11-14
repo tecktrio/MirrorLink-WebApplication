@@ -11,10 +11,6 @@ export const CookieContextProvider = ({ children }) => {
   function getCookie(name) {
     const val = Cookies.get(name);
     if (val) return val;
-    if (name === "login_key") {
-      Cookies.set("login_key", "adminpassword", { expires: 30, path: "/" });
-      return "adminpassword";
-    }
     return undefined;
   }
 

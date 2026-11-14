@@ -1,0 +1,40 @@
+.ml-subscription-page { max-width: 1000px; margin: 0 auto; }
+.ml-subscription-heading { margin: 8px 0 30px; }
+.ml-subscription-heading .ml-eyebrow { display: flex; align-items: center; gap: 9px; color: #777; font-size: 9px; font-weight: 700; letter-spacing: 1.4px; }
+.ml-subscription-heading .ml-eyebrow > span { height: 7px; width: 7px; background: #080808; border-radius: 50%; }
+.ml-subscription-heading h1 { margin: 17px 0 9px; font-size: clamp(38px, 5vw, 54px); line-height: 1; letter-spacing: -3px; }
+.ml-subscription-heading p { color: #666; font-size: 13px; line-height: 1.6; margin: 0; }
+.ml-subscription-status { display: flex; align-items: center; gap: 13px; padding: 17px 19px; margin-bottom: 15px; background: #fff; border: 1px solid #e8e8e8; }
+.ml-subscription-status-icon { height: 30px; width: 30px; flex: none; display: grid; place-items: center; border-radius: 50%; font-size: 14px; font-weight: 700; }
+.ml-subscription-status.is-active .ml-subscription-status-icon { background: #edf6ef; color: #26713a; }
+.ml-subscription-status.is-inactive .ml-subscription-status-icon { background: #f5f1e8; color: #795b15; }
+.ml-subscription-status > div { display: flex; flex-direction: column; gap: 4px; }
+.ml-subscription-status > div > span, .ml-subscription-kicker { color: #888; font-size: 8px; font-weight: 700; letter-spacing: 1.2px; }
+.ml-subscription-status > div > strong { color: #111; font-size: 15px; text-transform: capitalize; }
+.ml-subscription-status > a { margin-left: auto; color: #111; font-size: 11px; font-weight: 650; text-decoration: none; }
+.ml-subscription-status > a span { margin-left: 7px; font-size: 15px; }
+.ml-subscription-card { padding: 28px 30px; background: #fff; border: 1px solid #e8e8e8; box-shadow: 0 12px 35px #00000008; }
+.ml-subscription-card-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.ml-subscription-card h2 { margin: 7px 0 0; font-size: 20px; letter-spacing: -.5px; }
+.ml-subscription-pill { padding: 7px 9px; border: 1px solid; font-size: 8px; font-weight: 700; letter-spacing: .8px; }
+.ml-subscription-pill.is-active { color: #26713a; border-color: #cfe3d3; background: #f3faf4; }
+.ml-subscription-pill.is-inactive { color: #76591a; border-color: #e7ddc5; background: #faf8f1; }
+.ml-subscription-price { margin: 23px 0 25px; font-size: 38px; font-weight: 700; letter-spacing: -2px; }
+.ml-subscription-price small { color: #777; font-size: 12px; font-weight: 500; letter-spacing: 0; }
+.ml-subscription-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid #eee; }
+.ml-subscription-details > div { min-height: 85px; padding: 17px 15px 14px 0; display: flex; flex-direction: column; gap: 6px; border-bottom: 1px solid #eee; }
+.ml-subscription-details > div:nth-child(even) { padding-left: 20px; border-left: 1px solid #eee; }
+.ml-subscription-details > div > span { color: #777; font-size: 10px; }
+.ml-subscription-details > div > strong { color: #111; font-size: 12px; font-weight: 650; }
+.ml-subscription-details > div > small { color: #888; font-size: 9px; line-height: 1.4; }
+.ml-subscription-details .capitalize { text-transform: capitalize; }
+.ml-subscription-reference, .ml-subscription-footnote { margin: 16px 0 0; color: #888; font-size: 9px; line-height: 1.5; }
+.ml-subscription-notice { padding: 18px; background: #fff; border: 1px solid #e8e8e8; color: #666; font-size: 12px; }
+.ml-subscription-error { border-left: 3px solid #9d342b; color: #8e2b25; }
+@media (max-width: 560px) {
+  .ml-subscription-heading { margin: 5px 0 24px; }
+  .ml-subscription-card { padding: 23px 19px; }
+  .ml-subscription-price { font-size: 33px; }
+  .ml-subscription-details > div { min-height: 78px; }
+  .ml-subscription-status { padding: 14px; }
+}

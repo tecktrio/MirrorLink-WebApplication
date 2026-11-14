@@ -25,10 +25,10 @@ function MAKE_LOGIN(username, password) {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ username, password, 'service':'login' })
-            }).then(response => response.json())
-                .then((data) => {
-                    if (data.status_code == 401) {
+                body: JSON.stringify({ email: username, password, 'service':'login' })
+            }).then(async response => ({ ok: response.ok, data: await response.json() }))
+                .then(({ ok, data }) => {
+                    if (!ok || data.status_code == 401) {
                         reject(new Error('Request failed due to invalid data'))
                     }
                     else {
@@ -36,11 +36,11 @@ function MAKE_LOGIN(username, password) {
                         const key = data.login_key;
                         // save the mirror link login_key key in cookie
                         // console.log('key',data)
-                        resolve(key)
+                        resolve({ key, planActive: !!data.plan_active })
                     }
                 }).catch((error) => {
                     console.log(error)
-                    reject(new Error('Request failed due to invalid data'))
+                    reject(error)
                 })
         }
 
@@ -50,7 +50,23 @@ function MAKE_LOGIN(username, password) {
         }
     })
 }
-function MAKE_REGISTER(username, password, email, contact, profile_image_url, address_line_1, address_line_2, address_line_3) {
+function AUTH_REQUEST(payload) {
+    return fetch(ADMINISTRATOR_ROOT_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+        .then(async response => { const data = await response.json(); if (!response.ok) throw new Error(data.status_text || 'Request failed'); return data; });
+}
+export const REQUEST_EMAIL_OTP = (email, purpose) => AUTH_REQUEST({ service: 'request_otp', email, purpose });
+export const RESET_PASSWORD = (email, otp, password) => AUTH_REQUEST({ service: 'reset_password', email, otp, password });
+export const CHECK_PLAN = (login_key) => AUTH_REQUEST({ service: 'check_plan', login_key });
+export const GET_SUBSCRIPTION_DETAILS = (login_key) => fetch(`${SERVER_URL}Billing`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ service: 'get_subscription', login_key }),
+}).then(async response => {
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.status_text || 'Could not load subscription details.');
+    return data;
+});
+function MAKE_REGISTER(username, password, email, contact, profile_image_url, address_line_1, address_line_2, address_line_3, otp) {
     // 'username', 'password', 'email_id', 'profile_image_url', 'contact', 'address_line_1', 'address_line_2', 'address_line_3'
     // You can use fetch or another method to send this data to your server
     return new Promise((resolve, reject) => {
@@ -63,6 +79,7 @@ function MAKE_REGISTER(username, password, email, contact, profile_image_url, ad
                 body: JSON.stringify(
                     {
                         'service':'register',
+                        otp,
                         'username': username,
                         'password': password,
                         'email': email,
@@ -72,20 +89,17 @@ function MAKE_REGISTER(username, password, email, contact, profile_image_url, ad
                         'address_line_2': address_line_2,
                         'address_line_3': address_line_3,
                     })
-            }).then(response => response.json())
-                .then((data) => {
-                    if (data.status_code == 401) {
-                        reject(new Error('Request failed due to invalid data'))
+            }).then(async response => ({ ok: response.ok, data: await response.json() }))
+                .then(({ ok, data }) => {
+                    if (!ok || data.status_code >= 400) {
+                        reject(new Error(data.status_text || 'Request failed'))
                     }
                     else {
-                        const key = data.login_key;
-                        // save the mirror link websocket key in cookie
-                        document.cookie = key
-                        resolve(true)
+                        resolve(data)
                     }
                 }).catch((error) => {
                     console.log(error)
-                    reject(new Error('Request failed due to invalid data'))
+                    reject(error)
                 })
         }
 
@@ -596,25 +610,31 @@ function DELETE_MIRROR(login_key,mirror_id) {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify(request_data)
-                }).then(response => response.json())
-                    .then((data) => {
-                        // console.log(data)
-                        if (data.status_code == 401) {
-                            reject(new Error('Request failed due to invalid data'))
-                        }
-                        else {
-                            // console.log(data.data)
-                            resolve()
-                        }
+                }).then(async response => ({ ok: response.ok, data: await response.json() }))
+                    .then(({ ok, data }) => {
+                        if (!ok) reject(new Error(data.status_text || 'Could not delete mirror'))
+                        else resolve(data)
                     }).catch((error) => {
                         console.log(error)
-                        reject(new Error('Request failed due to invalid data'))
+                        reject(error)
                     })
             }
             catch {
                 reject(new Error('Request failed due to invalid data'))
             }
         })
+}
+
+function SET_MIRROR_ACTIVE_STATUS(login_key, mirror_id, is_active) {
+    return fetch(ADMINISTRATOR_ROOT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ service: 'SetMirrorActiveStatus', login_key, mirror_id, is_active })
+    }).then(async response => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.status_text || 'Could not update mirror status');
+        return data;
+    });
 }
 function DELETE_SITE(login_key,site_id) {
 
@@ -1043,6 +1063,7 @@ export {
     GET_CONTENT_DETAILS,GET_MIRROR,
     DELETE_CONTENT,
     DELETE_MIRROR,
+    SET_MIRROR_ACTIVE_STATUS,
     DELETE_SITE,
     GET_ALL_MIRRORS,ASSIGN_MIRROR_TO_SITE,
     GET_ALL_UNASSIGNED_MIRRORS,

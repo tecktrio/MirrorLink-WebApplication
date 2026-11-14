@@ -8,6 +8,7 @@ import {
 } from "react-router-dom";
 import Loginpage from "./pages/loginpage/Loginpage";
 import Registerpage from "./pages/registerpage/Registerpage";
+import RegisterVerifyPage from "./pages/registerpage/RegisterVerifyPage";
 import Contactpage from "./pages/contactpage/Contactpage";
 import Sitelistingpage from "./pages/sitelistingpage/Sitelistingpage";
 import Notfoundpage from "./pages/notfoundpage/Notfoundpage";
@@ -35,6 +36,18 @@ import { CookieContextProvider } from "./Contexts/CookieContext";
 import { AuthenticationContextWrapper } from "./Contexts/AuthenticationContext";
 import Setup from "./pages/setup/Setup";
 import Developing from "./pages/Developing/Developing";
+import LandingPage from "./pages/landingpage/LandingPage";
+import PricingPage from "./pages/pricingpage/PricingPage";
+import SelectMirror from "./pages/SelectMirror/SelectMirror";
+import SelectContent from "./pages/SelectContent/SelectContent";
+import ResetPassword from "./pages/loginpage/ResetPassword";
+import SubscriptionPage from "./pages/subscription/SubscriptionPage";
+import Cookies from "js-cookie";
+import { Navigate } from "react-router-dom";
+
+function AccountRequired({ children }) {
+  return Cookies.get("login_key") ? children : <Navigate to="/login" replace />;
+}
 
 function App() {
   const [isLoading, setIsLoading] = useState(false);
@@ -61,68 +74,71 @@ function App() {
                         <Router>
                           <Routes>
                             <Route path="/login" element={<Loginpage />} />
+                            <Route path="/reset-password" element={<ResetPassword />} />
                             <Route
                               path="/register"
                               element={<Registerpage />}
                             />
+                            <Route path="/register/verify" element={<RegisterVerifyPage />} />
                             {/* <AuthenticationContextWrapper> */}
                               <Route path="/"  element={<Dashboard />}>
 
-                              <Route
-                                 index
-                                  element={<AuthenticationContextWrapper><Setup /></AuthenticationContextWrapper>}
-                                />
+                                <Route index element={<LandingPage />} />
+                                <Route path="/pricing" element={<PricingPage />} />
+                                <Route path="/subscription" element={<AccountRequired><SubscriptionPage /></AccountRequired>} />
                                 <Route
                                   path="/contact"
                                   element={<Contactpage />}
                                 />
                                 <Route
                                   path="/setup"
-                                  element={<AuthenticationContextWrapper><Setup /></AuthenticationContextWrapper>}
+                                  element={<AccountRequired><Setup /></AccountRequired>}
                                 />
                                 <Route path="/about" element={<Aboutpage />} />
                                 <Route
                                   path="/manage_sites"
-                                  element={<ManageSites />}
+                                  element={<AccountRequired><ManageSites /></AccountRequired>}
                                 />
                                 <Route
                                   path="/manage_contents"
-                                  element={<ManageContents />}
+                                  element={<AccountRequired><ManageContents /></AccountRequired>}
                                 />
                                 <Route
                                   path="/manage_mirrors"
-                                  element={<ManageMirrors />}
+                                  element={<AccountRequired><ManageMirrors /></AccountRequired>}
                                 />
                                 <Route
                                   path="/manage_clients"
-                                  element={<ManageClients />}
+                                  element={<AccountRequired><ManageClients /></AccountRequired>}
                                 />
                                 <Route
                                   path="/manage_accounts"
-                                  element={<ManageAccounts />}
+                                  element={<AccountRequired><ManageAccounts /></AccountRequired>}
                                 />
                                 <Route
                                   path="/manage_menus"
-                                  element={<ManageMenus />}
+                                  element={<AccountRequired><ManageMenus /></AccountRequired>}
                                 />
                                 <Route path="/addmirror"
-                                element={<Addmirrorpage/>}
+                                element={<AccountRequired><Addmirrorpage/></AccountRequired>}
                                 />
                                 <Route path="/addcontent"
-                                element={<Addcontentpage/>}
+                                element={<AccountRequired><Addcontentpage/></AccountRequired>}
                                 />
                                
                                <Route path="/addsite"
-                                element={<Addsitepage/>}
+                                element={<AccountRequired><Addsitepage/></AccountRequired>}
                                 />
+                                <Route path="/selectmirror" element={<AccountRequired><SelectMirror /></AccountRequired>} />
+                                <Route path="/selectcontent" element={<AccountRequired><SelectContent /></AccountRequired>} />
                                
                                 <Route
                                   path="/contentlist"
-                                  element={<Contentlistingpage />}
+                                  element={<AccountRequired><Contentlistingpage /></AccountRequired>}
                                 />
                                 <Route
                                   path="/updatecontent"
-                                  element={<UpdateContentpage />}
+                                  element={<AccountRequired><UpdateContentpage /></AccountRequired>}
                                 />
                                 <Route path="*" element={< Developing/>} />
                               </Route>
