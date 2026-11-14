@@ -66,6 +66,6 @@ export default function RegisterVerifyPage() {
         <p className="ml-auth-foot"><Link to="/register">← Edit account details</Link></p>
       </form>
     </section>
-    <footer className="ml-footer"><Link className="ml-brand" to="/"><span className="ml-brand-mark">M</span><span>MirrorLink</span></Link><span>Wireless display management</span></footer>
+    <footer className="ml-footer"><Link className="ml-brand" to="/"><span className="ml-brand-mark">M</span><span>MirrorLink</span></Link><span>Wireless display management</span><a className="ml-footer-credit" href="https://bigburry.com" target="_blank" rel="noopener noreferrer">Made by Bigburry Hypersystems LLP</a></footer>
   </main>;
 }

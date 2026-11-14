@@ -133,7 +133,7 @@ export default function PricingPage() {
         </section>
         <div className="ml-price-foot"><span>Secure checkout</span><i /> <span>Monthly recurring billing</span><i /> <Link to="/login">Already subscribed? Open control panel <b>↗</b></Link></div>
       </main>
-      <footer className="ml-pricing-footer"><Link className="ml-price-brand" to="/"><span>M</span> MirrorLink</Link><small>Wireless display management.</small></footer>
+      <footer className="ml-pricing-footer"><Link className="ml-price-brand" to="/"><span>M</span> MirrorLink</Link><small>Wireless display management.</small><a className="ml-footer-credit" href="https://bigburry.com" target="_blank" rel="noopener noreferrer">Made by Bigburry Hypersystems LLP</a></footer>
     </div>
   );
 }

@@ -784,11 +784,17 @@ function ASSIGN_CONTENT_TO_MIRROR(login_key,content_ids, mirror_id) {
 }
 
 const MENU_REQUEST = (payload) => fetch(ADMINISTRATOR_ROOT_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).then(async r => { const d = await r.json(); if (!r.ok) throw new Error(d.status_text || 'Menu request failed'); return d; });
-export const GET_MENU_TEMPLATES = () => MENU_REQUEST({ service: 'GetMenuTemplates' });
+export const GET_MENU_TEMPLATES = (login_key) => MENU_REQUEST({ service: 'GetMenuTemplates', login_key });
 export const GET_MENUS = (login_key) => MENU_REQUEST({ service: 'GetMenus', login_key });
-export const SAVE_MENU = (login_key, menu_id, template_id, data) => MENU_REQUEST({ service: 'SaveMenu', login_key, menu_id, template_id, data });
+export const SAVE_MENU = (login_key, menu_id, template_id, data, custom_template) => MENU_REQUEST({ service: 'SaveMenu', login_key, menu_id, template_id, data, custom_template });
+export const SAVE_MENU_TEMPLATE = (login_key, template) => MENU_REQUEST({ service: 'SaveMenuTemplate', login_key, template });
+export const DELETE_MENU_TEMPLATE = (login_key, template_id) => MENU_REQUEST({ service: 'DeleteMenuTemplate', login_key, template_id });
 export const DELETE_MENU = (login_key, menu_id) => MENU_REQUEST({ service: 'DeleteMenu', login_key, menu_id });
 export const RENDER_MENU_PREVIEW = (login_key, menu_id, width = 1920, height = 1080) => MENU_REQUEST({ service: 'RenderMenuPreview', login_key, menu_id, width, height });
+export const GET_MENU_SHARE_LINK = (login_key, mirror_id) => MENU_REQUEST({ service: 'GetMenuShareLink', login_key, mirror_id });
+export const GET_PUBLIC_MIRROR_MENUS = (share_token) => MENU_REQUEST({ service: 'GetPublicMirrorMenus', share_token });
+export const SET_MENU_MIRRORS = (login_key, menu_id, mirror_id, assigned) => MENU_REQUEST({ service: 'SetMenuMirrors', login_key, menu_id, mirror_id, assigned });
+export const SET_MENU_ACTIVE = (login_key, menu_id, is_active) => MENU_REQUEST({ service: 'SetMenuActive', login_key, menu_id, is_active });
 
 function REMOVE_CONTENT_FROM_MIRROR(login_key, content_id, mirror_id) {
     return new Promise((resolve, reject) => {

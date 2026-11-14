@@ -32,6 +32,8 @@ import ManageMirrors from "./pages/manage_mirrors/ManageMirrors";
 import ManageAccounts from "./pages/manage_accounts/ManageAccounts";
 import ManageClients from "./pages/manage_clients/ManageClients";
 import ManageMenus from "./pages/manage_menus/ManageMenus";
+import CustomMenuEditor from "./pages/manage_menus/CustomMenuEditor";
+import PublicMenus from "./pages/publicmenus/PublicMenus";
 import { CookieContextProvider } from "./Contexts/CookieContext";
 import { AuthenticationContextWrapper } from "./Contexts/AuthenticationContext";
 import Setup from "./pages/setup/Setup";
@@ -95,6 +97,7 @@ function App() {
                                   element={<AccountRequired><Setup /></AccountRequired>}
                                 />
                                 <Route path="/about" element={<Aboutpage />} />
+                                <Route path="/menu/:shareToken" element={<PublicMenus />} />
                                 <Route
                                   path="/manage_sites"
                                   element={<AccountRequired><ManageSites /></AccountRequired>}
@@ -119,6 +122,7 @@ function App() {
                                   path="/manage_menus"
                                   element={<AccountRequired><ManageMenus /></AccountRequired>}
                                 />
+                                <Route path="/custom-menu" element={<AccountRequired><CustomMenuEditor /></AccountRequired>} />
                                 <Route path="/addmirror"
                                 element={<AccountRequired><Addmirrorpage/></AccountRequired>}
                                 />

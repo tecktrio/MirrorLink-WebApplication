@@ -77,6 +77,8 @@
 html, body, #root { max-width: 100%; min-height: 100%; }
 body { overflow-x: hidden; }
 img, video, canvas, svg { max-width: 100%; }
+.ml-footer-credit { color: #777; font-size: 9px; font-weight: 500; white-space: nowrap; text-decoration: none; }
+.ml-footer-credit:hover { color: #111; text-decoration: underline; text-underline-offset: 3px; }
 
 @media (max-width: 767px) {
   /* iOS Safari zooms focused controls below 16px. Keep text controls at the safe size. */

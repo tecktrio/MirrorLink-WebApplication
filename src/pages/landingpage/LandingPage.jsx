@@ -106,7 +106,7 @@ export default function LandingPage() {
         <section className="ml-final-cta"><div><div className="ml-eyebrow"><span /> READY WHEN YOU ARE</div><h2>Let's get your screens<br />connected.</h2></div><div className="ml-final-actions"><Link className="ml-button ml-button-dark" to="/login">Go to control panel <Arrow /></Link><a className="ml-text-link" href={viewerUrl} target="_blank" rel="noreferrer">Go to viewer <Arrow diagonal /></a></div></section>
       </main>
 
-      <footer className="ml-footer"><a className="ml-brand" href="#top"><span className="ml-brand-mark">M</span><span>MirrorLink</span></a><span>Wireless display management.</span><div><Link to="/login">Control panel</Link><a href={viewerUrl} target="_blank" rel="noreferrer">Viewer</a><span>© {new Date().getFullYear()} MirrorLink</span></div></footer>
+      <footer className="ml-footer"><a className="ml-brand" href="#top"><span className="ml-brand-mark">M</span><span>MirrorLink</span></a><span>Wireless display management.</span><div><Link to="/login">Control panel</Link><a href={viewerUrl} target="_blank" rel="noreferrer">Viewer</a><span>© {new Date().getFullYear()} MirrorLink</span><a className="ml-footer-credit" href="https://bigburry.com" target="_blank" rel="noopener noreferrer">Made by Bigburry Hypersystems LLP</a></div></footer>
     </div>
   );
 }

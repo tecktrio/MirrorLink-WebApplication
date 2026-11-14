@@ -16,7 +16,7 @@ export default function Dashboard() {
     CHECK_PLAN(loginKey).then((result) => setPlanActive(Boolean(result.plan_active))).catch(() => setPlanActive(null));
   }, [getCookie]);
 
-  if (pathname === "/" || pathname === "/pricing") return <Outlet />;
+  if (pathname === "/" || pathname === "/pricing" || pathname.startsWith("/menu/")) return <Outlet />;
 
   return (
     <div className="ml-console">
@@ -34,7 +34,7 @@ export default function Dashboard() {
         <div className="ml-explore-banner"><span><b>Explore mode</b> · Your setup is saved, but mirrors stay offline until you subscribe.</span><Link to="/pricing">View plan <b>→</b></Link></div>
       )}
       <main className="ml-console-main"><Outlet /></main>
-      <footer className="ml-console-footer"><span>MirrorLink · Wireless display management</span><Link to="/subscription">Subscription details</Link></footer>
+      <footer className="ml-console-footer"><span>MirrorLink · Wireless display management</span><Link to="/subscription">Subscription details</Link><a className="ml-footer-credit" href="https://bigburry.com" target="_blank" rel="noopener noreferrer">Made by Bigburry Hypersystems LLP</a></footer>
     </div>
   );
 }
