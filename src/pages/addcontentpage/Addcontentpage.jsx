@@ -1,8 +1,8 @@
-import React, { useContext, useEffect, useState } from 'react'
+import React, { useContext, useState } from 'react'
 import Inputtextbox from '../../components/inputtextbox/Inputtextbox'
 import Uploadbutton from '../../components/uploadbutton/Uploadbutton'
 import Submitbutton from '../../components/submitbutton/Submitbutton'
-import { CREATE_CONTENT, GET_ALL_MIRRORS } from '../../serverRequests/ServerRequests'
+import { CREATE_CONTENT } from '../../serverRequests/ServerRequests'
 import { LoadingStateContext } from '../../Contexts/LoadingStateContext'
 import Loadinpage from '../loadingpage/Loadinpage'
 import { useNavigate } from 'react-router-dom'
@@ -10,7 +10,7 @@ import { CookieContext } from '../../Contexts/CookieContext'
 import ImageCropperModal from '../../components/ImageCropperModal/ImageCropperModal'
 
 export default function Addcontentpage() {
-  const { getCookie, setCookie } = useContext(CookieContext)
+  const { getCookie } = useContext(CookieContext)
   const { isLoading } = useContext(LoadingStateContext)
   const [contentTitle, setcontenttitle] = useState('')
   const [ContentDescription, setcontentdescription] = useState('')
@@ -22,34 +22,13 @@ export default function Addcontentpage() {
   const [isCropperOpen, setIsCropperOpen] = useState(false)
   const [videoFitMode, setVideoFitMode] = useState("cover") // "cover" or "contain"
   const [videoAlignment, setVideoAlignment] = useState("center center")
-  const [mirrors, setMirrors] = useState([])
-  const [selectedMirrorId, setSelectedMirrorId] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [statusText, setStatusText] = useState('')
   let navigate = useNavigate()
 
-  useEffect(() => {
-    let login_key = getCookie('login_key') || 'adminpassword'
-    GET_ALL_MIRRORS(login_key)
-      .then((res) => {
-        const mirrorList = res?.data || []
-        setMirrors(mirrorList)
-        const cookieMirrorId = getCookie('mirror_id')
-        if (cookieMirrorId && mirrorList.some((m) => String(m._id) === String(cookieMirrorId))) {
-          setSelectedMirrorId(cookieMirrorId)
-        } else if (mirrorList.length > 0) {
-          setSelectedMirrorId(mirrorList[0]._id)
-        }
-      })
-      .catch((err) => {
-        console.error("Error loading mirrors:", err)
-      })
-  }, [])
-
-  const selectedMirror = mirrors.find((m) => String(m._id) === String(selectedMirrorId))
-  const targetWidth = Number(selectedMirror?.mirror_width) || 1920
-  const targetHeight = Number(selectedMirror?.mirror_height) || 1080
+  const targetWidth = 1920
+  const targetHeight = 1080
   const isPortrait = targetHeight > targetWidth
   const orientationText = isPortrait ? 'Portrait (Vertical)' : (targetWidth === targetHeight ? 'Square' : 'Landscape (Horizontal)')
 
@@ -111,20 +90,16 @@ export default function Addcontentpage() {
       setErrorMessage('Please choose or drop an image or video file to upload.')
       return
     }
-    if (!selectedMirrorId) {
-      setErrorMessage('Please select a mirror for this content.')
-      return
-    }
     const isImage = content?.type.startsWith('image/')
     const isVideo = content?.type.startsWith('video/')
 
     if (isImage && fileDimensions && !isExactMatch) {
-      setErrorMessage(`Uploaded image dimensions (${fileDimensions.width} × ${fileDimensions.height} px) do not match mirror resolution (${targetWidth} × ${targetHeight} px). Please use the image cropper.`)
+      setErrorMessage(`Uploaded image dimensions (${fileDimensions.width} × ${fileDimensions.height} px) do not match the library image size (${targetWidth} × ${targetHeight} px). Please use the image cropper.`)
       return
     }
 
     setIsSubmitting(true)
-    setStatusText("Uploading media to mirror playlist...")
+    setStatusText("Uploading to your shared content library...")
     setErrorMessage('')
 
     const uploadW = isVideo ? targetWidth : (fileDimensions ? fileDimensions.width : targetWidth)
@@ -136,16 +111,15 @@ export default function Addcontentpage() {
       contentTitle.trim(),
       ContentDescription.trim(),
       content,
-      selectedMirrorId,
+      null,
       duration,
       uploadW,
       uploadH
     )
       .then(() => {
-        setCookie('mirror_id', selectedMirrorId)
-        setStatusText("Upload complete! Redirecting to mirror setup...")
+        setStatusText("Upload complete! Redirecting to content library...")
         setTimeout(() => {
-          navigate('/contentlist')
+          navigate('/manage_contents')
         }, 600)
       })
       .catch((err) => {
@@ -163,31 +137,11 @@ export default function Addcontentpage() {
       ) : (
         <form onSubmit={HandleSubmit} className='p-4 sm:p-6 md:p-8 max-w-2xl w-full mx-auto bg-white rounded-2xl shadow-xs border border-slate-200/80 my-2 sm:my-4 space-y-6'>
           <div>
-            <h2 className='text-lg sm:text-xl font-bold text-slate-800 tracking-tight'>Add Content to Mirror</h2>
+            <h2 className='text-lg sm:text-xl font-bold text-slate-800 tracking-tight'>Upload / Create Content</h2>
             <p className='text-xs text-slate-500 mt-1'>
-              Upload images or videos directly to a specific mirror's dedicated playlist.
+              Add a video or image to your shared content library, then import it into any mirror.
             </p>
           </div>
-
-          {/* Mirror Target Dropdown */}
-          {mirrors.length > 0 && (
-            <div>
-              <label className='block text-xs font-bold text-black mb-1.5'>
-                Target Mirror <span className='text-red-500'>*</span>
-              </label>
-              <select
-                value={selectedMirrorId}
-                onChange={(e) => setSelectedMirrorId(e.target.value)}
-                className='w-full px-3.5 py-2.5 bg-neutral-50 hover:bg-neutral-100/70 focus:bg-white border border-neutral-300 focus:border-black rounded-xl text-xs font-semibold text-black outline-none transition-colors cursor-pointer'
-              >
-                {mirrors.map((m) => (
-                  <option key={m._id} value={m._id}>
-                    {m.mirror_name} ({m.mirror_width || 1920} × {m.mirror_height || 1080})
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
 
           {/* Mirror Resolution Warning Banner */}
           <div className='p-4 bg-amber-50/90 border border-amber-200 rounded-2xl flex items-start gap-3'>
@@ -198,14 +152,14 @@ export default function Addcontentpage() {
             </div>
             <div className='text-xs space-y-1'>
               <div className='font-bold text-amber-950 flex items-center gap-1.5 flex-wrap'>
-                <span>Display Resolution Warning:</span>
+                <span>Library Image Size:</span>
                 <span className='font-mono bg-amber-200/70 text-amber-950 px-2 py-0.5 rounded-md font-bold text-[11px]'>
                   {targetWidth} × {targetHeight} px
                 </span>
                 <span className='text-[11px] font-medium text-amber-800'>({orientationText})</span>
               </div>
               <p className='text-amber-900/80 leading-relaxed text-[11px]'>
-                Please upload media formatted in this mirror's native resolution (<strong>{targetWidth} × {targetHeight}</strong>). Media with different dimensions will be scaled to fit and may display letterbox borders or stretching.
+                Images are saved at this landscape size by default. You can crop menu imports to each mirror's exact resolution.
               </p>
             </div>
           </div>
@@ -478,7 +432,7 @@ export default function Addcontentpage() {
                     isExactMatch ? (
                       <div className='w-full flex items-center justify-between gap-2 flex-wrap bg-emerald-50 border border-emerald-300 rounded-xl p-2.5'>
                         <div className='text-xs font-semibold text-emerald-800 flex items-center gap-1.5'>
-                          <span>✓ Verified: {fileDimensions.width} × {fileDimensions.height} px matches mirror dimensions</span>
+                          <span>✓ Verified: {fileDimensions.width} × {fileDimensions.height} px matches library image size</span>
                         </div>
                         <button
                           type="button"
@@ -492,14 +446,14 @@ export default function Addcontentpage() {
                       <div className='w-full p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-left space-y-2'>
                         <div className='flex items-center justify-between gap-2 flex-wrap'>
                           <div className='text-xs font-bold text-amber-900'>
-                            Resolution Mismatch ({fileDimensions.width} × {fileDimensions.height} px)
+                            Image Size Mismatch ({fileDimensions.width} × {fileDimensions.height} px)
                           </div>
                           <span className='text-[10px] font-mono text-amber-800 bg-amber-200/70 px-2 py-0.5 rounded font-bold'>
                             Target: {targetWidth} × {targetHeight} px
                           </span>
                         </div>
                         <p className='text-[11px] text-amber-800 leading-normal'>
-                          This mirror requires images sized at <strong>{targetWidth} × {targetHeight} px</strong>. Crop this image to fit the mirror screen.
+                          Crop the image to the library size <strong>{targetWidth} × {targetHeight} px</strong>.
                         </p>
                         <button
                           type="button"
@@ -509,7 +463,7 @@ export default function Addcontentpage() {
                           <svg className='w-4 h-4 text-emerald-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                             <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z' />
                           </svg>
-                          <span>Crop Image to Mirror Size ({targetWidth} × {targetHeight} px)</span>
+                          <span>Crop Image ({targetWidth} × {targetHeight} px)</span>
                         </button>
                       </div>
                     )
@@ -550,7 +504,7 @@ export default function Addcontentpage() {
             </button>
             <div className='w-48'>
               <Submitbutton
-                text={isSubmitting ? "Uploading..." : (fileDimensions && !isExactMatch && content?.type.startsWith('image/') ? "Crop Image" : (content?.type.startsWith('video/') ? "Add Video to Mirror" : "Add to Mirror"))}
+                text={isSubmitting ? "Uploading..." : (fileDimensions && !isExactMatch && content?.type.startsWith('image/') ? "Crop Image" : "Save to Library")}
                 disabled={!content || isSubmitting || (fileDimensions && !isExactMatch && content?.type.startsWith('image/'))}
                 onClick={fileDimensions && !isExactMatch && content?.type.startsWith('image/') ? (e) => { e.preventDefault(); setIsCropperOpen(true); } : undefined}
               />

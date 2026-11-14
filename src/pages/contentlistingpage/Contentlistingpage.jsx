@@ -499,12 +499,12 @@ export default function Contentlistingpage() {
           <button
             onClick={openModal}
             className='flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-3.5 sm:px-4 py-2.5 bg-black hover:bg-neutral-800 text-white text-xs font-semibold rounded-xl shadow-2xs transition-colors cursor-pointer whitespace-nowrap shrink-0'
-            title='Upload images or videos directly to this mirror'
+            title='Import content from your shared library'
           >
             <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
               <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2.5' d='M12 4v16m8-8H4' />
             </svg>
-            <span>Add Content</span>
+            <span>Import Content</span>
           </button>
           <button
             type='button'
@@ -651,7 +651,7 @@ export default function Contentlistingpage() {
                   <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
                     <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2.5' d='M12 4v16m8-8H4' />
                   </svg>
-                  <span>Add Content to this Mirror</span>
+                  <span>Import Content</span>
                 </button>
               </div>
             ) : (
@@ -717,7 +717,7 @@ export default function Contentlistingpage() {
         mirrorHeight={liveStatus?.mirror_height || 1080}
         onContentAdded={(newTitle) => {
           fetchContents()
-          setMessage(`Added "${newTitle || 'Content'}" to mirror playlist.`)
+          setMessage(`Imported "${newTitle || 'Content'}" to mirror playlist.`)
           setTimeout(() => setMessage(''), 3500)
         }}
       />

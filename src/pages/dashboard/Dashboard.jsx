@@ -27,7 +27,6 @@ export default function Dashboard() {
             <Link to="/setup">Sites</Link>
             <Link to="/manage_mirrors">Mirrors</Link>
             <Link to="/manage_contents">Content</Link>
-            <Link to="/manage_menus">Menus</Link>
             <Link to="/subscription">Subscription</Link>
           </nav>
           <PublicAccountActions className="ml-console-account" />

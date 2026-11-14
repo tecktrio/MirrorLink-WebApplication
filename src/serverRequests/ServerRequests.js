@@ -783,6 +783,13 @@ function ASSIGN_CONTENT_TO_MIRROR(login_key,content_ids, mirror_id) {
         })
 }
 
+const MENU_REQUEST = (payload) => fetch(ADMINISTRATOR_ROOT_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).then(async r => { const d = await r.json(); if (!r.ok) throw new Error(d.status_text || 'Menu request failed'); return d; });
+export const GET_MENU_TEMPLATES = () => MENU_REQUEST({ service: 'GetMenuTemplates' });
+export const GET_MENUS = (login_key) => MENU_REQUEST({ service: 'GetMenus', login_key });
+export const SAVE_MENU = (login_key, menu_id, template_id, data) => MENU_REQUEST({ service: 'SaveMenu', login_key, menu_id, template_id, data });
+export const DELETE_MENU = (login_key, menu_id) => MENU_REQUEST({ service: 'DeleteMenu', login_key, menu_id });
+export const RENDER_MENU_PREVIEW = (login_key, menu_id, width = 1920, height = 1080) => MENU_REQUEST({ service: 'RenderMenuPreview', login_key, menu_id, width, height });
+
 function REMOVE_CONTENT_FROM_MIRROR(login_key, content_id, mirror_id) {
     return new Promise((resolve, reject) => {
         const request_data = {

@@ -1,40 +1,30 @@
 import React, { useContext, useEffect, useState } from 'react'
 import Addbutton from '../../components/addbutton/Addbutton'
-import SearchBar from '../../components/SearchBar/SearchBar'
 import Listitem from '../../components/listitem/Listitem'
-import { DELETE_CONTENT, GET_ALL_CONTENTS, GET_ALL_MIRRORS } from '../../serverRequests/ServerRequests'
+import ManageMenus from '../manage_menus/ManageMenus'
+import { DELETE_CONTENT, GET_ALL_CONTENTS } from '../../serverRequests/ServerRequests'
 import { CookieContext } from '../../Contexts/CookieContext'
-import { useNavigate } from 'react-router-dom'
 
 export default function ManageContents() {
   const [contentlist, setContentlist] = useState([])
-  const [searchresult, setSearchResult] = useState([])
-  const [mirrors, setMirrors] = useState([])
-  const [selectedMirrorFilter, setSelectedMirrorFilter] = useState('all')
+  const [tab, setTab] = useState('videos')
+  const [query, setQuery] = useState('')
   const [loading, setLoading] = useState(true)
-  const navigate = useNavigate()
-  const { getCookie, setCookie } = useContext(CookieContext)
+  const { getCookie } = useContext(CookieContext)
 
   const loadContents = () => {
     let login_key = getCookie('login_key') || 'adminpassword'
     setLoading(true)
 
-    Promise.all([
-      GET_ALL_CONTENTS(login_key).catch(() => ({ data: [] })),
-      GET_ALL_MIRRORS(login_key).catch(() => ({ data: [] }))
-    ])
-      .then(([contentsRes, mirrorsRes]) => {
+    GET_ALL_CONTENTS(login_key).catch(() => ({ data: [] }))
+      .then((contentsRes) => {
         const data = contentsRes?.data || []
-        const mirrorData = mirrorsRes?.data || []
         setContentlist(data)
-        setSearchResult(data)
-        setMirrors(mirrorData)
         setLoading(false)
       })
       .catch((err) => {
         console.error("Error loading contents and mirrors:", err)
         setContentlist([])
-        setSearchResult([])
         setLoading(false)
       })
   }
@@ -45,7 +35,6 @@ export default function ManageContents() {
     DELETE_CONTENT(login_key, id)
       .then(() => {
         setContentlist((prev) => prev.filter((c) => c._id !== id))
-        setSearchResult((prev) => prev.filter((c) => c._id !== id))
       })
       .catch((error) => {
         console.error("Error deleting content:", error)
@@ -56,16 +45,9 @@ export default function ManageContents() {
     loadContents()
   }, [])
 
-  const handleFilterChange = (mirrorId) => {
-    setSelectedMirrorFilter(mirrorId)
-    if (mirrorId === 'all') {
-      setSearchResult(contentlist)
-    } else {
-      setSearchResult(contentlist.filter((c) => String(c.mirror_id) === String(mirrorId)))
-    }
-  }
-
-  const mirrorMap = new Map(mirrors.map((m) => [String(m._id), m]))
+  const isVideo = c => ['mp4','mov','webm','m4v','avi','mkv'].includes((c.content_format || '').toLowerCase()) || (c.content_url || '').match(/\.(mp4|mov|webm|m4v)(\?|$)/i)
+  const isImage = c => ['jpg','jpeg','png','webp','gif','bmp'].includes((c.content_format || '').toLowerCase()) || (c.content_url || '').match(/\.(jpg|jpeg|png|webp|gif|bmp)(\?|$)/i)
+  const visibleContents = contentlist.filter(c => tab === 'videos' ? isVideo(c) : isImage(c)).filter(c => (c.content_title || '').toLowerCase().includes(query.toLowerCase()))
 
   return (
     <div className='space-y-6'>
@@ -74,51 +56,17 @@ export default function ManageContents() {
         <div>
           <h2 className='text-xl font-bold text-black tracking-tight'>Manage Contents</h2>
           <p className='text-xs text-neutral-500 mt-1'>
-            Contents are tied directly to individual mirrors. Manage and upload content per mirror.
+            Manage your shared video, image, and menu library.
           </p>
         </div>
         <div className='flex items-center gap-2 w-full sm:w-auto'>
-          <Addbutton label='Upload Content' goto='/addcontent' className='w-full sm:w-auto justify-center' />
+          {tab !== 'menus' && <Addbutton label='Upload / Create Content' goto='/addcontent' className='w-full sm:w-auto justify-center' />}
         </div>
       </div>
 
-      {/* Info notice about mirror-specific contents */}
-      <div className='p-3.5 bg-neutral-100 border border-neutral-300 rounded-2xl flex items-center justify-between gap-3 flex-wrap'>
-        <div className='flex items-center gap-2.5 text-xs text-neutral-700'>
-          <svg className='w-4 h-4 text-black shrink-0' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-            <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' />
-          </svg>
-          <span>Contents belong directly to each mirror. You can add and order content directly in each mirror's setup.</span>
-        </div>
-        <button
-          onClick={() => navigate('/manage_mirrors')}
-          className='text-xs font-semibold text-black hover:underline cursor-pointer'
-        >
-          Go to Manage Mirrors →
-        </button>
-      </div>
-
-      {/* Search & Mirror Filter */}
-      <div className='flex items-stretch sm:items-center justify-between gap-4 flex-col sm:flex-row'>
-        <SearchBar data={contentlist} setSearch={setSearchResult} placeholder='Search content by title...' />
-        {mirrors.length > 0 && (
-          <div className='flex items-center gap-2 shrink-0'>
-            <span className='text-xs font-medium text-neutral-500'>Filter by Mirror:</span>
-            <select
-              value={selectedMirrorFilter}
-              onChange={(e) => handleFilterChange(e.target.value)}
-              className='px-3 py-1.5 bg-white border border-neutral-300 rounded-xl text-xs font-semibold text-black outline-none cursor-pointer'
-            >
-              <option value='all'>All Mirrors ({contentlist.length})</option>
-              {mirrors.map((m) => (
-                <option key={m._id} value={m._id}>
-                  {m.mirror_name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-      </div>
+      <div className='bg-white border rounded-2xl p-2 flex gap-2'>{[['videos','Videos'],['images','Images'],['menus','Menus']].map(([id,label])=><button key={id} onClick={()=>{setTab(id);setQuery('')}} className={`px-4 py-2 rounded-xl text-sm font-semibold ${tab===id?'bg-black text-white':'hover:bg-neutral-100'}`}>{label}</button>)}</div>
+      {tab === 'menus' ? <ManageMenus embedded /> : <>
+      <input value={query} onChange={e=>setQuery(e.target.value)} placeholder={`Search ${tab}...`} className='w-full bg-white border rounded-xl px-4 py-3'/>
 
       {/* List */}
       <div>
@@ -126,7 +74,7 @@ export default function ManageContents() {
           <div className='p-12 text-center text-neutral-400 bg-white rounded-2xl border border-neutral-200'>
             Loading media library...
           </div>
-        ) : searchresult.length === 0 ? (
+        ) : visibleContents.length === 0 ? (
           <div className='p-12 bg-white rounded-2xl border border-dashed border-neutral-300 text-center flex flex-col items-center justify-center'>
             <div className='w-12 h-12 rounded-xl bg-neutral-100 text-black flex items-center justify-center mb-3'>
               <svg className='w-6 h-6' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -135,25 +83,20 @@ export default function ManageContents() {
             </div>
             <h4 className='text-sm font-bold text-black mb-1'>No Media Contents Found</h4>
             <p className='text-xs text-neutral-500 max-w-sm mb-4'>
-              {contentlist.length === 0 ? "You have not uploaded any media files yet." : "No content matches your filter keyword."}
+              {contentlist.length === 0 ? "You have not uploaded any media files yet." : `No ${tab} match your search.`}
             </p>
             {contentlist.length === 0 && (
-              <Addbutton label='Upload Content to Mirror' goto='/addcontent' />
+              <Addbutton label='Upload / Create Content' goto='/addcontent' />
             )}
           </div>
         ) : (
           <div className='space-y-2'>
-            {searchresult.map((data, key) => {
-              const assignedMirror = mirrorMap.get(String(data.mirror_id))
-              const mirrorLabel = assignedMirror
-                ? `Mirror: ${assignedMirror.mirror_name} (${assignedMirror.mirror_width || 1920} × ${assignedMirror.mirror_height || 1080})`
-                : 'Mirror Content'
-
+            {visibleContents.map((data, key) => {
               return (
                 <Listitem
                   key={data._id || key}
                   title={data.content_title}
-                  description={`${data.content_description ? data.content_description + ' • ' : ''}${mirrorLabel}`}
+                  description={data.content_description || 'Shared library content'}
                   onDelete={() => deleteContent(data._id)}
                   onPlay={data._id}
                   badge={data.content_format?.toUpperCase() || "IMG"}
@@ -163,6 +106,7 @@ export default function ManageContents() {
           </div>
         )}
       </div>
+      </>}
     </div>
   )
 }
