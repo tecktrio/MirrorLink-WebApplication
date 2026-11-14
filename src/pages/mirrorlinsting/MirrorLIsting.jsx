@@ -180,10 +180,10 @@ export default function MirrorListing({ site_id, site_name = "Selected Site", on
 
                 {/* Mirror Meta info & Stream URL */}
                 <div className="mt-4 pt-3 border-t border-neutral-100 space-y-2 text-[11px] text-neutral-500">
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
                       <span className="font-semibold text-neutral-700">Stream Name: </span>
-                      <span className="font-mono bg-neutral-100 px-1.5 py-0.5 rounded text-black">{mirror.mirror_name}</span>
+                      <span className="font-mono bg-neutral-100 px-1.5 py-0.5 rounded text-black break-words">{mirror.mirror_name}</span>
                     </div>
                     <div>
                       <span className="font-semibold text-neutral-700">Resolution: </span>

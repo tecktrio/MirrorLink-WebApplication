@@ -133,18 +133,18 @@ export default function SelectMirror({ site_id, handleclose, onMirrorAdded }) {
       </div>
 
       {/* Footer Actions */}
-      <div className="pt-4 border-t border-neutral-100 flex items-center justify-between gap-3">
+      <div className="pt-4 border-t border-neutral-100 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-3">
         <button
           type="button"
           onClick={handleclose}
-          className="px-5 py-2.5 rounded-xl border border-neutral-300 text-neutral-700 hover:bg-neutral-50 font-semibold text-xs transition-colors cursor-pointer"
+          className="w-full sm:w-auto px-5 py-2.5 rounded-xl border border-neutral-300 text-neutral-700 hover:bg-neutral-50 font-semibold text-xs transition-colors cursor-pointer"
         >
           Cancel
         </button>
         <button
           onClick={HandleAddMirror}
           disabled={selectedMirrorList.length === 0 || isSubmitting}
-          className={`px-6 py-2.5 rounded-xl text-white font-medium text-xs shadow-xs transition-all flex items-center gap-2 cursor-pointer ${
+          className={`w-full sm:w-auto justify-center px-6 py-2.5 rounded-xl text-white font-medium text-xs shadow-xs transition-all flex items-center gap-2 cursor-pointer ${
             selectedMirrorList.length > 0 && !isSubmitting
               ? "bg-black hover:bg-neutral-800"
               : "bg-neutral-300 text-neutral-500 cursor-not-allowed"

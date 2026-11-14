@@ -33,9 +33,7 @@ export default function SubscriptionPage() {
   const active = Boolean(details?.plan_active);
   const renewalDate = formatDate(subscription.charge_at || subscription.current_end);
   const billingPeriod = plan.period === "monthly" ? "month" : (plan.period || "month");
-  const price = Number(plan.amount) > 0
-    ? new Intl.NumberFormat(undefined, { style: "currency", currency: plan.currency || "INR", maximumFractionDigits: 0 }).format(Number(plan.amount) / 100)
-    : "—";
+  const price = "₹12,999";
 
   return (
     <section className="ml-subscription-page">

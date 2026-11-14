@@ -3,9 +3,31 @@
 @tailwind utilities;
 
 @layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
+  html {
+    width: 100%;
+    min-width: 320px;
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     @apply bg-[#f6f6f6] text-neutral-900 font-sans antialiased;
     font-family: -apple-system, BlinkMacSystemFont, "Uber Move Text", "Uber Move", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    width: 100%;
+    min-width: 320px;
+    overflow-x: hidden;
+  }
+
+  img,
+  video,
+  canvas,
+  iframe {
+    max-width: 100%;
   }
 }
 
@@ -50,4 +72,27 @@
 }
 .no-scrollbar::-webkit-scrollbar {
   display: none;
+}
+
+html, body, #root { max-width: 100%; min-height: 100%; }
+body { overflow-x: hidden; }
+img, video, canvas, svg { max-width: 100%; }
+
+@media (max-width: 767px) {
+  /* iOS Safari zooms focused controls below 16px. Keep text controls at the safe size. */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+  textarea,
+  select {
+    font-size: 16px !important;
+  }
+
+  .ml-console-main { min-width: 0; padding-left: 12px; padding-right: 12px; }
+  .ml-console-main > * { max-width: 100%; }
+  .ml-console-main [class*="grid"] { min-width: 0; grid-template-columns: minmax(0, 1fr); }
+  .ml-console-main .flex { min-width: 0; flex-wrap: wrap; }
+  .ml-console-main .flex > * { min-width: 0; }
+  .ml-console-main input, .ml-console-main textarea, .ml-console-main select { max-width: 100%; }
+  .ml-console-main button, .ml-console-main a { overflow-wrap: anywhere; }
+  .ml-console-main table { display: block; max-width: 100%; overflow-x: auto; }
+  .ml-console-footer { gap: 10px; flex-wrap: wrap; }
 }

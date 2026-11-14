@@ -60,7 +60,7 @@ export default function PricingPage() {
         key: data.key_id,
         subscription_id: data.subscription_id,
         name: "MirrorLink",
-        description: "MirrorLink Business · ₹25,000 per month",
+        description: "MirrorLink Business · ₹12,999 per month",
         image: `${window.location.origin}/logo.png`,
         prefill: { name: Cookies.get("username") || "", email: "", contact: "" },
         theme: { color: "#080808" },
@@ -112,7 +112,7 @@ export default function PricingPage() {
         <div className="ml-price-heading"><span>ONE SIMPLE SUBSCRIPTION</span><h1>Everything your<br />screens need.</h1><p>One plan with the full MirrorLink toolkit, ready to scale with your business.</p></div>
         <section className="ml-price-card" aria-labelledby="ml-plan-title">
           <div className="ml-price-card-head"><div><span className="ml-price-kicker">ALL-IN-ONE PLAN</span><h2 id="ml-plan-title">MirrorLink Business</h2></div><span className="ml-included">EVERYTHING INCLUDED</span></div>
-          <div className="ml-price-amount"><span>₹</span>25,000<small> / month</small></div>
+          <div className="ml-price-amount"><span>₹</span>12,999<small> / month</small></div>
           <p className="ml-price-tax">Recurring monthly billing securely handled by Razorpay.</p>
           <div className="ml-price-rule" />
           <div className="ml-includes-title">YOUR SUBSCRIPTION INCLUDES</div>

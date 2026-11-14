@@ -1,0 +1,145 @@
+@media (max-width: 720px) {
+  .ml-nav {
+    height: auto;
+    min-height: 65px;
+    padding: 10px 20px;
+    gap: 10px 16px;
+    flex-wrap: wrap;
+  }
+
+  .ml-nav-links {
+    order: 3;
+    display: flex;
+    width: 100%;
+    margin: 0;
+    gap: 24px;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 7px 0 3px;
+    scrollbar-width: none;
+  }
+
+  .ml-nav-links::-webkit-scrollbar { display: none; }
+  .ml-nav-links a { flex: 0 0 auto; font-size: 12px; }
+}
+
+@media (max-width: 560px) {
+  .ml-login-page .ml-auth-layout,
+  .ml-auth-layout {
+    grid-template-columns: minmax(0, 1fr);
+    padding-left: 18px;
+    padding-right: 18px;
+  }
+
+  .ml-auth-card {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .ml-auth-intro h1 {
+    font-size: clamp(46px, 13vw, 58px);
+    letter-spacing: -4px;
+  }
+
+  .ml-pricing-main {
+    width: 100%;
+    padding-left: 17px;
+    padding-right: 17px;
+  }
+
+  .ml-price-card {
+    min-width: 0;
+    padding: 24px 19px;
+  }
+
+  .ml-price-card-head {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+
+  .ml-price-foot i {
+    display: none;
+  }
+
+  .ml-pricing-footer {
+    flex-wrap: wrap;
+    gap: 8px 14px;
+    min-height: 68px;
+    height: auto;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .ml-hero-art {
+    min-width: 0;
+  }
+
+  .ml-visual {
+    transform: none;
+  }
+
+  .ml-food-art {
+    right: 0;
+    width: 48%;
+  }
+
+  .ml-screen-copy {
+    max-width: 58%;
+  }
+
+  .ml-screen-copy strong {
+    font-size: clamp(22px, 7vw, 27px);
+  }
+
+  .ml-footer > div {
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+
+  .ml-console-main > * {
+    min-width: 0;
+  }
+
+  .ml-subscription-details {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ml-subscription-details > div:nth-child(even) {
+    padding-left: 0;
+    border-left: 0;
+  }
+
+  .ml-subscription-details > div:last-child {
+    border-bottom: 0;
+  }
+
+  .ml-explore-banner > span {
+    line-height: 1.5;
+  }
+}
+
+@media (max-width: 400px) {
+  .ml-screen {
+    min-height: 230px;
+  }
+
+  .ml-screen-copy {
+    padding-left: 14px;
+  }
+
+  .ml-screen-copy strong {
+    font-size: 21px;
+    letter-spacing: -0.7px;
+  }
+
+  .ml-food-art {
+    opacity: 0.82;
+  }
+
+  .ml-final-cta h2,
+  .ml-section-head h2,
+  .ml-plan-intro h2 {
+    font-size: 42px;
+    letter-spacing: -2.8px;
+  }
+}

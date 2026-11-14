@@ -432,7 +432,7 @@ export default function ImageCropperModal({
           {/* Zoom Slider and Transform Buttons */}
           <div className="flex items-center justify-between gap-3 flex-wrap">
             {/* Zoom Controls */}
-            <div className="flex items-center gap-2 flex-1 min-w-[200px]">
+            <div className="flex items-center gap-2 flex-1 min-w-0 sm:min-w-[200px]">
               <span className="text-[11px] font-semibold text-neutral-500 shrink-0">Zoom</span>
               <button
                 type="button"
