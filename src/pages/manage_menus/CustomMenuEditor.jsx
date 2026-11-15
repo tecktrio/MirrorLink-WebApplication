@@ -1,10 +1,10 @@
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { Link, Navigate, useNavigate, useSearchParams } from 'react-router-dom'
+import { Link, Navigate, useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 import { CookieContext } from '../../Contexts/CookieContext'
 import { CREATE_CONTENT, GET_MENU_TEMPLATES, GET_MENUS, SAVE_MENU, SAVE_MENU_TEMPLATE } from '../../serverRequests/ServerRequests'
 
 const freshBlock = (type, scope = 'page') => type === 'text'
-  ? { type, scope, text: '', holder_key: `text-${Math.random().toString(36).slice(2, 9)}`, holder_label: scope === 'item' ? 'Item text' : 'Text holder', x: 5, y: 5, width: 90, height: 22, font_size: 24, font_family: 'Arial', bold: false, color: '#171717' }
+  ? { type, scope, text: '', holder_key: `text-${Math.random().toString(36).slice(2, 9)}`, holder_label: scope === 'item' ? 'Item text' : 'Text holder', x: 5, y: 5, width: 90, height: 22, font_size: 24, line_height: 1.2, font_family: 'Arial', bold: false, italic: false, underline: false, text_transform: 'none', letter_spacing: 0, text_align: 'left', color: '#171717' }
   : { type, scope, image_url: '', holder_key: `image-${Math.random().toString(36).slice(2, 9)}`, holder_label: scope === 'item' ? 'Item image' : 'Image holder', x: 5, y: 5, width: 90, height: 35, crop: 'cover' }
 const defaultItemArea = { x: 5, y: 34, width: 90, height: 60, columns: 2 }
 const itemColor = index => `hsl(${(index * 137.508) % 360} 72% 42%)`
@@ -14,6 +14,7 @@ export default function CustomMenuEditor() {
   const loginKey = getCookie('login_key')
   const [params] = useSearchParams()
   const navigate = useNavigate()
+  const location = useLocation()
   const canvasRef = useRef(null)
   const [templateId, setTemplateId] = useState('')
   const [menuId, setMenuId] = useState('')
@@ -40,12 +41,36 @@ export default function CustomMenuEditor() {
         setTemplateId(template?._id || '')
         setMenuId(requestedMenu._id)
         setName(template?.name || 'My custom menu')
-        const savedBlocks = requestedMenu.data?.blocks || template?.blocks || []
-        const configuredBlocks = savedBlocks.map((block, i) => ({ ...block, scope: block.scope || 'page', holder_key: block.holder_key || `${block.type}-${i + 1}`, holder_label: block.holder_label || `${block.type === 'text' ? 'Text' : 'Image'} ${i + 1}` }))
+        const templateBlocks = template?.blocks || []
+        const savedBlocks = requestedMenu.data?.blocks || []
+        const savedByKey = {}
+        savedBlocks.forEach(b => {
+          if (b && b.holder_key) savedByKey[b.holder_key] = b
+        })
+        const configuredBlocks = (templateBlocks.length ? templateBlocks : savedBlocks).map((tblk, i) => {
+          const sblk = savedByKey[tblk.holder_key]
+          return {
+            ...tblk,
+            scope: tblk.scope || 'page',
+            holder_key: tblk.holder_key || `${tblk.type}-${i + 1}`,
+            holder_label: tblk.holder_label || `${tblk.type === 'text' ? 'Text' : 'Image'} ${i + 1}`,
+            text: sblk?.text !== undefined ? sblk.text : (tblk.text || ''),
+            image_url: sblk?.image_url !== undefined ? sblk.image_url : (tblk.image_url || '')
+          }
+        })
         const count = Math.max(1, Number(template?.item_count || requestedMenu.data?.item_count || 1))
         const savedItems = requestedMenu.data?.items || []
         const fallbackAssignments = Array.from({ length: count }, () => configuredBlocks.filter(b => b.scope === 'item').map(b => b.holder_key))
-        setData({ ...requestedMenu.data, blocks: configuredBlocks, item_count: count, item_area: template?.item_area || defaultItemArea, item_assignments: requestedMenu.data?.item_assignments || template?.item_assignments || fallbackAssignments, items: Array.from({ length: count }, (_, i) => savedItems[i] || {}) })
+        setData({
+          ...requestedMenu.data,
+          background: template?.background || requestedMenu.data?.background || '#ffffff',
+          background_image: template?.background_image !== undefined ? template.background_image : (requestedMenu.data?.background_image || ''),
+          blocks: configuredBlocks,
+          item_count: count,
+          item_area: template?.item_area || defaultItemArea,
+          item_assignments: template?.item_assignments || requestedMenu.data?.item_assignments || fallbackAssignments,
+          items: Array.from({ length: count }, (_, i) => savedItems[i] || {})
+        })
       } else {
         const template = templates.find(x => x._id === params.get('templateId') && x.custom_layout)
         if (template) {
@@ -110,8 +135,8 @@ export default function CustomMenuEditor() {
     setBusy(true); setError('')
     try {
       if (templateMode) {
-        const result = await SAVE_MENU_TEMPLATE(loginKey, { _id: templateId || undefined, name, background: data.background, background_image: data.background_image, canvas_orientation: previewSize.height > previewSize.width ? 'portrait' : 'landscape', item_count: data.item_count, item_area: data.item_area, item_assignments: data.item_assignments, blocks: data.blocks.map((block, i) => ({ ...block, text: '', image_url: '', holder_key: block.holder_key || `${block.type}-${i + 1}` })) })
-        navigate('/manage_menus')
+        await SAVE_MENU_TEMPLATE(loginKey, { _id: templateId || undefined, name, background: data.background, background_image: data.background_image, canvas_orientation: previewSize.height > previewSize.width ? 'portrait' : 'landscape', item_count: data.item_count, item_area: data.item_area, item_assignments: data.item_assignments, blocks: data.blocks.map((block, i) => ({ ...block, text: '', image_url: '', holder_key: block.holder_key || `${block.type}-${i + 1}` })) })
+        navigate('/manage_menus', { state: location.state?.returnToTemplateSelection ? { openTemplateChooser: true } : undefined })
         return
       }
       await SAVE_MENU(loginKey, menuId || undefined, templateId, data)
@@ -151,14 +176,14 @@ export default function CustomMenuEditor() {
   const itemArea = data.item_area || defaultItemArea
   const renderHolder = (block, index) => {
     const assignedToActive = assigningHolders && block.scope === 'item' && (data.item_assignments?.[activeItem] || []).includes(block.holder_key)
-    return <div key={block.holder_key || index} onPointerDown={e => templateMode ? (assigningHolders ? (e.stopPropagation(), block.scope !== 'item' && changeBlock(index, { scope: 'item' }), toggleItemHolder(index)) : dragStart(e, index)) : (e.stopPropagation(), setSelected(index))} className={`absolute touch-none overflow-hidden ${selected === index ? 'outline outline-2 outline-violet-600' : 'hover:outline hover:outline-1 hover:outline-violet-400'}`} style={{ left: `${block.x}%`, top: `${block.y}%`, width: `${block.width}%`, height: `${block.height}%`, cursor: templateMode ? (assigningHolders ? 'pointer' : 'move') : 'default', outline: assignedToActive ? `3px solid ${itemColor(activeItem)}` : undefined, outlineOffset: assignedToActive ? '2px' : undefined }}>{block.type === 'image' ? block.image_url ? <img src={block.image_url} alt="" className="h-full w-full" style={{ objectFit: block.crop || 'cover' }} /> : <div className="grid h-full place-items-center bg-neutral-100 text-sm text-neutral-500">{templateMode ? (block.holder_label || 'Image holder') : block.holder_label}</div> : <div className="h-full w-full whitespace-pre-wrap break-words" style={{ fontSize: `${block.font_size}px`, fontFamily: block.font_family, fontWeight: block.bold ? 700 : 400, color: block.color || '#171717' }}>{templateMode ? (block.holder_label || 'Text holder') : (block.text || block.holder_label)}</div>}{templateMode && !assigningHolders && selected === index && <button aria-label="Resize holder" onPointerDown={e => dragStart(e, index, true)} className="absolute bottom-0 right-0 h-4 w-4 cursor-nwse-resize border-2 border-white bg-violet-600" />}</div>
+    return <div key={block.holder_key || index} onPointerDown={e => templateMode ? (assigningHolders ? (e.stopPropagation(), block.scope !== 'item' && changeBlock(index, { scope: 'item' }), toggleItemHolder(index)) : dragStart(e, index)) : (e.stopPropagation(), setSelected(index))} className={`absolute touch-none overflow-hidden ${selected === index ? 'outline outline-2 outline-violet-600' : 'hover:outline hover:outline-1 hover:outline-violet-400'}`} style={{ left: `${block.x}%`, top: `${block.y}%`, width: `${block.width}%`, height: `${block.height}%`, cursor: templateMode ? (assigningHolders ? 'pointer' : 'move') : 'default', outline: assignedToActive ? `3px solid ${itemColor(activeItem)}` : undefined, outlineOffset: assignedToActive ? '2px' : undefined }}>{block.type === 'image' ? block.image_url ? <img src={block.image_url} alt="" className="h-full w-full" style={{ objectFit: block.crop || 'cover' }} /> : <div className="grid h-full place-items-center bg-neutral-100 text-sm text-neutral-500">{templateMode ? (block.holder_label || 'Image holder') : block.holder_label}</div> : <div className="h-full w-full whitespace-pre-wrap break-words" style={{ fontSize: `${block.font_size}px`, lineHeight: block.line_height ? `${block.line_height}` : '1.2', fontFamily: block.font_family, fontWeight: block.bold ? 700 : 400, fontStyle: block.italic ? 'italic' : 'normal', textAlign: block.text_align || 'left', textDecoration: block.underline ? 'underline' : 'none', textTransform: block.text_transform || 'none', letterSpacing: block.letter_spacing ? `${block.letter_spacing}px` : 'normal', color: block.color || '#171717' }}>{templateMode ? (block.holder_label || 'Text holder') : (block.text || block.holder_label)}</div>}{templateMode && !assigningHolders && selected === index && <button aria-label="Resize holder" onPointerDown={e => dragStart(e, index, true)} className="absolute bottom-0 right-0 h-4 w-4 cursor-nwse-resize border-2 border-white bg-violet-600" />}</div>
   }
   const renderMenuItems = () => {
     const columns = Math.max(1, Number(itemArea.columns || 2))
     const rows = Math.ceil(data.item_count / columns)
     const cellWidth = itemArea.width / columns
     const cellHeight = itemArea.height / rows
-    return data.items.map((item, itemIndex) => <div key={itemIndex} className="absolute border border-neutral-400/60" style={{ left: `${itemArea.x + (itemIndex % columns) * cellWidth}%`, top: `${itemArea.y + Math.floor(itemIndex / columns) * cellHeight}%`, width: `${cellWidth}%`, height: `${cellHeight}%` }}>{holdersForItem(itemIndex).map(({ block, index }) => <div key={block.holder_key || index} className="absolute overflow-hidden" style={{ left: `${block.x}%`, top: `${block.y}%`, width: `${block.width}%`, height: `${block.height}%` }}>{block.type === 'image' ? item[block.holder_key] ? <img src={item[block.holder_key]} alt="" className="h-full w-full" style={{ objectFit: block.crop || 'cover' }} /> : <div className="grid h-full place-items-center bg-neutral-100 text-[10px] text-neutral-500">{block.holder_label}</div> : <div className="h-full whitespace-pre-wrap break-words" style={{ fontSize: `${block.font_size}px`, fontFamily: block.font_family, fontWeight: block.bold ? 700 : 400, color: block.color || '#171717' }}>{item[block.holder_key] || block.holder_label}</div>}</div>)}</div>)
+    return data.items.map((item, itemIndex) => <div key={itemIndex} className="absolute border border-neutral-400/60" style={{ left: `${itemArea.x + (itemIndex % columns) * cellWidth}%`, top: `${itemArea.y + Math.floor(itemIndex / columns) * cellHeight}%`, width: `${cellWidth}%`, height: `${cellHeight}%` }}>{holdersForItem(itemIndex).map(({ block, index }) => <div key={block.holder_key || index} className="absolute overflow-hidden" style={{ left: `${block.x}%`, top: `${block.y}%`, width: `${block.width}%`, height: `${block.height}%` }}>{block.type === 'image' ? item[block.holder_key] ? <img src={item[block.holder_key]} alt="" className="h-full w-full" style={{ objectFit: block.crop || 'cover' }} /> : <div className="grid h-full place-items-center bg-neutral-100 text-[10px] text-neutral-500">{block.holder_label}</div> : <div className="h-full whitespace-pre-wrap break-words" style={{ fontSize: `${block.font_size}px`, lineHeight: block.line_height ? `${block.line_height}` : '1.2', fontFamily: block.font_family, fontWeight: block.bold ? 700 : 400, fontStyle: block.italic ? 'italic' : 'normal', textAlign: block.text_align || 'left', textDecoration: block.underline ? 'underline' : 'none', textTransform: block.text_transform || 'none', letterSpacing: block.letter_spacing ? `${block.letter_spacing}px` : 'normal', color: block.color || '#171717' }}>{item[block.holder_key] || block.holder_label}</div>}</div>)}</div>)
   }
 
   if (!templateMode) return <Navigate to="/manage_menus" replace />
@@ -178,7 +203,126 @@ export default function CustomMenuEditor() {
           {responsivePreview && <><button aria-label="Adjust preview height" title={`Preview height: ${previewSize.height}px; drag to resize`} onPointerDown={e => resizePreview(e, 'height')} className="absolute -top-3 left-1/2 z-10 h-2 w-16 -translate-x-1/2 cursor-ns-resize rounded-full bg-violet-600 shadow ring-4 ring-white"/><button aria-label="Adjust preview width" title={`Preview width: ${previewSize.width}px; drag to resize`} onPointerDown={e => resizePreview(e, 'width')} className="absolute -right-3 top-1/2 z-10 h-16 w-2 -translate-y-1/2 cursor-ew-resize rounded-full bg-violet-600 shadow ring-4 ring-white"/><span className="absolute -bottom-6 right-0 text-xs text-neutral-500">{previewSize.width} × {previewSize.height}px</span></>}
         </div>
       </main>
-      <aside className="order-3 overflow-auto border-l bg-white p-4">{templateMode ? <>{activeBlock ? <><div className="mb-4 flex items-center justify-between"><h2 className="text-xs font-bold uppercase tracking-wider text-neutral-500">{activeBlock.scope === 'item' ? 'Item ' : 'Page '}{activeBlock.type} holder</h2><button className="text-xs text-red-600" onClick={() => { changeData('blocks', data.blocks.filter((_, i) => i !== selected)); setSelected(-1) }}>Delete</button></div><label className="block text-sm">Assign holder to<select className="mt-1 w-full rounded-lg border p-2" value={activeBlock.scope || 'page'} onChange={e => changeBlock(selected, { scope: e.target.value })}><option value="page">Menu page</option><option value="item">Each item</option></select></label><label className="mt-3 block text-sm">Field label<input className="mt-1 w-full rounded-lg border p-2" value={activeBlock.holder_label || ''} onChange={e => changeBlock(selected, { holder_label: e.target.value })} placeholder={activeBlock.type === 'text' ? 'Text field label' : 'Image field label'} /></label>{activeBlock.type === 'text' ? <><label className="mt-3 block text-sm">Font<select className="mt-1 w-full rounded-lg border p-2" value={activeBlock.font_family} onChange={e => changeBlock(selected, { font_family: e.target.value })}><option>Arial</option><option>Georgia</option><option>Verdana</option><option>Tahoma</option></select></label><label className="mt-3 block text-sm">Font size<input className="mt-1 w-full" type="range" min="12" max="80" value={activeBlock.font_size} onChange={e => changeBlock(selected, { font_size: Number(e.target.value) })}/><span className="text-xs">{activeBlock.font_size}px</span></label><label className="mt-3 flex items-center gap-2 text-sm"><input type="checkbox" checked={Boolean(activeBlock.bold)} onChange={e => changeBlock(selected, { bold: e.target.checked })}/>Bold</label><label className="mt-3 block text-sm">Text color<input type="color" className="ml-2 h-8 w-10 align-middle" value={activeBlock.color || '#171717'} onChange={e => changeBlock(selected, { color: e.target.value })}/></label></> : <label className="mt-3 block text-sm">Image fit<select className="mt-1 w-full rounded-lg border p-2" value={activeBlock.crop || 'cover'} onChange={e => changeBlock(selected, { crop: e.target.value })}><option value="cover">Cover (crop to fill)</option><option value="contain">Contain (show full image)</option></select></label>}<div className="mt-5 grid grid-cols-2 gap-2">{['x','y','width','height'].map(key => <label key={key} className="text-xs text-neutral-500">{key === 'x' ? 'Left' : key === 'y' ? 'Top' : key === 'width' ? 'Width' : 'Height'} (%)<input className="mt-1 w-full rounded border p-2 text-sm text-neutral-900" type="number" min="0" max="100" value={Math.round(activeBlock[key])} onChange={e => changeBlock(selected, { [key]: Math.max(0, Math.min(100, Number(e.target.value))) })}/></label>)}</div></> : <div className="py-10 text-center text-sm text-neutral-400">Select a holder to edit its label and style.</div>}</> : <><h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-neutral-500">Page holders</h2>{data.blocks.map((block, i) => block.scope === 'item' ? null : <div key={block.holder_key || i} className="mb-4 border-b pb-4"><label className="mb-2 block text-sm font-semibold">{block.holder_label || `${block.type} ${i + 1}`}</label>{block.type === 'text' ? <textarea className="w-full rounded-lg border p-2" rows="2" value={block.text || ''} onChange={e => changeBlock(i, { text: e.target.value })} /> : <><input className="w-full rounded-lg border p-2 text-xs" value={block.image_url || ''} onChange={e => changeBlock(i, { image_url: e.target.value })} placeholder="Image URL"/><label className="mt-2 block cursor-pointer rounded-lg border border-dashed p-3 text-center text-sm">Upload image<input type="file" accept="image/*" className="sr-only" onChange={e => upload(e.target.files?.[0], i)} /></label></>}</div>)}<h2 className="mb-3 mt-5 text-xs font-bold uppercase tracking-wider text-neutral-500">Items ({data.item_count} fixed slots)</h2>{data.items.map((item, itemIndex) => <section key={itemIndex} className="mb-4 rounded-xl border p-3"><h3 className="mb-3 text-sm font-bold">Item {itemIndex + 1}</h3>{holdersForItem(itemIndex).map(({ block, index: blockIndex }) => <div key={block.holder_key || blockIndex} className="mb-3"><label className="mb-1 block text-xs font-semibold">{block.holder_label || `${block.type} ${blockIndex + 1}`}</label>{block.type === 'text' ? <textarea className="w-full rounded-lg border p-2 text-sm" rows="2" value={item[block.holder_key] || ''} onChange={e => changeItemField(itemIndex, block.holder_key, e.target.value)} /> : <><input className="w-full rounded-lg border p-2 text-xs" value={item[block.holder_key] || ''} onChange={e => changeItemField(itemIndex, block.holder_key, e.target.value)} placeholder="Image URL"/><label className="mt-2 block cursor-pointer rounded-lg border border-dashed p-2 text-center text-xs">Upload image<input type="file" accept="image/*" className="sr-only" onChange={e => uploadItemImage(e.target.files?.[0], itemIndex, block.holder_key)} /></label></>}</div>)}</section>)}</>}</aside>
+      <aside className="order-3 overflow-auto border-l bg-white p-4">{templateMode ? <>{activeBlock ? <><div className="mb-4 flex items-center justify-between"><h2 className="text-xs font-bold uppercase tracking-wider text-neutral-500">{activeBlock.scope === 'item' ? 'Item ' : 'Page '}{activeBlock.type} holder</h2><button className="text-xs text-red-600" onClick={() => { changeData('blocks', data.blocks.filter((_, i) => i !== selected)); setSelected(-1) }}>Delete</button></div><label className="block text-sm">Assign holder to<select className="mt-1 w-full rounded-lg border p-2" value={activeBlock.scope || 'page'} onChange={e => changeBlock(selected, { scope: e.target.value })}><option value="page">Menu page</option><option value="item">Each item</option></select></label><label className="mt-3 block text-sm">Field label<input className="mt-1 w-full rounded-lg border p-2" value={activeBlock.holder_label || ''} onChange={e => changeBlock(selected, { holder_label: e.target.value })} placeholder={activeBlock.type === 'text' ? 'Text field label' : 'Image field label'} /></label>{activeBlock.type === 'text' ? <>
+  <label className="mt-3 block text-sm">Font
+    <select className="mt-1 w-full rounded-lg border p-2 text-sm" value={activeBlock.font_family} onChange={e => changeBlock(selected, { font_family: e.target.value })}>
+      <option value="Arial">Arial</option>
+      <option value="Georgia">Georgia</option>
+      <option value="Verdana">Verdana</option>
+      <option value="Tahoma">Tahoma</option>
+      <option value="Trebuchet MS">Trebuchet MS</option>
+      <option value="Impact">Impact</option>
+      <option value="Times New Roman">Times New Roman</option>
+      <option value="Courier New">Courier New</option>
+    </select>
+  </label>
+  <label className="mt-3 block text-sm">Font size
+    <input className="mt-1 w-full" type="range" min="12" max="80" value={activeBlock.font_size} onChange={e => changeBlock(selected, { font_size: Number(e.target.value) })}/>
+    <span className="text-xs text-neutral-500">{activeBlock.font_size}px</span>
+  </label>
+  <div className="mt-3">
+    <span className="block text-sm mb-1.5 font-medium">Text style</span>
+    <div className="grid grid-cols-3 gap-1.5">
+      <button
+        type="button"
+        onClick={() => changeBlock(selected, { bold: !activeBlock.bold })}
+        className={`px-2 py-1.5 rounded-lg border text-xs font-bold transition-colors ${activeBlock.bold ? 'bg-violet-100 border-violet-500 text-violet-800' : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-700'}`}
+        title="Bold text"
+      >
+        Bold (B)
+      </button>
+      <button
+        type="button"
+        onClick={() => changeBlock(selected, { italic: !activeBlock.italic })}
+        className={`px-2 py-1.5 rounded-lg border text-xs italic transition-colors ${activeBlock.italic ? 'bg-violet-100 border-violet-500 text-violet-800' : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-700'}`}
+        title="Italic text"
+      >
+        Italic (I)
+      </button>
+      <button
+        type="button"
+        onClick={() => changeBlock(selected, { underline: !activeBlock.underline })}
+        className={`px-2 py-1.5 rounded-lg border text-xs underline transition-colors ${activeBlock.underline ? 'bg-violet-100 border-violet-500 text-violet-800' : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-700'}`}
+        title="Underline text"
+      >
+        Underline (U)
+      </button>
+    </div>
+  </div>
+  <div className="mt-3">
+    <span className="block text-sm mb-1.5 font-medium">Alignment</span>
+    <div className="grid grid-cols-3 gap-1.5">
+      <button
+        type="button"
+        onClick={() => changeBlock(selected, { text_align: 'left' })}
+        className={`px-2 py-1.5 rounded-lg border text-xs transition-colors ${(activeBlock.text_align || 'left') === 'left' ? 'bg-violet-100 border-violet-500 text-violet-800 font-semibold' : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-700'}`}
+      >
+        Left
+      </button>
+      <button
+        type="button"
+        onClick={() => changeBlock(selected, { text_align: 'center' })}
+        className={`px-2 py-1.5 rounded-lg border text-xs transition-colors ${activeBlock.text_align === 'center' ? 'bg-violet-100 border-violet-500 text-violet-800 font-semibold' : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-700'}`}
+      >
+        Center
+      </button>
+      <button
+        type="button"
+        onClick={() => changeBlock(selected, { text_align: 'right' })}
+        className={`px-2 py-1.5 rounded-lg border text-xs transition-colors ${activeBlock.text_align === 'right' ? 'bg-violet-100 border-violet-500 text-violet-800 font-semibold' : 'bg-neutral-50 hover:bg-neutral-100 text-neutral-700'}`}
+      >
+        Right
+      </button>
+    </div>
+  </div>
+  <div className="mt-3">
+    <span className="block text-sm mb-1.5 font-medium">Transform</span>
+    <select
+      className="w-full rounded-lg border p-2 text-sm"
+      value={activeBlock.text_transform || 'none'}
+      onChange={e => changeBlock(selected, { text_transform: e.target.value })}
+    >
+      <option value="none">Normal capitalization</option>
+      <option value="uppercase">UPPERCASE</option>
+      <option value="lowercase">lowercase</option>
+      <option value="capitalize">Capitalize Each Word</option>
+    </select>
+  </div>
+  <div className="mt-3">
+    <label className="block text-sm">
+      Line height
+      <input
+        className="mt-1 w-full"
+        type="range"
+        min="0.8"
+        max="3"
+        step="0.1"
+        value={activeBlock.line_height ?? 1.2}
+        onChange={e => changeBlock(selected, { line_height: Number(e.target.value) })}
+      />
+      <span className="text-xs text-neutral-500">{activeBlock.line_height ?? 1.2}</span>
+    </label>
+  </div>
+  <div className="mt-3">
+    <label className="block text-sm">
+      Letter spacing
+      <input
+        className="mt-1 w-full"
+        type="range"
+        min="-2"
+        max="10"
+        step="0.5"
+        value={activeBlock.letter_spacing ?? 0}
+        onChange={e => changeBlock(selected, { letter_spacing: Number(e.target.value) })}
+      />
+      <span className="text-xs text-neutral-500">{activeBlock.letter_spacing ?? 0}px</span>
+    </label>
+  </div>
+  <label className="mt-3 flex items-center justify-between text-sm">
+    <span>Text color</span>
+    <input type="color" className="h-8 w-12 rounded border p-0.5 cursor-pointer" value={activeBlock.color || '#171717'} onChange={e => changeBlock(selected, { color: e.target.value })}/>
+  </label>
+</> : <label className="mt-3 block text-sm">Image fit<select className="mt-1 w-full rounded-lg border p-2" value={activeBlock.crop || 'cover'} onChange={e => changeBlock(selected, { crop: e.target.value })}><option value="cover">Cover (crop to fill)</option><option value="contain">Contain (show full image)</option></select></label>}<div className="mt-5 grid grid-cols-2 gap-2">{['x','y','width','height'].map(key => <label key={key} className="text-xs text-neutral-500">{key === 'x' ? 'Left' : key === 'y' ? 'Top' : key === 'width' ? 'Width' : 'Height'} (%)<input className="mt-1 w-full rounded border p-2 text-sm text-neutral-900" type="number" min="0" max="100" value={Math.round(activeBlock[key])} onChange={e => changeBlock(selected, { [key]: Math.max(0, Math.min(100, Number(e.target.value))) })}/></label>)}</div></> : <div className="py-10 text-center text-sm text-neutral-400">Select a holder to edit its label and style.</div>}</> : <><h2 className="mb-3 text-xs font-bold uppercase tracking-wider text-neutral-500">Page holders</h2>{data.blocks.map((block, i) => block.scope === 'item' ? null : <div key={block.holder_key || i} className="mb-4 border-b pb-4"><label className="mb-2 block text-sm font-semibold">{block.holder_label || `${block.type} ${i + 1}`}</label>{block.type === 'text' ? <textarea className="w-full rounded-lg border p-2" rows="2" value={block.text || ''} onChange={e => changeBlock(i, { text: e.target.value })} /> : <><input className="w-full rounded-lg border p-2 text-xs" value={block.image_url || ''} onChange={e => changeBlock(i, { image_url: e.target.value })} placeholder="Image URL"/><label className="mt-2 block cursor-pointer rounded-lg border border-dashed p-3 text-center text-sm">Upload image<input type="file" accept="image/*" className="sr-only" onChange={e => upload(e.target.files?.[0], i)} /></label></>}</div>)}<h2 className="mb-3 mt-5 text-xs font-bold uppercase tracking-wider text-neutral-500">Items ({data.item_count} fixed slots)</h2>{data.items.map((item, itemIndex) => <section key={itemIndex} className="mb-4 rounded-xl border p-3"><h3 className="mb-3 text-sm font-bold">Item {itemIndex + 1}</h3>{holdersForItem(itemIndex).map(({ block, index: blockIndex }) => <div key={block.holder_key || blockIndex} className="mb-3"><label className="mb-1 block text-xs font-semibold">{block.holder_label || `${block.type} ${blockIndex + 1}`}</label>{block.type === 'text' ? <textarea className="w-full rounded-lg border p-2 text-sm" rows="2" value={item[block.holder_key] || ''} onChange={e => changeItemField(itemIndex, block.holder_key, e.target.value)} /> : <><input className="w-full rounded-lg border p-2 text-xs" value={item[block.holder_key] || ''} onChange={e => changeItemField(itemIndex, block.holder_key, e.target.value)} placeholder="Image URL"/><label className="mt-2 block cursor-pointer rounded-lg border border-dashed p-2 text-center text-xs">Upload image<input type="file" accept="image/*" className="sr-only" onChange={e => uploadItemImage(e.target.files?.[0], itemIndex, block.holder_key)} /></label></>}</div>)}</section>)}</>}</aside>
     </div>
   </div>
 }

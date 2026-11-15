@@ -1,18 +1,38 @@
 import React, { useContext, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useLocation, useNavigate } from 'react-router-dom'
 import { CookieContext } from '../../Contexts/CookieContext'
 import { DELETE_MENU, DELETE_MENU_TEMPLATE, GET_MENU_TEMPLATES, GET_MENUS, SAVE_MENU, GET_ALL_MIRRORS, GET_MENU_SHARE_LINK, SET_MENU_ACTIVE, SET_MENU_MIRRORS, CREATE_CONTENT } from '../../serverRequests/ServerRequests'
 
 const prepareCustomMenu = (template, saved = {}, menuId) => {
-  const blocks = (saved.blocks || template.blocks || []).map((block, index) => ({ ...block, scope: block.scope || 'page', holder_key: block.holder_key || `${block.type}-${index + 1}`, holder_label: block.holder_label || `${block.type === 'text' ? 'Text' : 'Image'} ${index + 1}` }))
+  const templateBlocks = template.blocks || []
+  const savedBlocks = saved.blocks || []
+  const savedByKey = {}
+  savedBlocks.forEach(b => {
+    if (b && b.holder_key) savedByKey[b.holder_key] = b
+  })
+
+  // Synchronize with the current template definition so newly added/updated template blocks appear
+  const blocks = templateBlocks.map((tblk, index) => {
+    const sblk = savedByKey[tblk.holder_key]
+    return {
+      ...tblk,
+      scope: tblk.scope || 'page',
+      holder_key: tblk.holder_key || `${tblk.type}-${index + 1}`,
+      holder_label: tblk.holder_label || `${tblk.type === 'text' ? 'Text' : 'Image'} ${index + 1}`,
+      text: sblk?.text !== undefined ? sblk.text : (tblk.text || ''),
+      image_url: sblk?.image_url !== undefined ? sblk.image_url : (tblk.image_url || '')
+    }
+  })
+
   const count = Math.max(1, Number(template.item_count || saved.item_count || 1))
-  const assignments = saved.item_assignments || template.item_assignments || Array.from({ length: count }, () => blocks.filter(block => block.scope === 'item').map(block => block.holder_key))
+  const assignments = template.item_assignments || saved.item_assignments || Array.from({ length: count }, () => blocks.filter(block => block.scope === 'item').map(block => block.holder_key))
   const oldItems = saved.items || []
   return { ...saved, _id: menuId, template_id: template._id, title: saved.title || '', background: template.background, background_image: template.background_image || '', blocks, item_count: count, item_assignments: assignments, item_area: template.item_area, items: Array.from({ length: count }, (_, index) => oldItems[index] || {}) }
 }
 
 export default function ManageMenus({ embedded = false }) {
   const navigate = useNavigate()
+  const location = useLocation()
   const { getCookie } = useContext(CookieContext)
   const loginKey = getCookie('login_key')
   const [templates, setTemplates] = useState([])
@@ -37,6 +57,14 @@ export default function ManageMenus({ embedded = false }) {
       setSelectedMirror(initial)
     }).catch(e => setError(e.message || 'Could not load mirrors'))
   }, [])
+
+  useEffect(() => {
+    if (!location.state?.openTemplateChooser) return
+    setEditor({})
+    setChosen(null)
+    reload()
+    navigate(location.pathname, { replace: true, state: null })
+  }, [location.key])
 
   useEffect(() => {
     if (!selectedMirror) { setShareUrl(''); return }
@@ -132,7 +160,7 @@ export default function ManageMenus({ embedded = false }) {
 
   const customPreview = chosen?.custom_layout && editor ? (() => {
     const holderStyle = block => ({ position: 'absolute', left: `${block.x}%`, top: `${block.y}%`, width: `${block.width}%`, height: `${block.height}%`, overflow: 'hidden' })
-    const renderField = (block, value, key) => <div key={key} style={holderStyle(block)}>{block.type === 'image' ? value ? <img src={value} alt="" className="h-full w-full" style={{ objectFit: block.crop || 'cover' }} /> : <div className="grid h-full place-items-center bg-neutral-100/80 text-[10px] text-neutral-500">{block.holder_label}</div> : <div className="h-full whitespace-pre-wrap break-words" style={{ fontSize: `${block.font_size}px`, fontFamily: block.font_family, fontWeight: block.bold ? 700 : 400, color: block.color || '#171717' }}>{value || block.holder_label}</div>}</div>
+    const renderField = (block, value, key) => <div key={key} style={holderStyle(block)}>{block.type === 'image' ? value ? <img src={value} alt="" className="h-full w-full" style={{ objectFit: block.crop || 'cover' }} /> : <div className="grid h-full place-items-center bg-neutral-100/80 text-[10px] text-neutral-500">{block.holder_label}</div> : <div className="h-full whitespace-pre-wrap break-words" style={{ fontSize: `${block.font_size}px`, lineHeight: block.line_height ? `${block.line_height}` : '1.2', fontFamily: block.font_family, fontWeight: block.bold ? 700 : 400, fontStyle: block.italic ? 'italic' : 'normal', textAlign: block.text_align || 'left', textDecoration: block.underline ? 'underline' : 'none', textTransform: block.text_transform || 'none', letterSpacing: block.letter_spacing ? `${block.letter_spacing}px` : 'normal', color: block.color || '#171717' }}>{value || block.holder_label}</div>}</div>
     return <div className="rounded-xl border bg-neutral-50 p-4"><div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h3 className="font-bold">Live preview</h3><div className="flex rounded-lg border bg-white p-0.5"><button onClick={() => setMenuPreviewOrientation('portrait')} className={`rounded-md px-2 py-1 text-xs ${menuPreviewOrientation === 'portrait' ? 'bg-violet-100 text-violet-800' : ''}`}>Portrait</button><button onClick={() => setMenuPreviewOrientation('landscape')} className={`rounded-md px-2 py-1 text-xs ${menuPreviewOrientation === 'landscape' ? 'bg-violet-100 text-violet-800' : ''}`}>Landscape</button></div></div><div className="relative mx-auto w-full overflow-hidden border bg-white shadow-sm transition-all" style={{ aspectRatio: menuPreviewOrientation === 'portrait' ? '10 / 16' : '16 / 10', maxWidth: menuPreviewOrientation === 'portrait' ? '440px' : '960px', backgroundColor: editor.background, backgroundImage: editor.background_image ? `url(${editor.background_image})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center' }}>{editor.blocks.map((block, i) => block.scope === 'item' ? null : renderField(block, block.type === 'text' ? block.text : block.image_url, block.holder_key || i))}{editor.items.flatMap((item, itemIndex) => { const assigned = editor.item_assignments?.[itemIndex] || []; return editor.blocks.map((block, i) => block.scope === 'item' && assigned.includes(block.holder_key) ? renderField(block, item[block.holder_key], `${itemIndex}-${block.holder_key || i}`) : null)})}</div><p className="mt-2 text-center text-xs text-neutral-500">{editor.title || 'Menu title'} · updates as you fill the form</p></div>
   })() : null
 
@@ -142,7 +170,7 @@ export default function ManageMenus({ embedded = false }) {
     {!editor && <section className="bg-white border rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4"><div><h2 className="font-bold">Menu QR Code</h2><p className="text-sm text-neutral-500">Each mirror has its own link and shows only its active menus.</p><select value={selectedMirror} onChange={e => setSelectedMirror(e.target.value)} className="mt-3 border rounded-lg px-3 py-2" aria-label="Choose mirror for menu QR">{mirrors.map(mirror => <option key={mirror._id} value={mirror._id}>{mirror.mirror_name}</option>)}</select></div>{selectedMirror && shareUrl ? <div className="flex items-center gap-4"><a href={shareUrl} target="_blank" rel="noreferrer" className="text-sm underline break-all">Open menu page</a><img src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=8&data=${encodeURIComponent(shareUrl)}`} alt="QR code for this mirror's menu page" className="w-32 h-32 border rounded-lg"/><button onClick={() => navigator.clipboard.writeText(shareUrl)} className="border rounded-lg px-3 py-2 text-sm">Copy link</button></div> : <p className="text-sm text-neutral-500">Create a mirror to get its menu QR code.</p>}</section>}
     {editor ? <div className="bg-white border rounded-2xl p-5 space-y-4">
       <div className="flex justify-between items-center"><h2 className="text-lg font-bold">{editor._id ? 'Edit Menu' : chosen ? `New ${chosen.name}` : 'Choose a menu template'}</h2><button onClick={() => { setEditor(null); setChosen(null) }} className="text-sm text-neutral-500">Close</button></div>
-      {!chosen ? <div className="grid md:grid-cols-3 gap-4">{templates.map(template => template.custom_layout ? <article key={template._id} className="border rounded-xl p-4"><button onClick={() => selectTemplate(template)} className="block w-full text-left hover:text-violet-700"><div className="h-28 rounded-lg mb-3" style={{ background: template.background, borderBottom: `8px solid ${template.accent || '#6d28d9'}` }} /><b>{template.name}</b><p className="text-sm text-neutral-500 mt-1">{template.description}</p><span className="mt-3 inline-block rounded-lg bg-black px-3 py-2 text-sm text-white">Use template</span></button><div className="mt-2 flex gap-2"><button onClick={() => navigate(`/custom-menu?templateId=${encodeURIComponent(template._id)}&templateMode=1`)} className="rounded-lg border px-3 py-2 text-sm">Edit template</button><button onClick={() => deleteTemplate(template)} className="rounded-lg border border-red-200 px-3 py-2 text-sm text-red-600">Delete template</button></div></article> : <button key={template._id} onClick={() => selectTemplate(template)} className="text-left border rounded-xl p-4 hover:border-black"><div className="h-28 rounded-lg mb-3" style={{ background: template.background, borderBottom: `8px solid ${template.accent}` }} /><b>{template.name}</b><p className="text-sm text-neutral-500 mt-1">{template.description}</p></button>)}<button onClick={() => navigate('/custom-menu?templateMode=1')} className="text-left border-2 border-dashed rounded-xl p-4 hover:border-black"><div className="h-28 rounded-lg mb-3 bg-neutral-50 flex items-center justify-center text-3xl">＋</div><b>Custom template</b><p className="text-sm text-neutral-500 mt-1">Create a layout with your own text and image holders.</p></button>{!templates.length && <p className="text-sm text-neutral-500">No templates are available.</p>}</div> : chosen.custom_layout ? <div className="grid lg:grid-cols-2 gap-6"><div className="space-y-5">
+      {!chosen ? <div className="grid md:grid-cols-3 gap-4">{templates.map(template => template.custom_layout ? <article key={template._id} className="border rounded-xl p-4"><button onClick={() => selectTemplate(template)} className="block w-full text-left hover:text-violet-700"><div className="h-28 rounded-lg mb-3" style={{ background: template.background, borderBottom: `8px solid ${template.accent || '#6d28d9'}` }} /><b>{template.name}</b><p className="text-sm text-neutral-500 mt-1">{template.description}</p><span className="mt-3 inline-block rounded-lg bg-black px-3 py-2 text-sm text-white">Use template</span></button><div className="mt-2 flex gap-2"><button onClick={() => navigate(`/custom-menu?templateId=${encodeURIComponent(template._id)}&templateMode=1`, { state: { returnToTemplateSelection: true } })} className="rounded-lg border px-3 py-2 text-sm">Edit template</button><button onClick={() => deleteTemplate(template)} className="rounded-lg border border-red-200 px-3 py-2 text-sm text-red-600">Delete template</button></div></article> : <button key={template._id} onClick={() => selectTemplate(template)} className="text-left border rounded-xl p-4 hover:border-black"><div className="h-28 rounded-lg mb-3" style={{ background: template.background, borderBottom: `8px solid ${template.accent}` }} /><b>{template.name}</b><p className="text-sm text-neutral-500 mt-1">{template.description}</p></button>)}<button onClick={() => navigate('/custom-menu?templateMode=1', { state: { returnToTemplateSelection: true } })} className="text-left border-2 border-dashed rounded-xl p-4 hover:border-black"><div className="h-28 rounded-lg mb-3 bg-neutral-50 flex items-center justify-center text-3xl">＋</div><b>Custom template</b><p className="text-sm text-neutral-500 mt-1">Create a layout with your own text and image holders.</p></button>{!templates.length && <p className="text-sm text-neutral-500">No templates are available.</p>}</div> : chosen.custom_layout ? <div className="grid lg:grid-cols-2 gap-6"><div className="space-y-5">
         <label className="block text-sm font-semibold">Menu title<input className="mt-1 w-full rounded-lg border px-3 py-2" value={editor.title || ''} onChange={e => update('title', e.target.value)} placeholder="Enter a menu title" /></label>
         <p className="text-sm text-neutral-500">Fill the fields defined by “{chosen.name}”. The template design is managed separately.</p>
         {editor.blocks.filter(block => block.scope !== 'item').length > 0 && <section className="rounded-xl border p-4"><h3 className="mb-3 font-bold">Menu page</h3><div className="space-y-4">{editor.blocks.map((block, index) => block.scope === 'item' ? null : <div key={block.holder_key || index}><label className="mb-1 block text-sm font-medium">{block.holder_label}</label>{block.type === 'text' ? <textarea className="w-full rounded-lg border p-2" rows="2" value={block.text || ''} onChange={e => update('blocks', editor.blocks.map((current, i) => i === index ? { ...current, text: e.target.value } : current))} /> : <><input className="w-full rounded-lg border p-2 text-sm" value={block.image_url || ''} onChange={e => update('blocks', editor.blocks.map((current, i) => i === index ? { ...current, image_url: e.target.value } : current))} placeholder="Image URL"/><label className="mt-2 inline-flex cursor-pointer rounded-lg border px-3 py-2 text-sm">Upload image<input type="file" accept="image/*" className="sr-only" onChange={e => uploadCustomImage(e.target.files?.[0], { scope: 'page', blockIndex: index })}/></label></>}</div>)}</div></section>}
