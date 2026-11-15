@@ -66,6 +66,24 @@ export const GET_SUBSCRIPTION_DETAILS = (login_key) => fetch(`${SERVER_URL}Billi
     if (!response.ok) throw new Error(data.status_text || 'Could not load subscription details.');
     return data;
 });
+export const GET_PLAN_DETAILS = (country_code, country_name) => fetch(`${SERVER_URL}Billing`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ service: 'get_plan', country_code, country_name }),
+}).then(async response => {
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.status_text || 'Could not load plan details.');
+    return data;
+});
+export const CONVERT_CURRENCY = (country_code, country_name) => fetch(`${SERVER_URL}Billing`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ service: 'convert_currency', country_code, country_name }),
+}).then(async response => {
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.status_text || 'Could not convert currency.');
+    return data;
+});
 function MAKE_REGISTER(username, password, email, contact, profile_image_url, address_line_1, address_line_2, address_line_3, otp) {
     // 'username', 'password', 'email_id', 'profile_image_url', 'contact', 'address_line_1', 'address_line_2', 'address_line_3'
     // You can use fetch or another method to send this data to your server

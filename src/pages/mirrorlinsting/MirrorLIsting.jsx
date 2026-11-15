@@ -169,12 +169,19 @@ export default function MirrorListing({ site_id, site_name = "Selected Site", on
                     </div>
                   </div>
 
+                  {/* Active / Inactive / Paused Status Badge synced from DB */}
                   <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full border shrink-0 ${
-                    mirror.playback_state === 'paused'
+                    mirror.is_active === false || String(mirror.status).toLowerCase() === 'inactive'
+                      ? 'bg-neutral-100 text-neutral-600 border-neutral-300'
+                      : mirror.playback_state === 'paused'
                       ? 'bg-amber-50 text-amber-700 border-amber-200'
                       : 'bg-emerald-50 text-emerald-700 border-emerald-200'
                   }`}>
-                    {mirror.playback_state === 'paused' ? 'Paused' : 'Active'}
+                    {mirror.is_active === false || String(mirror.status).toLowerCase() === 'inactive'
+                      ? 'Inactive'
+                      : mirror.playback_state === 'paused'
+                      ? 'Paused'
+                      : 'Active'}
                   </span>
                 </div>
 

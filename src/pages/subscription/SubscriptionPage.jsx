@@ -33,7 +33,7 @@ export default function SubscriptionPage() {
   const active = Boolean(details?.plan_active);
   const renewalDate = formatDate(subscription.charge_at || subscription.current_end);
   const billingPeriod = plan.period === "monthly" ? "month" : (plan.period || "month");
-  const price = "₹12,999";
+  const price = plan.amount != null ? `₹${Number(plan.amount).toLocaleString("en-IN")}` : "₹1";
 
   return (
     <section className="ml-subscription-page">
@@ -61,12 +61,16 @@ export default function SubscriptionPage() {
             </div>
             <div className="ml-subscription-price">{price}<small> / {billingPeriod}</small></div>
             <div className="ml-subscription-details">
-              <div><span>Next renewal</span><strong>{renewalDate}</strong>{renewalDate === "Not available yet" && <small>Razorpay has not provided the next billing date yet.</small>}</div>
+              <div><span>Next renewal</span><strong>{renewalDate}</strong>{renewalDate === "Not available yet" && <small>Subscription renewal date not yet available.</small>}</div>
               <div><span>Billing frequency</span><strong>{plan.interval > 1 ? `Every ${plan.interval} ${billingPeriod}s` : `${billingPeriod[0].toUpperCase()}${billingPeriod.slice(1)}`}</strong></div>
               <div><span>Subscription status</span><strong className="capitalize">{subscription.status || "Not subscribed"}</strong></div>
               {subscription.paid_count !== undefined && <div><span>Payments completed</span><strong>{subscription.paid_count}{subscription.total_count ? ` of ${subscription.total_count}` : ""}</strong></div>}
             </div>
-            {subscription.razorpay_subscription_id && <p className="ml-subscription-reference">Subscription reference: {subscription.razorpay_subscription_id}</p>}
+            {(subscription.order_id || subscription.razorpay_subscription_id) && (
+              <p className="ml-subscription-reference">
+                Subscription reference: {subscription.order_id || subscription.razorpay_subscription_id}
+              </p>
+            )}
           </article>
 
           <div className="ml-subscription-footnote">Plan and renewal details are synced from your MirrorLink billing record.</div>

@@ -34,7 +34,7 @@ export default function Loginpage() {
         setCookie("login_key", key, 30);
         setCookie("username", username, 30);
         const nextPath = new URLSearchParams(window.location.search).get("next");
-        navigate(!planActive ? "/pricing" : (nextPath && nextPath.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/setup"));
+        navigate(nextPath && nextPath.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/setup");
       })
       .catch((error) => {
         console.error("Login failed:", error);
