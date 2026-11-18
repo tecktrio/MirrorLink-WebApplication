@@ -40,7 +40,7 @@ export default function SubscriptionPage() {
       <div className="ml-subscription-heading">
         <div className="ml-eyebrow"><span /> ACCOUNT &amp; BILLING</div>
         <h1>Subscription</h1>
-        <p>View your MirrorLink account status, current plan and next renewal.</p>
+        <p>View your ScreenPilot account status, current plan and next renewal.</p>
       </div>
 
       {loading ? <div className="ml-subscription-notice">Loading your subscription details…</div> : null}
@@ -56,7 +56,7 @@ export default function SubscriptionPage() {
 
           <article className="ml-subscription-card">
             <div className="ml-subscription-card-head">
-              <div><span className="ml-subscription-kicker">CURRENT PLAN</span><h2>{subscription.plan_name || plan.name || "MirrorLink Business"}</h2></div>
+              <div><span className="ml-subscription-kicker">CURRENT PLAN</span><h2>{subscription.plan_name || plan.name || "ScreenPilot Business"}</h2></div>
               <span className={`ml-subscription-pill ${active ? "is-active" : "is-inactive"}`}>{active ? "ACTIVE" : "INACTIVE"}</span>
             </div>
             <div className="ml-subscription-price">{price}<small> / {billingPeriod}</small></div>
@@ -73,7 +73,7 @@ export default function SubscriptionPage() {
             )}
           </article>
 
-          <div className="ml-subscription-footnote">Plan and renewal details are synced from your MirrorLink billing record.</div>
+          <div className="ml-subscription-footnote">Plan and renewal details are synced from your ScreenPilot billing record.</div>
         </>
       )}
     </section>

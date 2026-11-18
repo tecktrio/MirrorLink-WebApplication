@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react'
 import Addbutton from '../../components/addbutton/Addbutton'
 import SearchBar from '../../components/SearchBar/SearchBar'
 import Listitem from '../../components/listitem/Listitem'
+import AddSiteModal from '../../components/AddSiteModal/AddSiteModal'
 import { DELETE_SITE, GET_AVAILABLE_SITES } from '../../serverRequests/ServerRequests'
 import { CookieContext } from '../../Contexts/CookieContext'
 import { useNavigate } from 'react-router-dom'
@@ -10,6 +11,8 @@ export default function ManageSites() {
   const [sitelist, setSitelist] = useState([])
   const [filteredList, setFilteredList] = useState([])
   const [loading, setLoading] = useState(true)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [siteToEdit, setSiteToEdit] = useState(null)
   const { getCookie } = useContext(CookieContext)
   const navigate = useNavigate()
 
@@ -97,13 +100,30 @@ export default function ManageSites() {
                 key={data._id || key}
                 title={data.site_name}
                 description={data.site_description || "No description provided"}
+                onEdit={() => {
+                  setSiteToEdit(data)
+                  setIsModalOpen(true)
+                }}
                 onDelete={() => deleteSite(data._id)}
-                badge='Site'
+                badge='Location'
               />
             ))}
           </div>
         )}
       </div>
+
+      {/* Edit Location Modal */}
+      <AddSiteModal
+        isOpen={isModalOpen}
+        siteToEdit={siteToEdit}
+        onClose={() => {
+          setIsModalOpen(false)
+          setSiteToEdit(null)
+        }}
+        onSiteUpdated={() => {
+          loadSites()
+        }}
+      />
     </div>
   )
 }

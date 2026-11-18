@@ -17,7 +17,7 @@ export default function PublicMenus() {
   const move = direction => rail.current?.scrollBy({ left: direction * rail.current.clientWidth, behavior: 'smooth' })
 
   return <main className="public-menu-page">
-    <header className="public-menu-header"><span className="public-menu-brand"><b>M</b> MirrorLink</span><span>{mirrorName}</span></header>
+    <header className="public-menu-header"><span className="public-menu-brand"><img src="/logo.png" alt="ScreenPilot" className="h-6 w-auto max-w-[120px] object-contain inline-block mr-2" /></span><span>{mirrorName}</span></header>
     {error ? <div className="public-menu-message">{error}</div> : menus.length ? <>
       <div className="public-menu-controls"><span>{menus.length} active menu{menus.length === 1 ? '' : 's'}</span><div><button onClick={() => move(-1)} aria-label="Previous menu" disabled={menus.length < 2}>←</button><button onClick={() => move(1)} aria-label="Next menu" disabled={menus.length < 2}>→</button></div></div>
       <div className="public-menu-rail" ref={rail}>{menus.map(menu => <article className="public-menu-slide" key={menu._id}>

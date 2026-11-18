@@ -482,6 +482,46 @@ function ADD_SITE_IN_ACCOUNT(login_key, sitename, site_description) {
         }
     });
 }
+function UPDATE_SITE(login_key, site_id, sitename, site_description) {
+    return new Promise((resolve, reject) => {
+        try {
+            fetch(ADMINISTRATOR_ROOT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    "service": "UpdateSite",
+                    "site_id": site_id,
+                    "site_name": sitename,
+                    "site_description": site_description || '',
+                    "login_key": login_key || 'adminpassword',
+                })
+            }).then(response => {
+                if (!response.ok) {
+                    return response.json().then(errData => {
+                        throw new Error(errData.status_text || `HTTP error ${response.status}`);
+                    }).catch(() => {
+                        throw new Error(`HTTP error ${response.status}`);
+                    });
+                }
+                return response.json();
+            }).then((data) => {
+                if (data.status_code && data.status_code >= 400) {
+                    reject(new Error(data.status_text || 'Request failed'));
+                } else {
+                    resolve(data);
+                }
+            }).catch((error) => {
+                console.error("UPDATE_SITE error:", error);
+                reject(error);
+            });
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
 function CREATE_MIRROR(login_key, name, description, username, password, height, width, site_id = null) {
 
     return new Promise((resolve, reject) => {
@@ -1087,6 +1127,7 @@ export {
     GET_AVAILABLE_SITES,
     GET_AVAILABLE_MIRRORS_ON_SITE,
     ADD_SITE_IN_ACCOUNT,
+    UPDATE_SITE,
     CREATE_MIRROR,
     GET_AVAILABLE_CONTENTS_ON_SITE,
     CREATE_CONTENT,

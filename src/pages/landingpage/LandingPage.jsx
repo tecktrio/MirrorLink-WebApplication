@@ -69,7 +69,7 @@ export default function LandingPage() {
   return (
     <div className="ml-landing">
       <header className="ml-nav">
-        <a className="ml-brand" href="#top" aria-label="MirrorLink home"><span className="ml-brand-mark">M</span><span>MirrorLink</span></a>
+        <a className="ml-brand" href="#top" aria-label="ScreenPilot home"><img src="/logo.png" alt="ScreenPilot" className="h-10 sm:h-12 w-auto max-w-[220px] sm:max-w-[260px] object-contain" /></a>
         <nav className="ml-nav-links" aria-label="Main navigation">
           <a href="#applications">What you can do</a>
           <a href="#how-it-works">How it works</a>
@@ -93,23 +93,23 @@ export default function LandingPage() {
           <div className="ml-hero-art"><ScreenVisual /><div className="ml-float-card"><span className="ml-float-icon">↗</span><span><strong>Updated everywhere</strong><small>Your screens stay in sync</small></span><span className="ml-float-check">✓</span></div><div className="ml-hero-index">01 / 04</div></div>
         </section>
 
-        <section className="ml-proof" aria-label="MirrorLink benefits">
+        <section className="ml-proof" aria-label="ScreenPilot benefits">
           <span>MADE FOR REAL-WORLD SPACES</span><i /> <span>MANAGE CONTENT FROM ONE PLACE</span><i /> <span>PLAY IT WIRELESSLY</span>
         </section>
 
         <section className="ml-applications" id="applications">
-          <div className="ml-section-head"><div><div className="ml-eyebrow"><span /> ONE PLATFORM, MANY POSSIBILITIES</div><h2>Make every screen<br />work harder.</h2></div><p>From the front desk to the dining room, MirrorLink helps you share useful, timely information on the displays you already have.</p></div>
+          <div className="ml-section-head"><div><div className="ml-eyebrow"><span /> ONE PLATFORM, MANY POSSIBILITIES</div><h2>Make every screen<br />work harder.</h2></div><p>From the front desk to the dining room, ScreenPilot helps you share useful, timely information on the displays you already have.</p></div>
           <div className="ml-app-grid">{applications.map((item) => <article className="ml-app-card" key={item.number}><div className="ml-card-top"><span className="ml-card-number">{item.number}</span><span className="ml-card-icon">{item.icon}</span></div><div className="ml-card-tag">{item.tag}</div><h3>{item.title}</h3><p>{item.text}</p><a href="#how-it-works" aria-label={`Learn how ${item.title.toLowerCase()} works`}>See how it works <Arrow /></a></article>)}</div>
         </section>
 
         <section className="ml-plan" id="pricing"><div className="ml-plan-intro"><div className="ml-eyebrow"><span /> ONE PLAN. EVERYTHING INCLUDED.</div><h2>Room to grow,<br />built right in.</h2><p>One straightforward subscription for your whole display network. No per-screen add-ons.</p></div><div className="ml-plan-label"><Link className="ml-button ml-button-dark" to="/pricing">Subscription plans <Arrow /></Link></div></section>
 
-        <section className="ml-how" id="how-it-works"><div className="ml-how-left"><div className="ml-eyebrow"><span /> SIMPLE BY DESIGN</div><h2>From control<br />to screen.</h2><p>Organize your displays, choose what to show, and let MirrorLink take care of the connection.</p><Link className="ml-button ml-button-light" to={controlPanelPath}>Get started <Arrow /></Link></div><div className="ml-steps"><div className="ml-step"><span>01</span><div><h3>Set up your screens</h3><p>Connect a display and give it a place in your workspace.</p></div><span className="ml-step-icon">▣</span></div><div className="ml-step"><span>02</span><div><h3>Choose what to show</h3><p>Arrange menus, videos, announcements or queue updates.</p></div><span className="ml-step-icon">▤</span></div><div className="ml-step"><span>03</span><div><h3>Keep everything current</h3><p>Make an update in the control panel and share it with your screens.</p></div><span className="ml-step-icon">↗</span></div></div></section>
+        <section className="ml-how" id="how-it-works"><div className="ml-how-left"><div className="ml-eyebrow"><span /> SIMPLE BY DESIGN</div><h2>From control<br />to screen.</h2><p>Organize your displays, choose what to show, and let ScreenPilot take care of the connection.</p><Link className="ml-button ml-button-light" to={controlPanelPath}>Get started <Arrow /></Link></div><div className="ml-steps"><div className="ml-step"><span>01</span><div><h3>Set up your screens</h3><p>Connect a display and give it a place in your workspace.</p></div><span className="ml-step-icon">▣</span></div><div className="ml-step"><span>02</span><div><h3>Choose what to show</h3><p>Arrange menus, videos, announcements or queue updates.</p></div><span className="ml-step-icon">▤</span></div><div className="ml-step"><span>03</span><div><h3>Keep everything current</h3><p>Make an update in the control panel and share it with your screens.</p></div><span className="ml-step-icon">↗</span></div></div></section>
 
         <section className="ml-final-cta"><div><div className="ml-eyebrow"><span /> READY WHEN YOU ARE</div><h2>Let's get your screens<br />connected.</h2></div><div className="ml-final-actions"><Link className="ml-button ml-button-dark" to={controlPanelPath}>Go to control panel <Arrow /></Link><a className="ml-text-link" href={viewerUrl} target="_blank" rel="noreferrer">Go to viewer <Arrow diagonal /></a></div></section>
       </main>
 
-      <footer className="ml-footer"><a className="ml-brand" href="#top"><span className="ml-brand-mark">M</span><span>MirrorLink</span></a><span>Wireless display management.</span><div><Link to={controlPanelPath}>Control panel</Link><a href={viewerUrl} target="_blank" rel="noreferrer">Viewer</a><span>© {new Date().getFullYear()} MirrorLink</span><a className="ml-footer-credit" href="https://bigburry.com" target="_blank" rel="noopener noreferrer">Made by Bigburry Hypersystems LLP</a></div></footer>
+      <footer className="ml-footer"><a className="ml-brand" href="#top"><img src="/logo.png" alt="ScreenPilot" className="h-8 sm:h-9 w-auto max-w-[180px] object-contain" /></a><span>Wireless display management.</span><div><Link to={controlPanelPath}>Control panel</Link><a href={viewerUrl} target="_blank" rel="noreferrer">Viewer</a><span>© {new Date().getFullYear()} ScreenPilot</span><a className="ml-footer-credit" href="https://bigburry.com" target="_blank" rel="noopener noreferrer">Made by Bigburry Hypersystems LLP</a></div></footer>
     </div>
   );
 }

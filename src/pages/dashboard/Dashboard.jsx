@@ -22,7 +22,9 @@ export default function Dashboard() {
     <div className="ml-console">
       <header className="ml-console-header">
         <div className="ml-console-header-inner">
-          <Link to="/setup" className="ml-console-brand"><span>M</span><strong>MirrorLink</strong></Link>
+          <Link to="/setup" className="ml-console-brand">
+            <img src="/logo.png" alt="ScreenPilot" className="h-10 sm:h-12 w-auto max-w-[220px] sm:max-w-[260px] object-contain" />
+          </Link>
           <nav className="ml-console-nav" aria-label="Control panel">
             <Link to="/manage_contents">Content</Link>
             <Link to="/subscription">Subscription</Link>
@@ -34,7 +36,7 @@ export default function Dashboard() {
         <div className="ml-explore-banner"><span><b>Explore mode</b> · Your setup is saved, but mirrors stay offline until you subscribe.</span><Link to="/pricing">View plan <b>→</b></Link></div>
       )}
       <main className="ml-console-main"><Outlet /></main>
-      <footer className="ml-console-footer"><span>MirrorLink · Wireless display management</span><Link to="/subscription">Subscription details</Link><a className="ml-footer-credit" href="https://bigburry.com" target="_blank" rel="noopener noreferrer">Made by Bigburry Hypersystems LLP</a></footer>
+      <footer className="ml-console-footer"><span>ScreenPilot · Wireless display management</span><Link to="/subscription">Subscription details</Link><a className="ml-footer-credit" href="https://bigburry.com" target="_blank" rel="noopener noreferrer">Made by Bigburry Hypersystems LLP</a></footer>
     </div>
   );
 }

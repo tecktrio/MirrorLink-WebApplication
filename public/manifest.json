@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "ScreenPilot",
+  "name": "ScreenPilot Cloud Screen Management",
   "icons": [
     {
       "src": "favicon.ico",

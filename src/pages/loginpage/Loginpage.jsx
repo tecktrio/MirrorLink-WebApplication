@@ -50,7 +50,7 @@ export default function Loginpage() {
       ) : (
         <main className="ml-landing ml-auth-page ml-login-page">
           <header className="ml-nav">
-            <Link className="ml-brand" to="/"><span className="ml-brand-mark">M</span><span>MirrorLink</span></Link>
+            <Link className="ml-brand" to="/"><img src="/logo.png" alt="ScreenPilot" className="h-10 sm:h-12 w-auto max-w-[220px] sm:max-w-[260px] object-contain" /></Link>
             <nav className="ml-nav-links" aria-label="Main navigation"><Link to="/">Overview</Link><Link to="/pricing">Pricing</Link></nav>
             <Link className="ml-nav-cta" to={`/register${window.location.search}`}>Create account <span className="ml-arrow">↗</span></Link>
           </header>
@@ -62,18 +62,18 @@ export default function Loginpage() {
               <div className="ml-hero-note"><span className="ml-note-line" /> One place to manage. Any screen to share.</div>
             </div>
             <form className="ml-auth-card" onSubmit={HandleLogin}>
-              <div className="ml-auth-step">MIRRORLINK ACCOUNT <span>SECURE SIGN IN</span></div>
+              <div className="ml-auth-step">SCREENPILOT ACCOUNT <span>SECURE SIGN IN</span></div>
               <h2>Sign in</h2>
               <p className="ml-auth-caption">Use your account email and password to continue.</p>
               {message && <div className="ml-auth-message ml-login-error" role="alert">{message}</div>}
               <label className="ml-auth-field"><span>Email address</span><input type="email" autoComplete="email" placeholder="you@example.com" value={username} onChange={(event) => setusername(event.target.value)} required /></label>
               <label className="ml-auth-field"><span>Password</span><input type="password" autoComplete="current-password" placeholder="Enter your password" value={password} onChange={(event) => setpassword(event.target.value)} required /></label>
               <div className="ml-login-forgot"><Link to="/reset-password">Forgot password?</Link></div>
-              <button className="ml-button ml-button-dark ml-auth-submit" type="submit" disabled={isSubmitting}>{isSubmitting ? "Signing in…" : "Sign in to MirrorLink"}<span className="ml-arrow">→</span></button>
-              <p className="ml-auth-foot">New to MirrorLink? <Link to={`/register${window.location.search}`}>Create an account</Link></p>
+              <button className="ml-button ml-button-dark ml-auth-submit" type="submit" disabled={isSubmitting}>{isSubmitting ? "Signing in…" : "Sign in to ScreenPilot"}<span className="ml-arrow">→</span></button>
+              <p className="ml-auth-foot">New to ScreenPilot? <Link to={`/register${window.location.search}`}>Create an account</Link></p>
             </form>
           </section>
-          <footer className="ml-footer"><Link className="ml-brand" to="/"><span className="ml-brand-mark">M</span><span>MirrorLink</span></Link><span>Wireless display management</span><a className="ml-footer-credit" href="https://bigburry.com" target="_blank" rel="noopener noreferrer">Made by Bigburry Hypersystems LLP</a></footer>
+          <footer className="ml-footer"><Link className="ml-brand" to="/"><img src="/logo.png" alt="ScreenPilot" className="h-8 sm:h-9 w-auto max-w-[180px] object-contain" /></Link><span>Wireless display management</span><a className="ml-footer-credit" href="https://bigburry.com" target="_blank" rel="noopener noreferrer">Made by Bigburry Hypersystems LLP</a></footer>
         </main>
       )}
     </>

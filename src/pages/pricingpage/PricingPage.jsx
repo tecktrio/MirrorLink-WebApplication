@@ -134,7 +134,7 @@ export default function PricingPage() {
           if (!verified.ok) {
             throw new Error(result.status_text || "Payment verification failed.");
           }
-          setMessage("Payment successful! Your MirrorLink subscription is now active.");
+          setMessage("Payment successful! Your ScreenPilot subscription is now active.");
           setMessageType("success");
         } catch (error) {
           setMessage(error.message || "Could not verify payment with server.");
@@ -235,20 +235,20 @@ export default function PricingPage() {
   return (
     <div className="ml-pricing-page">
       <header className="ml-price-nav">
-        <Link className="ml-price-brand" to="/"><span>M</span> MirrorLink</Link>
+        <Link className="ml-price-brand" to="/"><img src="/logo.png" alt="ScreenPilot" className="h-10 sm:h-12 w-auto max-w-[220px] sm:max-w-[260px] object-contain" /></Link>
         <div className="ml-pricing-nav-right"><Link to="/">Back to home <b>↗</b></Link><PublicAccountActions /></div>
       </header>
       <main className="ml-pricing-main">
         <div className="ml-price-heading">
           <span>ONE SIMPLE SUBSCRIPTION</span>
           <h1>Everything your<br />screens need.</h1>
-          <p>One plan with the full MirrorLink toolkit, ready to scale with your business.</p>
+          <p>One plan with the full ScreenPilot toolkit, ready to scale with your business.</p>
         </div>
         <section className="ml-price-card" aria-labelledby="ml-plan-title">
           <div className="ml-price-card-head">
             <div>
               <span className="ml-price-kicker">ALL-IN-ONE PLAN</span>
-              <h2 id="ml-plan-title">{plan?.name || "MirrorLink Business"}</h2>
+              <h2 id="ml-plan-title">{plan?.name || "ScreenPilot Business"}</h2>
             </div>
             <span className="ml-included">EVERYTHING INCLUDED</span>
           </div>
@@ -345,7 +345,7 @@ export default function PricingPage() {
         </section>
         <div className="ml-price-foot"><span>Secure checkout</span><i /> <span>Monthly recurring billing</span><i /> <Link to="/login">Already subscribed? Open control panel <b>↗</b></Link></div>
       </main>
-      <footer className="ml-pricing-footer"><Link className="ml-price-brand" to="/"><span>M</span> MirrorLink</Link><small>Wireless display management.</small><a className="ml-footer-credit" href="https://bigburry.com" target="_blank" rel="noopener noreferrer">Made by Bigburry Hypersystems LLP</a></footer>
+      <footer className="ml-pricing-footer"><Link className="ml-price-brand" to="/"><img src="/logo.png" alt="ScreenPilot" className="h-8 sm:h-9 w-auto max-w-[180px] object-contain" /></Link><small>Wireless display management.</small><a className="ml-footer-credit" href="https://bigburry.com" target="_blank" rel="noopener noreferrer">Made by Bigburry Hypersystems LLP</a></footer>
     </div>
   );
 }

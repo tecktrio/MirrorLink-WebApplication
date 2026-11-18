@@ -26,7 +26,7 @@ export default function RegisterPage() {
 
   return <main className="ml-landing ml-auth-page">
     <header className="ml-nav">
-      <Link className="ml-brand" to="/"><span className="ml-brand-mark">M</span><span>MirrorLink</span></Link>
+      <Link className="ml-brand" to="/"><img src="/logo.png" alt="ScreenPilot" className="h-10 sm:h-12 w-auto max-w-[220px] sm:max-w-[260px] object-contain" /></Link>
       <nav className="ml-nav-links"><Link to="/">Overview</Link><Link to="/pricing">Pricing</Link></nav>
       <Link className="ml-nav-cta" to="/login">Sign in <span className="ml-arrow">↗</span></Link>
     </header>
@@ -34,7 +34,7 @@ export default function RegisterPage() {
       <div className="ml-auth-intro">
         <div className="ml-eyebrow"><span /> YOUR SCREENS, IN SYNC</div>
         <h1>Make room<br />to <span>connect.</span></h1>
-        <p className="ml-hero-description">Create your MirrorLink account and manage every display from one simple control panel.</p>
+        <p className="ml-hero-description">Create your ScreenPilot account and manage every display from one simple control panel.</p>
         <div className="ml-hero-note"><span className="ml-note-line" /> Two quick steps. Then you’re ready to go.</div>
       </div>
       <form className="ml-auth-card" onSubmit={continueToVerification}>
@@ -50,6 +50,6 @@ export default function RegisterPage() {
         <p className="ml-auth-foot">Already have an account? <Link to="/login">Sign in</Link></p>
       </form>
     </section>
-    <footer className="ml-footer"><Link className="ml-brand" to="/"><span className="ml-brand-mark">M</span><span>MirrorLink</span></Link><span>Wireless display management</span><a className="ml-footer-credit" href="https://bigburry.com" target="_blank" rel="noopener noreferrer">Made by Bigburry Hypersystems LLP</a></footer>
+    <footer className="ml-footer"><Link className="ml-brand" to="/"><img src="/logo.png" alt="ScreenPilot" className="h-8 sm:h-9 w-auto max-w-[180px] object-contain" /></Link><span>Wireless display management</span><a className="ml-footer-credit" href="https://bigburry.com" target="_blank" rel="noopener noreferrer">Made by Bigburry Hypersystems LLP</a></footer>
   </main>;
 }

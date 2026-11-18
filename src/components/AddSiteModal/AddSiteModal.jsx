@@ -1,27 +1,39 @@
 import React, { useContext, useEffect, useState } from "react";
 import { CookieContext } from "../../Contexts/CookieContext";
-import { ADD_SITE_IN_ACCOUNT } from "../../serverRequests/ServerRequests";
+import { ADD_SITE_IN_ACCOUNT, UPDATE_SITE } from "../../serverRequests/ServerRequests";
 
-export default function AddSiteModal({ isOpen, onClose, onSiteAdded }) {
+export default function AddSiteModal({ isOpen, onClose, onSiteAdded, onSiteUpdated, siteToEdit = null }) {
   const { getCookie } = useContext(CookieContext);
   const [siteName, setSiteName] = useState("");
   const [description, setDescription] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  const isEditMode = Boolean(siteToEdit && siteToEdit._id);
+
   useEffect(() => {
-    if (!isOpen) {
+    if (isOpen) {
+      if (siteToEdit) {
+        setSiteName(siteToEdit.site_name || "");
+        setDescription(siteToEdit.site_description || "");
+      } else {
+        setSiteName("");
+        setDescription("");
+      }
+      setErrorMessage("");
+      setIsSubmitting(false);
+    } else {
       setSiteName("");
       setDescription("");
       setErrorMessage("");
       setIsSubmitting(false);
     }
-  }, [isOpen]);
+  }, [isOpen, siteToEdit]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (!siteName.trim()) {
-      setErrorMessage("Site Name is required.");
+      setErrorMessage("Location Name is required.");
       return;
     }
 
@@ -29,17 +41,31 @@ export default function AddSiteModal({ isOpen, onClose, onSiteAdded }) {
     setErrorMessage("");
     const loginKey = getCookie("login_key") || "adminpassword";
 
-    ADD_SITE_IN_ACCOUNT(loginKey, siteName.trim(), description.trim() || "")
-      .then((res) => {
-        setIsSubmitting(false);
-        if (onSiteAdded) onSiteAdded(siteName.trim());
-        onClose();
-      })
-      .catch((err) => {
-        console.error("Add site error:", err);
-        setErrorMessage(err.message || "Failed to create site. Please try again.");
-        setIsSubmitting(false);
-      });
+    if (isEditMode) {
+      UPDATE_SITE(loginKey, siteToEdit._id, siteName.trim(), description.trim() || "")
+        .then((res) => {
+          setIsSubmitting(false);
+          if (onSiteUpdated) onSiteUpdated({ ...siteToEdit, site_name: siteName.trim(), site_description: description.trim() || "" });
+          onClose();
+        })
+        .catch((err) => {
+          console.error("Update site error:", err);
+          setErrorMessage(err.message || "Failed to update location. Please try again.");
+          setIsSubmitting(false);
+        });
+    } else {
+      ADD_SITE_IN_ACCOUNT(loginKey, siteName.trim(), description.trim() || "")
+        .then((res) => {
+          setIsSubmitting(false);
+          if (onSiteAdded) onSiteAdded(siteName.trim());
+          onClose();
+        })
+        .catch((err) => {
+          console.error("Add site error:", err);
+          setErrorMessage(err.message || "Failed to create location. Please try again.");
+          setIsSubmitting(false);
+        });
+    }
   };
 
   if (!isOpen) return null;
@@ -62,10 +88,14 @@ export default function AddSiteModal({ isOpen, onClose, onSiteAdded }) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
               </div>
-              <h3 className="text-lg font-bold text-black tracking-tight">Create New Site</h3>
+              <h3 className="text-lg font-bold text-black tracking-tight">
+                {isEditMode ? "Edit Location" : "Create New Location"}
+              </h3>
             </div>
             <p className="text-xs text-neutral-500 mt-1">
-              Add a branch, location, or store to group your digital displays.
+              {isEditMode
+                ? "Update your location, branch, or room details and description."
+                : "Add a location, branch, or room to group your digital displays."}
             </p>
           </div>
           <button
@@ -92,28 +122,33 @@ export default function AddSiteModal({ isOpen, onClose, onSiteAdded }) {
 
           <div>
             <label className="block text-xs font-bold text-black mb-1">
-              Site Name <span className="text-red-500">*</span>
+              Location Name <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
               value={siteName}
               onChange={(e) => setSiteName(e.target.value)}
-              placeholder="e.g., Downtown Flagship Store, Reception Lobby"
+              placeholder="e.g., Downtown Location, Reception Lobby"
               className="w-full px-3.5 py-2.5 bg-neutral-50 hover:bg-neutral-100/70 focus:bg-white border border-neutral-300 focus:border-black rounded-xl text-xs font-medium text-black outline-none transition-colors"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-bold text-black mb-1">
-              Description <span className="text-neutral-400 font-normal">(Optional)</span>
-            </label>
+            <div className="flex items-center justify-between mb-1">
+              <label className="block text-xs font-bold text-black">
+                Location Description <span className="text-neutral-400 font-normal">(Optional)</span>
+              </label>
+            </div>
             <textarea
               rows={3}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="e.g., Main corporate headquarters 1st & 2nd floor screens..."
+              placeholder="e.g., Room 102, 2nd floor retail display, stockroom or main lobby screens..."
               className="w-full px-3.5 py-2 bg-neutral-50 hover:bg-neutral-100/70 focus:bg-white border border-neutral-300 focus:border-black rounded-xl text-xs font-medium text-black outline-none transition-colors resize-none"
             />
+            <p className="text-[11px] text-neutral-400 mt-1">
+              Provide context about the room, floor, shelf, or physical spot where this display is placed.
+            </p>
           </div>
 
           {/* Footer Actions */}
@@ -137,14 +172,20 @@ export default function AddSiteModal({ isOpen, onClose, onSiteAdded }) {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  <span>Creating Site...</span>
+                  <span>{isEditMode ? "Saving Changes..." : "Creating Location..."}</span>
                 </>
               ) : (
                 <>
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
-                  </svg>
-                  <span>Create Site</span>
+                  {isEditMode ? (
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+                    </svg>
+                  ) : (
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
+                    </svg>
+                  )}
+                  <span>{isEditMode ? "Save Changes" : "Create Location"}</span>
                 </>
               )}
             </button>

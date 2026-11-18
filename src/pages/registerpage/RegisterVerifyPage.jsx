@@ -44,7 +44,7 @@ export default function RegisterVerifyPage() {
 
   return <main className="ml-landing ml-auth-page">
     <header className="ml-nav">
-      <Link className="ml-brand" to="/"><span className="ml-brand-mark">M</span><span>MirrorLink</span></Link>
+      <Link className="ml-brand" to="/"><img src="/logo.png" alt="ScreenPilot" className="h-10 sm:h-12 w-auto max-w-[220px] sm:max-w-[260px] object-contain" /></Link>
       <nav className="ml-nav-links"><Link to="/">Overview</Link><Link to="/pricing">Pricing</Link></nav>
       <Link className="ml-nav-cta" to="/login">Sign in <span className="ml-arrow">↗</span></Link>
     </header>
@@ -66,6 +66,6 @@ export default function RegisterVerifyPage() {
         <p className="ml-auth-foot"><Link to="/register">← Edit account details</Link></p>
       </form>
     </section>
-    <footer className="ml-footer"><Link className="ml-brand" to="/"><span className="ml-brand-mark">M</span><span>MirrorLink</span></Link><span>Wireless display management</span><a className="ml-footer-credit" href="https://bigburry.com" target="_blank" rel="noopener noreferrer">Made by Bigburry Hypersystems LLP</a></footer>
+    <footer className="ml-footer"><Link className="ml-brand" to="/"><img src="/logo.png" alt="ScreenPilot" className="h-8 sm:h-9 w-auto max-w-[180px] object-contain" /></Link><span>Wireless display management</span><a className="ml-footer-credit" href="https://bigburry.com" target="_blank" rel="noopener noreferrer">Made by Bigburry Hypersystems LLP</a></footer>
   </main>;
 }

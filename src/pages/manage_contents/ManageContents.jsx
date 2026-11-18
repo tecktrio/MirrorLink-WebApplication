@@ -95,8 +95,9 @@ export default function ManageContents() {
                   key={data._id || key}
                   title={data.content_title}
                   description={data.content_description || 'Shared library content'}
+                  imageUrl={data.content_url}
+                  contentFormat={data.content_format}
                   onDelete={() => deleteContent(data._id)}
-                  onPlay={data._id}
                   badge={data.content_format?.toUpperCase() || "IMG"}
                 />
               )

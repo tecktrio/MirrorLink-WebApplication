@@ -84,10 +84,10 @@ export default function MirrorListing({ site_id, site_name = "Selected Site", on
       {/* Section Header */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div>
-          <h3 className="text-base font-bold text-black">
+          <h3 className="text-lg font-black text-black tracking-tight">
             Assigned Mirrors ({mirrorlist.length})
           </h3>
-          <p className="text-xs text-neutral-500 mt-0.5">
+          <p className="text-xs text-neutral-500 mt-0.5 font-medium">
             Displays and screens currently configured to broadcast at this location
           </p>
         </div>
@@ -95,7 +95,7 @@ export default function MirrorListing({ site_id, site_name = "Selected Site", on
         <div className="flex items-center gap-2">
           <button
             onClick={() => setIsAddMirrorModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 sm:px-4 py-2 bg-black hover:bg-neutral-800 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 bg-black hover:bg-neutral-800 text-white text-xs font-bold rounded-full shadow-2xs transition-all cursor-pointer"
             title="Register a new mirror display directly to this site"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -105,7 +105,7 @@ export default function MirrorListing({ site_id, site_name = "Selected Site", on
           </button>
           <button
             onClick={openModal}
-            className="inline-flex items-center gap-1.5 px-3 py-2 bg-white hover:bg-neutral-100 text-neutral-800 border border-neutral-300 text-xs font-medium rounded-xl shadow-2xs transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-white hover:bg-neutral-100 text-black border border-neutral-200 text-xs font-bold rounded-full shadow-2xs transition-colors cursor-pointer"
             title="Link an existing unassigned mirror to this site"
           >
             <span>Assign Existing</span>
@@ -153,35 +153,34 @@ export default function MirrorListing({ site_id, site_name = "Selected Site", on
             <div
               key={idx}
               onClick={() => handleConfigureMirror(mirror._id)}
-              className="group bg-white hover:bg-neutral-50/70 border border-neutral-200/90 hover:border-black rounded-2xl p-5 shadow-2xs hover:shadow-xs transition-all duration-200 cursor-pointer flex flex-col justify-between"
+              className="group bg-white hover:bg-neutral-50/50 border border-neutral-200 hover:border-black rounded-2xl p-5 shadow-2xs hover:shadow-xs transition-all duration-200 cursor-pointer flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-neutral-100 border border-neutral-200 text-black flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <div className="w-10 h-10 rounded-2xl bg-white border border-neutral-200 text-black flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-2xs">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                       </svg>
                     </div>
                     <div>
-                      <h4 className="text-sm font-bold text-black group-hover:text-black">{mirror.mirror_name}</h4>
-                      <p className="text-xs text-neutral-500 mt-0.5 line-clamp-1">{mirror.mirror_description || "Mirror Display Screen"}</p>
+                      <h4 className="text-base font-black text-black group-hover:text-black">{mirror.mirror_name}</h4>
+                      <p className="text-xs text-neutral-500 mt-0.5 line-clamp-1 font-medium">{mirror.mirror_description || "Mirror Display Screen"}</p>
                     </div>
                   </div>
 
                   {/* Active / Inactive / Paused Status Badge synced from DB */}
-                  <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full border shrink-0 ${
-                    mirror.is_active === false || String(mirror.status).toLowerCase() === 'inactive'
-                      ? 'bg-neutral-100 text-neutral-600 border-neutral-300'
+                  <span className={`text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full shrink-0 ${mirror.is_active === false || String(mirror.status).toLowerCase() === 'inactive'
+                      ? 'bg-white text-neutral-500 border border-neutral-200'
                       : mirror.playback_state === 'paused'
-                      ? 'bg-amber-50 text-amber-700 border-amber-200'
-                      : 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                  }`}>
+                        ? 'bg-white text-black border border-black'
+                        : 'bg-black text-white'
+                    }`}>
                     {mirror.is_active === false || String(mirror.status).toLowerCase() === 'inactive'
                       ? 'Inactive'
                       : mirror.playback_state === 'paused'
-                      ? 'Paused'
-                      : 'Active'}
+                        ? 'Paused'
+                        : 'Active'}
                   </span>
                 </div>
 
@@ -189,18 +188,18 @@ export default function MirrorListing({ site_id, site_name = "Selected Site", on
                 <div className="mt-4 pt-3 border-t border-neutral-100 space-y-2 text-[11px] text-neutral-500">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <div>
-                      <span className="font-semibold text-neutral-700">Stream Name: </span>
-                      <span className="font-mono bg-neutral-100 px-1.5 py-0.5 rounded text-black break-words">{mirror.mirror_name}</span>
+                      <span className="font-bold text-black">Stream Name: </span>
+                      <span className="font-mono bg-white border border-neutral-200 px-1.5 py-0.5 rounded-lg text-black break-words">{mirror.mirror_name}</span>
                     </div>
                     <div>
-                      <span className="font-semibold text-neutral-700">Resolution: </span>
-                      <span className="font-medium text-black">{mirror.mirror_width || 1920} × {mirror.mirror_height || 1080}</span>
+                      <span className="font-bold text-black">Resolution: </span>
+                      <span className="font-semibold text-black">{mirror.mirror_width || 1920} × {mirror.mirror_height || 1080}</span>
                     </div>
                   </div>
 
                   {/* Direct Stream URL Bar */}
-                  <div className="flex items-center justify-between gap-1.5 bg-neutral-50 px-2.5 py-1.5 rounded-xl border border-neutral-200/80">
-                    <span className="font-mono text-[10px] text-neutral-700 truncate select-all">
+                  <div className="flex items-center justify-between gap-1.5 bg-white px-3 py-2 rounded-xl border border-neutral-200 shadow-2xs">
+                    <span className="font-mono text-[11px] text-neutral-800 truncate select-all">
                       {`${(process.env.REACT_APP_VIEWER_URL || 'https://mirror.bigburry.com').replace(/\/+$/, '')}?mirror_name=${encodeURIComponent(mirror.mirror_name)}`}
                     </span>
                     <button
@@ -213,7 +212,7 @@ export default function MirrorListing({ site_id, site_name = "Selected Site", on
                         setStatusMsg(`Stream URL copied for "${mirror.mirror_name}"`);
                         setTimeout(() => setStatusMsg(''), 2500);
                       }}
-                      className="px-2 py-0.5 bg-white hover:bg-neutral-100 border border-neutral-300 rounded text-[10px] font-semibold text-black shrink-0 transition-colors cursor-pointer shadow-2xs"
+                      className="px-2.5 py-1 bg-white hover:bg-black hover:text-white border border-neutral-200 rounded-lg text-[10px] font-bold text-black shrink-0 transition-colors cursor-pointer shadow-2xs"
                       title="Copy direct stream URL"
                     >
                       Copy URL
@@ -224,11 +223,11 @@ export default function MirrorListing({ site_id, site_name = "Selected Site", on
 
               {/* Action Footer */}
               <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center justify-between gap-2">
-                <span className="text-xs text-neutral-400">
+                <span className="text-xs text-neutral-400 font-medium">
                   {mirror.contents?.length || 0} media playlist items
                 </span>
 
-                <span className="text-xs font-semibold text-black flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+                <span className="text-xs font-black text-black flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                   <span>Setup Playlist</span>
                   <span>→</span>
                 </span>

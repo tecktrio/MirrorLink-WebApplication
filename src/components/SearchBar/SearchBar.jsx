@@ -35,7 +35,7 @@ export default function SearchBar({ data = [], setSearch, placeholder = 'Search 
         placeholder={placeholder}
         value={keyword}
         onChange={(e) => handleSearch(e.target.value)}
-        className='w-full pl-10 pr-10 py-2.5 bg-neutral-50 hover:bg-white border border-neutral-300 rounded-lg text-neutral-900 placeholder-neutral-400 text-xs sm:text-sm focus:outline-none focus:border-black focus:ring-2 focus:ring-black/10 transition-all shadow-2xs'
+        className='w-full pl-10 pr-10 py-2.5 bg-white border border-neutral-200 rounded-full text-black placeholder-neutral-400 text-xs sm:text-sm font-medium focus:outline-none focus:border-black focus:ring-2 focus:ring-black/10 transition-all shadow-2xs'
       />
       {keyword && (
         <button

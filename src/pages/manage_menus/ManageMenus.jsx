@@ -37,6 +37,8 @@ export default function ManageMenus({ embedded = false }) {
   const loginKey = getCookie('login_key')
   const [templates, setTemplates] = useState([])
   const [menus, setMenus] = useState([])
+  const [loadingMenus, setLoadingMenus] = useState(false)
+  const [loadingTemplates, setLoadingTemplates] = useState(false)
   const [editor, setEditor] = useState(null)
   const [chosen, setChosen] = useState(null)
   const [busy, setBusy] = useState(false)
@@ -45,9 +47,31 @@ export default function ManageMenus({ embedded = false }) {
   const [selectedMirror, setSelectedMirror] = useState('')
   const [shareUrl, setShareUrl] = useState('')
   const [menuPreviewOrientation, setMenuPreviewOrientation] = useState('landscape')
-  const reload = () => Promise.all([GET_MENU_TEMPLATES(loginKey), GET_MENUS(loginKey)])
-    .then(([templateResult, menuResult]) => { setTemplates(templateResult.data || []); setMenus(menuResult.data || []) })
-    .catch(e => setError(e.message || 'Could not load menus'))
+
+  const fetchTemplates = async () => {
+    if (templates.length > 0) return templates
+    setLoadingTemplates(true)
+    try {
+      const templateResult = await GET_MENU_TEMPLATES(loginKey)
+      const data = templateResult.data || []
+      setTemplates(data)
+      return data
+    } catch (e) {
+      setError(e.message || 'Could not load menu templates')
+      return []
+    } finally {
+      setLoadingTemplates(false)
+    }
+  }
+
+  const reload = () => {
+    setLoadingMenus(true)
+    return GET_MENUS(loginKey)
+      .then(menuResult => { setMenus(menuResult.data || []) })
+      .catch(e => setError(e.message || 'Could not load menus'))
+      .finally(() => setLoadingMenus(false))
+  }
+
   useEffect(() => {
     reload()
     GET_ALL_MIRRORS(loginKey).then(result => {
@@ -62,6 +86,7 @@ export default function ManageMenus({ embedded = false }) {
     if (!location.state?.openTemplateChooser) return
     setEditor({})
     setChosen(null)
+    fetchTemplates()
     reload()
     navigate(location.pathname, { replace: true, state: null })
   }, [location.key])
@@ -73,10 +98,11 @@ export default function ManageMenus({ embedded = false }) {
       .catch(e => setError(e.message || 'Could not create menu QR link'))
   }, [selectedMirror, loginKey])
 
-  const start = (menu = null) => {
+  const start = async (menu = null) => {
     setError('')
+    const currentTemplates = await fetchTemplates()
     if (!menu) { setEditor({}); setChosen(null); return }
-    const template = templates.find(item => item._id === menu.template_id)
+    const template = currentTemplates.find(item => item._id === menu.template_id)
     if (!template) { setError('This menu template is unavailable.'); return }
     if (template.custom_layout) { setEditor(prepareCustomMenu(template, menu.data || {}, menu._id)); setChosen(template); setMenuPreviewOrientation(template.canvas_orientation || 'portrait'); return }
     setEditor({ ...menu.data, _id: menu._id, template_id: menu.template_id, template_name: template.name })
@@ -160,8 +186,8 @@ export default function ManageMenus({ embedded = false }) {
 
   const customPreview = chosen?.custom_layout && editor ? (() => {
     const holderStyle = block => ({ position: 'absolute', left: `${block.x}%`, top: `${block.y}%`, width: `${block.width}%`, height: `${block.height}%`, overflow: 'hidden' })
-    const renderField = (block, value, key) => <div key={key} style={holderStyle(block)}>{block.type === 'image' ? value ? <img src={value} alt="" className="h-full w-full" style={{ objectFit: block.crop || 'cover' }} /> : <div className="grid h-full place-items-center bg-neutral-100/80 text-[10px] text-neutral-500">{block.holder_label}</div> : <div className="h-full whitespace-pre-wrap break-words" style={{ fontSize: `${block.font_size}px`, lineHeight: block.line_height ? `${block.line_height}` : '1.2', fontFamily: block.font_family, fontWeight: block.bold ? 700 : 400, fontStyle: block.italic ? 'italic' : 'normal', textAlign: block.text_align || 'left', textDecoration: block.underline ? 'underline' : 'none', textTransform: block.text_transform || 'none', letterSpacing: block.letter_spacing ? `${block.letter_spacing}px` : 'normal', color: block.color || '#171717' }}>{value || block.holder_label}</div>}</div>
-    return <div className="rounded-xl border bg-neutral-50 p-4"><div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h3 className="font-bold">Live preview</h3><div className="flex rounded-lg border bg-white p-0.5"><button onClick={() => setMenuPreviewOrientation('portrait')} className={`rounded-md px-2 py-1 text-xs ${menuPreviewOrientation === 'portrait' ? 'bg-violet-100 text-violet-800' : ''}`}>Portrait</button><button onClick={() => setMenuPreviewOrientation('landscape')} className={`rounded-md px-2 py-1 text-xs ${menuPreviewOrientation === 'landscape' ? 'bg-violet-100 text-violet-800' : ''}`}>Landscape</button></div></div><div className="relative mx-auto w-full overflow-hidden border bg-white shadow-sm transition-all" style={{ aspectRatio: menuPreviewOrientation === 'portrait' ? '10 / 16' : '16 / 10', maxWidth: menuPreviewOrientation === 'portrait' ? '440px' : '960px', backgroundColor: editor.background, backgroundImage: editor.background_image ? `url(${editor.background_image})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center' }}>{editor.blocks.map((block, i) => block.scope === 'item' ? null : renderField(block, block.type === 'text' ? block.text : block.image_url, block.holder_key || i))}{editor.items.flatMap((item, itemIndex) => { const assigned = editor.item_assignments?.[itemIndex] || []; return editor.blocks.map((block, i) => block.scope === 'item' && assigned.includes(block.holder_key) ? renderField(block, item[block.holder_key], `${itemIndex}-${block.holder_key || i}`) : null)})}</div><p className="mt-2 text-center text-xs text-neutral-500">{editor.title || 'Menu title'} · updates as you fill the form</p></div>
+    const renderField = (block, value, key) => <div key={key} style={holderStyle(block)}>{block.type === 'image' ? value ? <img src={value} alt="" className="h-full w-full" style={{ objectFit: block.crop || 'cover' }} /> : <div className="grid h-full place-items-center bg-neutral-100/80 text-[10px] text-neutral-500">{block.holder_label}</div> : <div className="h-full whitespace-pre-wrap break-words" style={{ fontSize: `${(Number(block.font_size) || 24) / 10}cqw`, lineHeight: block.line_height ? `${block.line_height}` : '1.2', fontFamily: block.font_family, fontWeight: block.bold ? 700 : 400, fontStyle: block.italic ? 'italic' : 'normal', textAlign: block.text_align || 'left', textDecoration: block.underline ? 'underline' : 'none', textTransform: block.text_transform || 'none', letterSpacing: block.letter_spacing ? `${(Number(block.letter_spacing) || 0) / 10}cqw` : 'normal', color: block.color || '#171717' }}>{value || block.holder_label}</div>}</div>
+    return <div className="rounded-xl border bg-neutral-50 p-4"><div className="mb-3 flex flex-wrap items-center justify-between gap-2"><h3 className="font-bold">Live preview</h3><div className="flex rounded-lg border bg-white p-0.5"><button onClick={() => setMenuPreviewOrientation('portrait')} className={`rounded-md px-2 py-1 text-xs ${menuPreviewOrientation === 'portrait' ? 'bg-violet-100 text-violet-800' : ''}`}>Portrait</button><button onClick={() => setMenuPreviewOrientation('landscape')} className={`rounded-md px-2 py-1 text-xs ${menuPreviewOrientation === 'landscape' ? 'bg-violet-100 text-violet-800' : ''}`}>Landscape</button></div></div><div className="relative mx-auto w-full overflow-hidden border bg-white shadow-sm transition-all" style={{ containerType: 'inline-size', aspectRatio: menuPreviewOrientation === 'portrait' ? '10 / 16' : '16 / 10', maxWidth: menuPreviewOrientation === 'portrait' ? '440px' : '960px', backgroundColor: editor.background, backgroundImage: editor.background_image ? `url(${editor.background_image})` : undefined, backgroundSize: 'cover', backgroundPosition: 'center' }}>{editor.blocks.map((block, i) => block.scope === 'item' ? null : renderField(block, block.type === 'text' ? block.text : block.image_url, block.holder_key || i))}{editor.items.flatMap((item, itemIndex) => { const assigned = editor.item_assignments?.[itemIndex] || []; return editor.blocks.map((block, i) => block.scope === 'item' && assigned.includes(block.holder_key) ? renderField(block, item[block.holder_key], `${itemIndex}-${block.holder_key || i}`) : null)})}</div><p className="mt-2 text-center text-xs text-neutral-500">{editor.title || 'Menu title'} · updates as you fill the form</p></div>
   })() : null
 
   return <div className="space-y-5">
@@ -170,7 +196,40 @@ export default function ManageMenus({ embedded = false }) {
     {!editor && <section className="bg-white border rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4"><div><h2 className="font-bold">Menu QR Code</h2><p className="text-sm text-neutral-500">Each mirror has its own link and shows only its active menus.</p><select value={selectedMirror} onChange={e => setSelectedMirror(e.target.value)} className="mt-3 border rounded-lg px-3 py-2" aria-label="Choose mirror for menu QR">{mirrors.map(mirror => <option key={mirror._id} value={mirror._id}>{mirror.mirror_name}</option>)}</select></div>{selectedMirror && shareUrl ? <div className="flex items-center gap-4"><a href={shareUrl} target="_blank" rel="noreferrer" className="text-sm underline break-all">Open menu page</a><img src={`https://api.qrserver.com/v1/create-qr-code/?size=160x160&margin=8&data=${encodeURIComponent(shareUrl)}`} alt="QR code for this mirror's menu page" className="w-32 h-32 border rounded-lg"/><button onClick={() => navigator.clipboard.writeText(shareUrl)} className="border rounded-lg px-3 py-2 text-sm">Copy link</button></div> : <p className="text-sm text-neutral-500">Create a mirror to get its menu QR code.</p>}</section>}
     {editor ? <div className="bg-white border rounded-2xl p-5 space-y-4">
       <div className="flex justify-between items-center"><h2 className="text-lg font-bold">{editor._id ? 'Edit Menu' : chosen ? `New ${chosen.name}` : 'Choose a menu template'}</h2><button onClick={() => { setEditor(null); setChosen(null) }} className="text-sm text-neutral-500">Close</button></div>
-      {!chosen ? <div className="grid md:grid-cols-3 gap-4">{templates.map(template => template.custom_layout ? <article key={template._id} className="border rounded-xl p-4"><button onClick={() => selectTemplate(template)} className="block w-full text-left hover:text-violet-700"><div className="h-28 rounded-lg mb-3" style={{ background: template.background, borderBottom: `8px solid ${template.accent || '#6d28d9'}` }} /><b>{template.name}</b><p className="text-sm text-neutral-500 mt-1">{template.description}</p><span className="mt-3 inline-block rounded-lg bg-black px-3 py-2 text-sm text-white">Use template</span></button><div className="mt-2 flex gap-2"><button onClick={() => navigate(`/custom-menu?templateId=${encodeURIComponent(template._id)}&templateMode=1`, { state: { returnToTemplateSelection: true } })} className="rounded-lg border px-3 py-2 text-sm">Edit template</button><button onClick={() => deleteTemplate(template)} className="rounded-lg border border-red-200 px-3 py-2 text-sm text-red-600">Delete template</button></div></article> : <button key={template._id} onClick={() => selectTemplate(template)} className="text-left border rounded-xl p-4 hover:border-black"><div className="h-28 rounded-lg mb-3" style={{ background: template.background, borderBottom: `8px solid ${template.accent}` }} /><b>{template.name}</b><p className="text-sm text-neutral-500 mt-1">{template.description}</p></button>)}<button onClick={() => navigate('/custom-menu?templateMode=1', { state: { returnToTemplateSelection: true } })} className="text-left border-2 border-dashed rounded-xl p-4 hover:border-black"><div className="h-28 rounded-lg mb-3 bg-neutral-50 flex items-center justify-center text-3xl">＋</div><b>Custom template</b><p className="text-sm text-neutral-500 mt-1">Create a layout with your own text and image holders.</p></button>{!templates.length && <p className="text-sm text-neutral-500">No templates are available.</p>}</div> : chosen.custom_layout ? <div className="grid lg:grid-cols-2 gap-6"><div className="space-y-5">
+      {!chosen ? (
+        loadingTemplates ? (
+          <div className="p-12 text-center text-neutral-400">Loading templates...</div>
+        ) : (
+          <div className="grid md:grid-cols-3 gap-4">
+            {templates.map(template => template.custom_layout ? (
+              <article key={template._id} className="border rounded-xl p-4">
+                <button onClick={() => selectTemplate(template)} className="block w-full text-left hover:text-violet-700">
+                  <div className="h-28 rounded-lg mb-3" style={{ background: template.background, borderBottom: `8px solid ${template.accent || '#6d28d9'}` }} />
+                  <b>{template.name}</b>
+                  <p className="text-sm text-neutral-500 mt-1">{template.description}</p>
+                  <span className="mt-3 inline-block rounded-lg bg-black px-3 py-2 text-sm text-white">Use template</span>
+                </button>
+                <div className="mt-2 flex gap-2">
+                  <button onClick={() => navigate(`/custom-menu?templateId=${encodeURIComponent(template._id)}&templateMode=1`, { state: { returnToTemplateSelection: true } })} className="rounded-lg border px-3 py-2 text-sm">Edit template</button>
+                  <button onClick={() => deleteTemplate(template)} className="rounded-lg border border-red-200 px-3 py-2 text-sm text-red-600">Delete template</button>
+                </div>
+              </article>
+            ) : (
+              <button key={template._id} onClick={() => selectTemplate(template)} className="text-left border rounded-xl p-4 hover:border-black">
+                <div className="h-28 rounded-lg mb-3" style={{ background: template.background, borderBottom: `8px solid ${template.accent}` }} />
+                <b>{template.name}</b>
+                <p className="text-sm text-neutral-500 mt-1">{template.description}</p>
+              </button>
+            ))}
+            <button onClick={() => navigate('/custom-menu?templateMode=1', { state: { returnToTemplateSelection: true } })} className="text-left border-2 border-dashed rounded-xl p-4 hover:border-black">
+              <div className="h-28 rounded-lg mb-3 bg-neutral-50 flex items-center justify-center text-3xl">＋</div>
+              <b>Custom template</b>
+              <p className="text-sm text-neutral-500 mt-1">Create a layout with your own text and image holders.</p>
+            </button>
+            {!templates.length && <p className="text-sm text-neutral-500">No templates are available.</p>}
+          </div>
+        )
+      ) : chosen.custom_layout ? <div className="grid lg:grid-cols-2 gap-6"><div className="space-y-5">
         <label className="block text-sm font-semibold">Menu title<input className="mt-1 w-full rounded-lg border px-3 py-2" value={editor.title || ''} onChange={e => update('title', e.target.value)} placeholder="Enter a menu title" /></label>
         <p className="text-sm text-neutral-500">Fill the fields defined by “{chosen.name}”. The template design is managed separately.</p>
         {editor.blocks.filter(block => block.scope !== 'item').length > 0 && <section className="rounded-xl border p-4"><h3 className="mb-3 font-bold">Menu page</h3><div className="space-y-4">{editor.blocks.map((block, index) => block.scope === 'item' ? null : <div key={block.holder_key || index}><label className="mb-1 block text-sm font-medium">{block.holder_label}</label>{block.type === 'text' ? <textarea className="w-full rounded-lg border p-2" rows="2" value={block.text || ''} onChange={e => update('blocks', editor.blocks.map((current, i) => i === index ? { ...current, text: e.target.value } : current))} /> : <><input className="w-full rounded-lg border p-2 text-sm" value={block.image_url || ''} onChange={e => update('blocks', editor.blocks.map((current, i) => i === index ? { ...current, image_url: e.target.value } : current))} placeholder="Image URL"/><label className="mt-2 inline-flex cursor-pointer rounded-lg border px-3 py-2 text-sm">Upload image<input type="file" accept="image/*" className="sr-only" onChange={e => uploadCustomImage(e.target.files?.[0], { scope: 'page', blockIndex: index })}/></label></>}</div>)}</div></section>}
@@ -197,8 +256,19 @@ export default function ManageMenus({ embedded = false }) {
       </div>}
     </div> : <>
       <div className="flex flex-wrap justify-between items-center gap-3"><div><h2 className="text-lg font-bold">Saved menus</h2><p className="text-sm text-neutral-500">Edit saved menus or choose one from Import Content on a mirror.</p></div><button onClick={() => start()} className="bg-black text-white rounded-xl px-4 py-2.5">+ Create New Menu</button></div>
-      <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">{menus.map(menu => { const assigned = (menu.mirror_ids || []).some(id => String(id) === String(selectedMirror)); return <article key={menu._id} className="bg-white border rounded-2xl p-5"><div className="h-32 rounded-xl mb-4 overflow-hidden flex items-center justify-center bg-neutral-50" style={{ background: templates.find(t => t._id === menu.template_id)?.background }}>{menu.image_url ? <img src={menu.image_url} alt={`${menu.title} menu preview`} className="w-full h-full object-contain" /> : <span className="text-xl font-bold">{menu.title}</span>}</div><p className="text-xs text-neutral-500">{templates.find(t => t._id === menu.template_id)?.name}</p><div className="mt-3 flex items-center justify-between gap-3"><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={menu.is_active !== false} onChange={() => toggleActive(menu)} />Active in menu QR</label><label className="flex items-center gap-2 text-sm"><input type="checkbox" disabled={!selectedMirror} checked={assigned} onChange={e => toggleMirror(menu, e.target.checked)} />Show on {mirrors.find(m => String(m._id) === String(selectedMirror))?.mirror_name || 'mirror'}</label></div><div className="flex gap-2 mt-4"><button onClick={() => start(menu)} className="border rounded-lg px-3 py-2 text-sm">Edit</button><button onClick={() => deleteMenu(menu._id)} className="text-red-600 px-2">Delete</button></div></article>})}</div>
-      {!menus.length && <div className="bg-white border border-dashed rounded-2xl p-10 text-center text-neutral-500">No menus yet. Create one from a template.</div>}
+      {loadingMenus ? (
+        <div className="p-12 text-center text-neutral-400 bg-white rounded-2xl border border-neutral-200">
+          Loading menus...
+        </div>
+      ) : (
+        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">{menus.map(menu => {
+          const assigned = (menu.mirror_ids || []).some(id => String(id) === String(selectedMirror));
+          const bg = menu.template_background || templates.find(t => t._id === menu.template_id)?.background || '#ffffff';
+          const tName = menu.template_name || templates.find(t => t._id === menu.template_id)?.name || 'Menu';
+          return <article key={menu._id} className="bg-white border rounded-2xl p-5"><div className="h-32 rounded-xl mb-4 overflow-hidden flex items-center justify-center bg-neutral-50" style={{ background: bg }}>{menu.image_url ? <img src={menu.image_url} alt={`${menu.title} menu preview`} className="w-full h-full object-contain" /> : <span className="text-xl font-bold">{menu.title}</span>}</div><p className="text-xs text-neutral-500">{tName}</p><div className="mt-3 flex items-center justify-between gap-3"><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={menu.is_active !== false} onChange={() => toggleActive(menu)} />Active in menu QR</label><label className="flex items-center gap-2 text-sm"><input type="checkbox" disabled={!selectedMirror} checked={assigned} onChange={e => toggleMirror(menu, e.target.checked)} />Show on {mirrors.find(m => String(m._id) === String(selectedMirror))?.mirror_name || 'mirror'}</label></div><div className="flex gap-2 mt-4"><button onClick={() => start(menu)} className="border rounded-lg px-3 py-2 text-sm">Edit</button><button onClick={() => deleteMenu(menu._id)} className="text-red-600 px-2">Delete</button></div></article>
+        })}</div>
+      )}
+      {!loadingMenus && !menus.length && <div className="bg-white border border-dashed rounded-2xl p-10 text-center text-neutral-500">No menus yet. Create one from a template.</div>}
     </>}
   </div>
 }

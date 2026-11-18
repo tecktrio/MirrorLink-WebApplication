@@ -16,6 +16,7 @@ export default function Setup() {
   const [selectedsite, setSelectedsite] = useState("");
   const [loading, setLoading] = useState(true);
   const [isAddSiteModalOpen, setIsAddSiteModalOpen] = useState(false);
+  const [siteToEdit, setSiteToEdit] = useState(null);
   const [statusMsg, setStatusMsg] = useState("");
 
   const login_key = getCookie("login_key") || "adminpassword";
@@ -123,7 +124,7 @@ export default function Setup() {
             <div className="flex items-center gap-2">
               <button
                 onClick={handleBackToSites}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white hover:bg-neutral-100 text-black border border-neutral-300 text-xs font-semibold rounded-xl shadow-2xs transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white hover:bg-neutral-100 text-black border border-neutral-200 text-xs font-bold rounded-full shadow-2xs transition-colors cursor-pointer"
                 title="Return to Sites Overview"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -131,7 +132,7 @@ export default function Setup() {
                 </svg>
                 <span>All Sites</span>
               </button>
-              <span className="text-neutral-400 text-xs">/</span>
+              <span className="text-neutral-300 text-xs">/</span>
               <span className="text-xs font-bold text-black truncate max-w-xs sm:max-w-md">
                 {activeSiteObj.site_name}
               </span>
@@ -139,8 +140,21 @@ export default function Setup() {
 
             <div className="flex items-center gap-2">
               <button
+                onClick={() => {
+                  setSiteToEdit(activeSiteObj);
+                  setIsAddSiteModalOpen(true);
+                }}
+                className="px-3.5 py-2 text-xs text-black bg-white hover:bg-neutral-100 border border-neutral-200 rounded-full transition-colors cursor-pointer flex items-center gap-1.5 font-bold shadow-2xs"
+                title="Edit this location"
+              >
+                <svg className="w-3.5 h-3.5 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                <span>Edit Location</span>
+              </button>
+              <button
                 onClick={(e) => handleDeleteSite(activeSiteObj._id, activeSiteObj.site_name, e)}
-                className="px-3 py-1.5 text-xs text-red-600 hover:text-red-700 bg-white hover:bg-red-50 border border-neutral-300 hover:border-red-200 rounded-xl transition-colors cursor-pointer"
+                className="px-3.5 py-2 text-xs text-black hover:text-red-600 bg-white hover:bg-red-50 border border-neutral-200 hover:border-red-200 rounded-full transition-colors cursor-pointer font-bold shadow-2xs"
                 title="Delete this site"
               >
                 Delete Site
@@ -149,23 +163,23 @@ export default function Setup() {
           </div>
 
           {/* Active Site Header Card */}
-          <div className="bg-white p-5 sm:p-6 rounded-2xl border border-neutral-200/90 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-2xs flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 rounded-2xl bg-neutral-100 border border-neutral-200 text-black flex items-center justify-center shrink-0">
+              <div className="w-12 h-12 rounded-2xl bg-white border border-neutral-200 text-black flex items-center justify-center shrink-0 shadow-2xs">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                 </svg>
               </div>
               <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-xl font-bold text-black tracking-tight">
+                <div className="flex items-center gap-2.5">
+                  <h2 className="text-xl font-black text-black tracking-tight">
                     {activeSiteObj.site_name}
                   </h2>
-                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-black text-white">
                     Active Location
                   </span>
                 </div>
-                <p className="text-xs text-neutral-500 mt-1 max-w-xl">
+                <p className="text-xs text-neutral-500 mt-1 max-w-xl font-medium">
                   {activeSiteObj.site_description || "Displays configured at this location"}
                 </p>
               </div>
@@ -175,7 +189,7 @@ export default function Setup() {
               <button
                 onClick={loadData}
                 title="Refresh site mirrors"
-                className="p-2.5 bg-neutral-50 hover:bg-neutral-100 border border-neutral-200 rounded-xl text-neutral-600 hover:text-black transition-colors cursor-pointer shrink-0"
+                className="p-2.5 bg-white hover:bg-neutral-100 border border-neutral-200 rounded-xl text-black transition-colors cursor-pointer shrink-0 shadow-2xs"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
@@ -242,7 +256,10 @@ export default function Setup() {
               </p>
             </div>
             <button
-              onClick={() => setIsAddSiteModalOpen(true)}
+              onClick={() => {
+                setSiteToEdit(null);
+                setIsAddSiteModalOpen(true);
+              }}
               className="px-4 py-2.5 bg-black hover:bg-neutral-800 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer flex items-center gap-2 whitespace-nowrap shrink-0"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -288,7 +305,10 @@ export default function Setup() {
               </p>
               {availableSiteList.length === 0 && (
                 <button
-                  onClick={() => setIsAddSiteModalOpen(true)}
+                  onClick={() => {
+                    setSiteToEdit(null);
+                    setIsAddSiteModalOpen(true);
+                  }}
                   className="px-5 py-2.5 bg-black hover:bg-neutral-800 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer flex items-center gap-2"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -337,15 +357,30 @@ export default function Setup() {
                         <span>→</span>
                       </span>
 
-                      <button
-                        onClick={(e) => handleDeleteSite(site._id, site.site_name, e)}
-                        className="w-7 h-7 rounded-lg text-neutral-400 hover:text-red-600 hover:bg-red-50 flex items-center justify-center transition-colors"
-                        title="Delete site"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
-                      </button>
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSiteToEdit(site);
+                            setIsAddSiteModalOpen(true);
+                          }}
+                          className="w-7 h-7 rounded-lg text-neutral-400 hover:text-black hover:bg-neutral-100 flex items-center justify-center transition-colors"
+                          title="Edit location"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        </button>
+                        <button
+                          onClick={(e) => handleDeleteSite(site._id, site.site_name, e)}
+                          className="w-7 h-7 rounded-lg text-neutral-400 hover:text-red-600 hover:bg-red-50 flex items-center justify-center transition-colors"
+                          title="Delete site"
+                        >
+                          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          </svg>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );
@@ -355,13 +390,22 @@ export default function Setup() {
         </div>
       )}
 
-      {/* Add Site Modal */}
+      {/* Add / Edit Site Modal */}
       <AddSiteModal
         isOpen={isAddSiteModalOpen}
-        onClose={() => setIsAddSiteModalOpen(false)}
+        siteToEdit={siteToEdit}
+        onClose={() => {
+          setIsAddSiteModalOpen(false);
+          setSiteToEdit(null);
+        }}
         onSiteAdded={(newSiteName) => {
           loadData();
-          setStatusMsg(`Site "${newSiteName}" created successfully.`);
+          setStatusMsg(`Location "${newSiteName}" created successfully.`);
+          setTimeout(() => setStatusMsg(""), 3500);
+        }}
+        onSiteUpdated={(updatedSite) => {
+          loadData();
+          setStatusMsg(`Location "${updatedSite.site_name}" updated successfully.`);
           setTimeout(() => setStatusMsg(""), 3500);
         }}
       />

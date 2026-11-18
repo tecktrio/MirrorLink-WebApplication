@@ -57,17 +57,17 @@ export default function Addsitepage() {
 
       <div className='flex flex-col gap-4'>
         <Inputtextbox
-          label='Site Name'
-          description='Enter a recognizable name for this site/location'
-          placeholder='e.g., Downtown Store, Lobby, Head Office'
+          label='Location / Site Name'
+          description='Enter a recognizable name for this location, branch, or area'
+          placeholder='e.g., Downtown Location, Reception, 2nd Floor'
           value={sitename}
           updatedata={setsitename}
           required={true}
         />
         <Inputtextbox
-          label='Site Description'
-          description='Optional details or address about this site'
-          placeholder='e.g., 2nd floor main reception area'
+          label='Location Description'
+          description='Optional details, room number, or physical placement details'
+          placeholder='e.g., Room 102, 2nd floor retail display, lobby screens'
           value={siteDescription}
           updatedata={setSiteDescription}
           required={false}

@@ -67,7 +67,7 @@ export default function VirtualScreen({
       if (isPaused) {
         videoRef.current.pause();
       } else {
-        videoRef.current.play().catch(() => {});
+        videoRef.current.play().catch(() => { });
       }
     }
   }, [isPaused, resolvedContent]);
@@ -77,7 +77,7 @@ export default function VirtualScreen({
       if (isPaused) {
         fullscreenVideoRef.current.pause();
       } else {
-        fullscreenVideoRef.current.play().catch(() => {});
+        fullscreenVideoRef.current.play().catch(() => { });
       }
     }
   }, [isPaused, isFullscreen, resolvedContent]);
@@ -120,38 +120,7 @@ export default function VirtualScreen({
     <>
       <div className="bg-white border border-neutral-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-4">
         {/* Virtual Screen Card Header */}
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className={`w-2 h-2 rounded-full ${isPaused ? 'bg-amber-500' : 'bg-emerald-500'}`}></span>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-neutral-500">
-                Default Virtual Mirror ({orientation})
-              </span>
-            </div>
-            <div className="flex items-center gap-2 mt-0.5">
-              <h3 className="text-sm sm:text-base font-bold text-black truncate">
-                {screenTitle}
-              </h3>
-              <span className="text-[10px] font-mono text-neutral-600 bg-neutral-100 px-1.5 py-0.5 rounded font-bold shrink-0">
-                {displayResolution}
-              </span>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-1.5 shrink-0">
-            <button
-              type="button"
-              onClick={() => setIsFullscreen(true)}
-              className="p-1.5 sm:px-2.5 sm:py-1.5 text-xs font-medium text-neutral-700 hover:text-black bg-neutral-100 hover:bg-neutral-200 rounded-lg border border-neutral-200 transition-colors flex items-center gap-1 cursor-pointer"
-              title="Expand virtual screen to full view"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-              </svg>
-              <span className="hidden sm:inline">Maximize</span>
-            </button>
-          </div>
-        </div>
 
         {/* Physical TV / Monitor Frame */}
         <div className="bg-[#111111] border border-[#262626] rounded-2xl p-2.5 sm:p-3 shadow-xl relative overflow-hidden flex flex-col items-center">
@@ -226,41 +195,11 @@ export default function VirtualScreen({
                   </div>
                 )}
 
-                {/* Top Corner HUD Badges */}
-                <div className="absolute top-2 left-2 right-2 flex items-center justify-between gap-2 z-20 pointer-events-none">
-                  {/* Live Status Pill */}
-                  <div className="pointer-events-auto">
-                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold backdrop-blur-md shadow-xs border ${
-                      isPaused
-                        ? "bg-black/75 text-amber-300 border-amber-500/30"
-                        : "bg-black/75 text-emerald-400 border-emerald-500/30"
-                    }`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${isPaused ? "bg-amber-400" : "bg-emerald-400 animate-pulse"}`}></span>
-                      <span>{isPaused ? "DEFAULT MIRROR (PAUSED)" : "DEFAULT MIRROR (LIVE)"}</span>
-                    </span>
-                  </div>
 
-                  {/* Sequence Count and Format Pill */}
-                  <span className="px-2.5 py-1 rounded-full text-[10px] font-mono font-bold bg-black/75 backdrop-blur-md text-white border border-white/15 shadow-xs">
-                    {currentIndex + 1} / {totalCount} • {resolvedContent.content_format?.toUpperCase() || "IMG"}
-                    {resolvedContent.content_format?.toLowerCase() !== "mp4" && (
-                      <span className="text-neutral-300 ml-1">({resolvedContent.duration || mirror?.photo_duration || 5}s)</span>
-                    )}
-                  </span>
-                </div>
 
                 {/* Bottom Overlay Info Banner */}
                 <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-3 pt-6 flex items-end justify-between gap-3 text-white z-20 pointer-events-none">
-                  <div className="min-w-0 pointer-events-auto">
-                    <p className="text-xs font-bold truncate text-white drop-shadow-xs">
-                      {resolvedContent.content_title || "Untitled Slide"}
-                    </p>
-                    {resolvedContent.content_description && (
-                      <p className="text-[10px] text-neutral-300 truncate max-w-sm drop-shadow-xs">
-                        {resolvedContent.content_description}
-                      </p>
-                    )}
-                  </div>
+
                   <span className="text-[10px] font-mono text-neutral-400 shrink-0 font-medium">
                     {displayResolution}
                   </span>
@@ -271,52 +210,10 @@ export default function VirtualScreen({
 
           {/* Bezel Bottom Chin */}
           <div className="pt-2 px-1 w-full flex items-center justify-between text-[9px] font-mono tracking-widest text-neutral-400 uppercase select-none">
-            <span className="truncate">MirrorLink Screen • {orientation}</span>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <span>{displayResolution} • {resolvedContent?.duration || mirror?.photo_duration || 5}s</span>
-              <span className={`w-1.5 h-1.5 rounded-full ${isPaused ? 'bg-amber-400' : 'bg-emerald-400'}`}></span>
-            </div>
+
           </div>
         </div>
 
-        {/* Mirror Stream Broadcast Status & Direct Viewer URL */}
-        <div className="bg-neutral-50/90 border border-neutral-200/90 rounded-2xl p-3.5 space-y-2.5">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5">
-              <span className={`w-2 h-2 rounded-full ${isPaused ? "bg-amber-500" : "bg-emerald-500 animate-pulse"}`} />
-              <span className="text-[11px] font-bold text-black uppercase tracking-wider">
-                Live Stream Broadcast
-              </span>
-            </div>
-            <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full font-bold border ${
-              isPaused
-                ? "bg-amber-50 text-amber-800 border-amber-200"
-                : "bg-emerald-50 text-emerald-800 border-emerald-200"
-            }`}>
-              {isPaused ? "PAUSED" : "RUNNING LIVE"}
-            </span>
-          </div>
-
-          <div className="bg-white border border-neutral-200/80 rounded-xl p-3 flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <span className="block text-[10px] uppercase font-bold text-neutral-400 tracking-wider">
-                Stream / Mirror Name
-              </span>
-              <p className="text-xs font-mono font-bold text-black truncate mt-0.5">
-                {screenTitle}
-              </p>
-            </div>
-            <div className="text-right shrink-0">
-              <span className="block text-[10px] uppercase font-bold text-neutral-400 tracking-wider">
-                Resolution
-              </span>
-              <p className="text-xs font-mono font-medium text-neutral-700 mt-0.5">
-                {displayResolution}
-              </p>
-            </div>
-          </div>
-
-        </div>
 
         {/* Screen Controller Toolbar */}
         <div className="space-y-3 pt-1">
@@ -364,11 +261,10 @@ export default function VirtualScreen({
                       key={item._id || idx}
                       type="button"
                       onClick={() => onSelectSlide && onSelectSlide(idx, item._id)}
-                      className={`h-7 px-2.5 rounded-md text-xs font-mono font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${
-                        isCurrent
-                          ? "bg-black text-white shadow-xs"
-                          : "bg-neutral-100 hover:bg-neutral-200 text-neutral-600 border border-neutral-200"
-                      }`}
+                      className={`h-7 px-2.5 rounded-md text-xs font-mono font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${isCurrent
+                        ? "bg-black text-white shadow-xs"
+                        : "bg-neutral-100 hover:bg-neutral-200 text-neutral-600 border border-neutral-200"
+                        }`}
                       title={`Jump virtual screen to #${idx + 1}: ${item.content_title || 'Media'}`}
                     >
                       <span>#{idx + 1}</span>
