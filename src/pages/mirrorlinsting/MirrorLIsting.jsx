@@ -200,13 +200,13 @@ export default function MirrorListing({ site_id, site_name = "Selected Site", on
                   {/* Direct Stream URL Bar */}
                   <div className="flex items-center justify-between gap-1.5 bg-white px-3 py-2 rounded-xl border border-neutral-200 shadow-2xs">
                     <span className="font-mono text-[11px] text-neutral-800 truncate select-all">
-                      {`${(process.env.REACT_APP_VIEWER_URL || 'https://mirror.bigburry.com').replace(/\/+$/, '')}?mirror_name=${encodeURIComponent(mirror.mirror_name)}`}
+                      {`${(process.env.REACT_APP_VIEWER_URL || 'https://screen.bigburry.com').replace(/\/+$/, '')}?mirror_name=${encodeURIComponent(mirror.mirror_name)}`}
                     </span>
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        const viewerBase = (process.env.REACT_APP_VIEWER_URL || 'https://mirror.bigburry.com').replace(/\/+$/, '');
+                        const viewerBase = (process.env.REACT_APP_VIEWER_URL || 'https://screen.bigburry.com').replace(/\/+$/, '');
                         const targetUrl = `${viewerBase}?mirror_name=${encodeURIComponent(mirror.mirror_name)}`;
                         navigator.clipboard.writeText(targetUrl);
                         setStatusMsg(`Stream URL copied for "${mirror.mirror_name}"`);

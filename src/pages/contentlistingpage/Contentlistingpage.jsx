@@ -43,7 +43,7 @@ export default function Contentlistingpage() {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   const mirror_id = getCookie('mirror_id')
-  const viewerBase = (process.env.REACT_APP_VIEWER_URL || "https://mirror.bigburry.com").replace(/\/+$/, "")
+  const viewerBase = (process.env.REACT_APP_VIEWER_URL || "https://screen.bigburry.com").replace(/\/+$/, "")
   const currentMirrorName = liveStatus?.mirror_name || 'Display Screen'
   const mirrorViewerUrl = `${viewerBase}?mirror_name=${encodeURIComponent(currentMirrorName)}`
 

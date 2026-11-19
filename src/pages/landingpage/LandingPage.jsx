@@ -5,7 +5,7 @@ import "./LandingPage.css";
 import "./PricingPlan.css";
 import PublicAccountActions from "../../components/PublicAccountActions";
 
-const viewerUrl = (process.env.REACT_APP_VIEWER_URL || "https://mirror.bigburry.com").replace(/\/+$/, "");
+const viewerUrl = (process.env.REACT_APP_VIEWER_URL || "https://screen.bigburry.com").replace(/\/+$/, "");
 
 const applications = [
   {
