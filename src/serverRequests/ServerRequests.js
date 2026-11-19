@@ -572,7 +572,7 @@ function CREATE_MIRROR(login_key, name, description, username, password, height,
     })
 }
 
-function CREATE_CONTENT(login_key, content_title, content_description, content, mirror_id = null, duration = null, width = null, height = null) {
+function CREATE_CONTENT(login_key, content_title, content_description, content, mirror_id = null, duration = null, width = null, height = null, onProgress = null) {
 
     return new Promise((resolve, reject) => {
 
@@ -582,6 +582,16 @@ function CREATE_CONTENT(login_key, content_title, content_description, content, 
             console.error("FileReader error:", err);
             reject(new Error('Failed to read file for upload'));
         };
+
+        if (onProgress && typeof onProgress === 'function') {
+            reader.onprogress = function (e) {
+                if (e.lengthComputable) {
+                    // File reading is the first 15% of the overall process
+                    const readPercent = Math.round((e.loaded / e.total) * 15);
+                    onProgress(readPercent);
+                }
+            };
+        }
 
         reader.onload = function (event) {
             const fileData = event.target.result;
@@ -618,35 +628,55 @@ function CREATE_CONTENT(login_key, content_title, content_description, content, 
             if (height !== null && height !== undefined) {
                 request_data["height"] = height;
             }
-              
-            fetch(ADMINISTRATOR_ROOT_URL, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(request_data)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(data => {
-                        throw new Error(data.status_text || `Upload error HTTP ${response.status}`);
-                    }).catch(e => {
-                        throw new Error(e.message || `Upload server error HTTP ${response.status}`);
-                    });
-                }
-                return response.json();
-            })
-            .then((data) => {
-                if (data.status_code === 400 || data.status_code === 401 || data.status_code === 403) {
-                    reject(new Error(data.status_text || 'Request failed due to invalid data'));
+
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', ADMINISTRATOR_ROOT_URL, true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+
+            if (xhr.upload && onProgress && typeof onProgress === 'function') {
+                xhr.upload.onprogress = function (e) {
+                    if (e.lengthComputable) {
+                        // Network upload represents 15% -> 98%
+                        const uploadPercent = 15 + Math.round((e.loaded / e.total) * 83);
+                        onProgress(Math.min(uploadPercent, 99));
+                    }
+                };
+            }
+
+            xhr.onload = function () {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+                        if (data.status_code === 400 || data.status_code === 401 || data.status_code === 403) {
+                            reject(new Error(data.status_text || 'Request failed due to invalid data'));
+                        } else {
+                            if (onProgress && typeof onProgress === 'function') {
+                                onProgress(100);
+                            }
+                            resolve(data);
+                        }
+                    } catch (parseErr) {
+                        reject(new Error('Invalid response from server'));
+                    }
                 } else {
-                    resolve(data);
+                    let errMsg = `Upload server error HTTP ${xhr.status}`;
+                    try {
+                        const data = JSON.parse(xhr.responseText);
+                        if (data.status_text) errMsg = data.status_text;
+                    } catch (_) {}
+                    reject(new Error(errMsg));
                 }
-            })
-            .catch((error) => {
-                console.error("CREATE_CONTENT error:", error);
-                reject(error);
-            });
+            };
+
+            xhr.onerror = function () {
+                reject(new Error('Network error during upload'));
+            };
+
+            xhr.onabort = function () {
+                reject(new Error('Upload aborted'));
+            };
+
+            xhr.send(JSON.stringify(request_data));
         };
 
         reader.readAsDataURL(content);

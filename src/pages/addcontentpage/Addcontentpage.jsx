@@ -23,6 +23,7 @@ export default function Addcontentpage() {
   const [videoFitMode, setVideoFitMode] = useState("cover") // "cover" or "contain"
   const [videoAlignment, setVideoAlignment] = useState("center center")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
   const [errorMessage, setErrorMessage] = useState('')
   const [statusText, setStatusText] = useState('')
   let navigate = useNavigate()
@@ -99,6 +100,7 @@ export default function Addcontentpage() {
     }
 
     setIsSubmitting(true)
+    setUploadProgress(0)
     setStatusText("Uploading to your shared content library...")
     setErrorMessage('')
 
@@ -114,9 +116,20 @@ export default function Addcontentpage() {
       null,
       duration,
       uploadW,
-      uploadH
+      uploadH,
+      (percent) => {
+        setUploadProgress(percent)
+        if (percent < 15) {
+          setStatusText(`Reading media file (${percent}%)...`)
+        } else if (percent < 100) {
+          setStatusText(`Uploading media (${percent}%)...`)
+        } else {
+          setStatusText("Processing content...")
+        }
+      }
     )
       .then(() => {
+        setUploadProgress(100)
         setStatusText("Upload complete! Redirecting to content library...")
         setTimeout(() => {
           navigate('/manage_contents')
@@ -127,6 +140,7 @@ export default function Addcontentpage() {
         setErrorMessage("Upload failed. Supported formats: MP4, JPG, PNG, WEBP.")
         setStatusText('')
         setIsSubmitting(false)
+        setUploadProgress(0)
       })
   }
 
@@ -171,9 +185,24 @@ export default function Addcontentpage() {
           )}
 
           {statusText && (
-            <div className='p-4 rounded-xl text-xs font-semibold bg-neutral-100 text-black border border-neutral-300 flex items-center gap-2'>
-              <div className='w-4 h-4 border-2 border-neutral-300 border-t-black rounded-full animate-spin'></div>
-              <span>{statusText}</span>
+            <div className='p-4 rounded-xl text-xs font-semibold bg-neutral-100 text-black border border-neutral-300 space-y-2'>
+              <div className='flex items-center justify-between'>
+                <div className='flex items-center gap-2'>
+                  <div className='w-4 h-4 border-2 border-neutral-300 border-t-black rounded-full animate-spin'></div>
+                  <span>{statusText}</span>
+                </div>
+                {isSubmitting && uploadProgress > 0 && (
+                  <span className='font-mono font-bold text-black'>{uploadProgress}%</span>
+                )}
+              </div>
+              {isSubmitting && (
+                <div className='w-full bg-neutral-200 h-2 rounded-full overflow-hidden'>
+                  <div
+                    className='bg-black h-full rounded-full transition-all duration-200 ease-out'
+                    style={{ width: `${uploadProgress}%` }}
+                  />
+                </div>
+              )}
             </div>
           )}
 
@@ -504,7 +533,7 @@ export default function Addcontentpage() {
             </button>
             <div className='w-48'>
               <Submitbutton
-                text={isSubmitting ? "Uploading..." : (fileDimensions && !isExactMatch && content?.type.startsWith('image/') ? "Crop Image" : "Save to Library")}
+                text={isSubmitting ? (uploadProgress > 0 ? `Uploading (${uploadProgress}%)...` : "Uploading...") : (fileDimensions && !isExactMatch && content?.type.startsWith('image/') ? "Crop Image" : "Save to Library")}
                 disabled={!content || isSubmitting || (fileDimensions && !isExactMatch && content?.type.startsWith('image/'))}
                 onClick={fileDimensions && !isExactMatch && content?.type.startsWith('image/') ? (e) => { e.preventDefault(); setIsCropperOpen(true); } : undefined}
               />
