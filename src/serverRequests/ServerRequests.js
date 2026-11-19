@@ -1,7 +1,7 @@
 // Request URL s and other Main urls for the application to communicate with server
 
 // Request URLs and communication endpoints for server
-const RAW_API_URL = process.env.REACT_APP_API_URL || "https://mirrorlink.bigburry.com/api";
+const RAW_API_URL = process.env.REACT_APP_API_URL || "https://screenpilot.bigburry.com/api";
 const CLEAN_API_URL = RAW_API_URL.replace(/\/+$/, "");
 
 export const SERVER_URL = `${CLEAN_API_URL}/`;

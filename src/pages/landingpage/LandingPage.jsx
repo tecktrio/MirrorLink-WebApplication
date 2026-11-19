@@ -69,7 +69,7 @@ export default function LandingPage() {
   return (
     <div className="ml-landing">
       <header className="ml-nav">
-        <a className="ml-brand" href="#top" aria-label="ScreenPilot home"><img src="/logo.png" alt="ScreenPilot" className="h-10 sm:h-12 w-auto max-w-[220px] sm:max-w-[260px] object-contain" /></a>
+        <a className="ml-brand" href="#top" aria-label="ScreenPilot home"><img src="/logo.png" alt="ScreenPilot" className="h-12 sm:h-14 md:h-16 w-auto max-w-[280px] sm:max-w-[340px] md:max-w-[400px] object-contain" /></a>
         <nav className="ml-nav-links" aria-label="Main navigation">
           <a href="#applications">What you can do</a>
           <a href="#how-it-works">How it works</a>
@@ -109,7 +109,7 @@ export default function LandingPage() {
         <section className="ml-final-cta"><div><div className="ml-eyebrow"><span /> READY WHEN YOU ARE</div><h2>Let's get your screens<br />connected.</h2></div><div className="ml-final-actions"><Link className="ml-button ml-button-dark" to={controlPanelPath}>Go to control panel <Arrow /></Link><a className="ml-text-link" href={viewerUrl} target="_blank" rel="noreferrer">Go to viewer <Arrow diagonal /></a></div></section>
       </main>
 
-      <footer className="ml-footer"><a className="ml-brand" href="#top"><img src="/logo.png" alt="ScreenPilot" className="h-8 sm:h-9 w-auto max-w-[180px] object-contain" /></a><span>Wireless display management.</span><div><Link to={controlPanelPath}>Control panel</Link><a href={viewerUrl} target="_blank" rel="noreferrer">Viewer</a><span>© {new Date().getFullYear()} ScreenPilot</span><a className="ml-footer-credit" href="https://bigburry.com" target="_blank" rel="noopener noreferrer">Made by Bigburry Hypersystems LLP</a></div></footer>
+      <footer className="ml-footer"><a className="ml-brand" href="#top"><img src="/logo.png" alt="ScreenPilot" className="h-10 sm:h-12 w-auto max-w-[220px] sm:max-w-[260px] object-contain" /></a><span>Wireless display management.</span><div><Link to={controlPanelPath}>Control panel</Link><a href={viewerUrl} target="_blank" rel="noreferrer">Viewer</a><span>© {new Date().getFullYear()} ScreenPilot</span><a className="ml-footer-credit" href="https://bigburry.com" target="_blank" rel="noopener noreferrer">Made by Bigburry Hypersystems LLP</a></div></footer>
     </div>
   );
 }

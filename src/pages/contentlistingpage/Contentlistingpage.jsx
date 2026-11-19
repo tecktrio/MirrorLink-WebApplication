@@ -86,7 +86,7 @@ export default function Contentlistingpage() {
   // Subscribe the web virtual screen to the same MQTT topic as physical displays.
   useEffect(() => {
     if (!mirror_id || !window.mqtt) return
-    const brokerUrl = process.env.REACT_APP_MQTT_URL || window.MIRRORLINK_MQTT_URL || "wss://mirrorlink.bigburry.com/mqtt"
+    const brokerUrl = process.env.REACT_APP_MQTT_URL || window.MIRRORLINK_MQTT_URL || "wss://screenpilot.bigburry.com/mqtt"
     const client = window.mqtt.connect(brokerUrl, {
       ...(window.MIRRORLINK_MQTT_OPTIONS || {}),
       reconnectPeriod: 3000,
