@@ -834,41 +834,142 @@ function ASSIGN_MIRROR_TO_SITE(login_key,mirrors,site_id) {
         })
 }
 
-function ASSIGN_CONTENT_TO_MIRROR(login_key,content_ids, mirror_id) {
-
+function ASSIGN_CONTENT_TO_MIRROR(login_key, content_ids, mirror_id, timeslot_ids = ['default']) {
     return new Promise((resolve, reject) => {
-            const request_data = {
-                "service": "AssignContentToMirror",
-                "content_ids": content_ids,
-                "mirror_id":mirror_id,
-                "login_key":login_key
-            }
-            try {
-                fetch(ADMINISTRATOR_ROOT_URL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(request_data)
-                }).then(response => response.json())
-                    .then((data) => {
-                        // console.log(data)
-                        if (data.status_code == 401) {
-                            reject(new Error('Request failed due to invalid data'))
-                        }
-                        else {
-                            // console.log(data.data)
-                            resolve()
-                        }
-                    }).catch((error) => {
-                        console.log(error)
+        const slot_ids = Array.isArray(timeslot_ids) ? timeslot_ids : [timeslot_ids]
+        const request_data = {
+            "service": "AssignContentToMirror",
+            "content_ids": content_ids,
+            "mirror_id": mirror_id,
+            "timeslot_ids": slot_ids,
+            "timeslot_id": slot_ids[0] || 'default',
+            "login_key": login_key
+        }
+        try {
+            fetch(ADMINISTRATOR_ROOT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(request_data)
+            }).then(response => response.json())
+                .then((data) => {
+                    if (data.status_code == 401) {
                         reject(new Error('Request failed due to invalid data'))
-                    })
-            }
-            catch {
-                reject(new Error('Request failed due to invalid data'))
-            }
-        })
+                    } else if (data.status_code >= 400) {
+                        reject(new Error(data.status_text || 'Failed to assign content'))
+                    } else {
+                        resolve(data)
+                    }
+                }).catch((error) => {
+                    reject(error)
+                })
+        }
+        catch (e) {
+            reject(e)
+        }
+    })
+}
+
+function SAVE_TIMESLOT(login_key, mirror_id, timeslot) {
+    return new Promise((resolve, reject) => {
+        const request_data = {
+            "service": "SaveTimeslot",
+            "mirror_id": mirror_id,
+            "timeslot": timeslot,
+            "login_key": login_key
+        }
+        try {
+            fetch(ADMINISTRATOR_ROOT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(request_data)
+            }).then(response => response.json())
+                .then((data) => {
+                    if (data.status_code >= 400) {
+                        reject(new Error(data.status_text || 'Failed to save timeslot'))
+                    } else {
+                        resolve(data)
+                    }
+                }).catch(reject)
+        } catch (e) { reject(e) }
+    })
+}
+
+function DELETE_TIMESLOT(login_key, mirror_id, timeslot_id) {
+    return new Promise((resolve, reject) => {
+        const request_data = {
+            "service": "DeleteTimeslot",
+            "mirror_id": mirror_id,
+            "timeslot_id": timeslot_id,
+            "login_key": login_key
+        }
+        try {
+            fetch(ADMINISTRATOR_ROOT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(request_data)
+            }).then(response => response.json())
+                .then((data) => {
+                    if (data.status_code >= 400) {
+                        reject(new Error(data.status_text || 'Failed to delete timeslot'))
+                    } else {
+                        resolve(data)
+                    }
+                }).catch(reject)
+        } catch (e) { reject(e) }
+    })
+}
+
+function UPDATE_TIMESLOT_ORDER(login_key, mirror_id, timeslot_id, ordered_content_ids) {
+    return new Promise((resolve, reject) => {
+        const request_data = {
+            "service": "UpdateTimeslotContentsOrder",
+            "mirror_id": mirror_id,
+            "timeslot_id": timeslot_id,
+            "ordered_content_ids": ordered_content_ids,
+            "login_key": login_key
+        }
+        try {
+            fetch(ADMINISTRATOR_ROOT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(request_data)
+            }).then(response => response.json())
+                .then((data) => {
+                    if (data.status_code >= 400) {
+                        reject(new Error(data.status_text || 'Failed to update timeslot order'))
+                    } else {
+                        resolve(data)
+                    }
+                }).catch(reject)
+        } catch (e) { reject(e) }
+    })
+}
+
+function UPDATE_MIRROR_TIMEZONE(login_key, mirror_id, timezone) {
+    return new Promise((resolve, reject) => {
+        const request_data = {
+            "service": "UpdateMirrorTimezone",
+            "mirror_id": mirror_id,
+            "timezone": timezone,
+            "login_key": login_key
+        }
+        try {
+            fetch(ADMINISTRATOR_ROOT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(request_data)
+            }).then(response => response.json())
+                .then((data) => {
+                    if (data.status_code >= 400) {
+                        reject(new Error(data.status_text || 'Failed to update timezone'))
+                    } else {
+                        resolve(data)
+                    }
+                }).catch(reject)
+        } catch (e) { reject(e) }
+    })
 }
 
 const MENU_REQUEST = (payload) => fetch(ADMINISTRATOR_ROOT_URL, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).then(async r => { const d = await r.json(); if (!r.ok) throw new Error(d.status_text || 'Menu request failed'); return d; });
@@ -1178,5 +1279,9 @@ export {
     GET_MIRROR_LIVE_STATUS,
     SYNC_CONNECTED_MIRRORS,
     TOGGLE_CONTENT_STATUS_ON_MIRROR,
-    UPDATE_PHOTO_SPEED
+    UPDATE_PHOTO_SPEED,
+    SAVE_TIMESLOT,
+    DELETE_TIMESLOT,
+    UPDATE_TIMESLOT_ORDER,
+    UPDATE_MIRROR_TIMEZONE
 }

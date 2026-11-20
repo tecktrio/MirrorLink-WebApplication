@@ -29,6 +29,9 @@ export default function Listitem({
   onMoveDown,
   canMoveUp = false,
   canMoveDown = false,
+  owner = "me",
+  dateModified = "—",
+  displayMode = "tableRow", // "tableRow" (Google Drive row) or "card"
 }) {
   const navigate = useNavigate();
 
@@ -36,12 +39,70 @@ export default function Listitem({
     if (goto) navigate(goto);
   };
 
-  const borderAndBgClass = isDragOver
-    ? 'border-2 border-black bg-white shadow-md scale-[1.01]'
-    : 'border-neutral-200 hover:border-black shadow-2xs';
-
   const isVideo = contentFormat?.toLowerCase() === 'mp4' || (typeof imageUrl === 'string' && imageUrl.toLowerCase().endsWith('.mp4'));
 
+  // Render Google Drive styled folder / file icon
+  const renderDriveIcon = () => {
+    if (imageUrl) {
+      return (
+        <div className="w-9 h-9 rounded-lg overflow-hidden border border-neutral-200 bg-neutral-100 shrink-0 relative flex items-center justify-center">
+          {isVideo ? (
+            <div className="w-full h-full bg-black flex items-center justify-center text-white">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </div>
+          ) : (
+            <img
+              src={imageUrl}
+              alt={title || "Preview"}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                e.currentTarget.style.display = 'none';
+              }}
+            />
+          )}
+        </div>
+      );
+    }
+
+    // Default Drive style icons based on badge or content type
+    const badgeLower = (badge || '').toLowerCase();
+    if (badgeLower === 'location' || badgeLower === 'site') {
+      // Folder icon
+      return (
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-600 shrink-0">
+          <svg className="w-6 h-6 fill-neutral-600" viewBox="0 0 24 24">
+            <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
+          </svg>
+        </div>
+      );
+    }
+
+    if (badgeLower.includes('x') || badgeLower.includes('mirror') || badgeLower === 'screen') {
+      // Display Screen icon
+      return (
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-700 shrink-0">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <rect x="2" y="3" width="20" height="14" rx="2" strokeWidth="2" />
+            <line x1="8" y1="21" x2="16" y2="21" strokeWidth="2" strokeLinecap="round" />
+            <line x1="12" y1="17" x2="12" y2="21" strokeWidth="2" strokeLinecap="round" />
+          </svg>
+        </div>
+      );
+    }
+
+    // Generic file icon
+    return (
+      <div className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-500 shrink-0">
+        <svg className="w-6 h-6 fill-neutral-500" viewBox="0 0 24 24">
+          <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+        </svg>
+      </div>
+    );
+  };
+
+  // Google Drive table row mode (default)
   return (
     <div
       draggable={isDraggable}
@@ -51,128 +112,117 @@ export default function Listitem({
       onDrop={onDrop}
       onDragEnd={onDragEnd}
       onClick={handleCardClick}
-      className={`group bg-white hover:bg-neutral-50/50 border rounded-2xl p-4 my-2.5 shadow-2xs transition-all duration-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 ${
+      className={`group w-full flex items-center justify-between py-2.5 px-3 sm:px-4 border-b border-neutral-100 hover:bg-neutral-50/90 transition-colors select-none ${
         goto ? 'cursor-pointer' : ''
-      } ${
-        isDragging ? 'opacity-40 scale-98 border-dashed border-black bg-white' : ''
-      } ${borderAndBgClass}`}
+      } ${isDragging ? 'opacity-30 bg-neutral-100' : ''} ${
+        isDragOver ? 'bg-neutral-100 border-b-2 border-black' : ''
+      }`}
     >
-      <div className="flex items-center gap-3 min-w-0 flex-1">
-        {/* Drag Handle and Order Badge */}
-        {order !== undefined && (
-          <div className="flex items-center gap-2 shrink-0">
-            {isDraggable && (
-              <div
-                className="cursor-grab active:cursor-grabbing p-1.5 text-neutral-400 hover:text-black hover:bg-neutral-100 rounded-full transition-colors flex items-center justify-center shrink-0"
-                title="Click and drag to reorder playlist playback order"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 6h.01M8 12h.01M8 18h.01M16 6h.01M16 12h.01M16 18h.01" />
-                </svg>
-              </div>
-            )}
-            <div
-              className="w-7 h-7 rounded-full border bg-white border-neutral-200 text-black flex items-center justify-center text-xs font-black shrink-0 shadow-2xs"
-              title={`Playlist Play Order: #${order}`}
-            >
-              #{order}
-            </div>
-          </div>
-        )}
-
-        {/* Content Thumbnail Preview / Default Icon */}
-        {imageUrl ? (
-          <div className="w-14 h-10 rounded-xl overflow-hidden border border-neutral-200 bg-white shrink-0 relative flex items-center justify-center group-hover:scale-105 transition-transform duration-200 shadow-2xs">
-            {isVideo ? (
-              <div className="w-full h-full bg-black flex items-center justify-center text-white">
-                <svg className="w-5 h-5 opacity-90" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z" />
-                </svg>
-              </div>
-            ) : (
-              <img
-                src={imageUrl}
-                alt={title || "Content preview"}
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.style.display = 'none';
-                  e.currentTarget.parentElement.classList.add('flex', 'items-center', 'justify-center');
-                }}
-              />
-            )}
-          </div>
-        ) : (
-          <div className="w-10 h-10 rounded-2xl border border-neutral-200 bg-white text-black flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform duration-200 shadow-2xs">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+      {/* Column 1: Name, Drag handle, Order, Icon & Subtitle */}
+      <div className="flex items-center gap-3 min-w-0 flex-1 pr-4">
+        {/* Drag handle */}
+        {isDraggable && (
+          <div
+            className="cursor-grab active:cursor-grabbing p-1 text-neutral-400 hover:text-black hover:bg-neutral-200/60 rounded transition-colors shrink-0"
+            title="Drag to reorder"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M8 6h.01M8 12h.01M8 18h.01M16 6h.01M16 12h.01M16 18h.01" />
             </svg>
           </div>
         )}
 
+        {/* Order badge */}
+        {order !== undefined && (
+          <div
+            className="w-6 h-6 rounded-md bg-neutral-100 text-neutral-800 flex items-center justify-center text-[11px] font-bold shrink-0 border border-neutral-200"
+            title={`Position #${order}`}
+          >
+            {order}
+          </div>
+        )}
+
+        {/* Drive Icon */}
+        {renderDriveIcon()}
+
+        {/* Name and subtitle */}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <h4 className="text-sm font-black truncate transition-colors text-black group-hover:text-neutral-800">
+            <span className="font-semibold text-neutral-900 group-hover:text-black text-sm truncate">
               {title}
-            </h4>
-
+            </span>
             {badge && (
-              <span className="text-[10px] uppercase tracking-wider font-black px-2.5 py-0.5 rounded-full bg-black text-white">
+              <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-neutral-100 border border-neutral-200 text-neutral-700 shrink-0">
                 {badge}
               </span>
             )}
-
-            {/* Per-Photo Time to Stay Selector */}
-            {onUpdateDuration && (
-              <div
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white border border-neutral-200 text-black text-[10px] shadow-2xs shrink-0 transition-colors"
-                onClick={(e) => e.stopPropagation()}
-                title="Time to stay on screen"
-              >
-                <svg className="w-2.5 h-2.5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span className="text-[10px] text-neutral-500 font-bold whitespace-nowrap">Time:</span>
-                <select
-                  value={duration || 5}
-                  onChange={(e) => onUpdateDuration(Number(e.target.value))}
-                  className="bg-transparent text-black font-black font-mono outline-none cursor-pointer pr-0.5"
-                >
-                  <option value={2}>2s</option>
-                  <option value={3}>3s</option>
-                  <option value={4}>4s</option>
-                  <option value={5}>5s</option>
-                  <option value={7}>7s</option>
-                  <option value={8}>8s</option>
-                  <option value={10}>10s</option>
-                  <option value={15}>15s</option>
-                  <option value={20}>20s</option>
-                  <option value={30}>30s</option>
-                  <option value={45}>45s</option>
-                  <option value={60}>60s</option>
-                </select>
-              </div>
-            )}
           </div>
-          <p className="text-xs text-neutral-500 truncate mt-0.5 max-w-xl font-medium">
-            {description}
-          </p>
+          {description && (
+            <p className="text-xs text-neutral-500 truncate max-w-lg mt-0.5">
+              {description}
+            </p>
+          )}
         </div>
       </div>
 
-      <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+      {/* Column 2: Owner (Google Drive style circle + 'me') */}
+      <div className="hidden md:flex items-center gap-2 w-28 shrink-0 text-xs text-neutral-600">
+        <div className="w-5 h-5 rounded-full bg-black text-white flex items-center justify-center text-[9px] font-bold shrink-0 shadow-2xs">
+          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+          </svg>
+        </div>
+        <span className="truncate">{owner}</span>
+      </div>
+
+      {/* Column 3: Duration / Date Modified (Drive Style) */}
+      <div className="hidden sm:flex items-center justify-start w-32 shrink-0 text-xs text-neutral-500">
+        {onUpdateDuration ? (
+          <div
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-neutral-100 border border-neutral-200 text-neutral-800 text-[11px]"
+            onClick={(e) => e.stopPropagation()}
+            title="Time to stay on screen"
+          >
+            <span className="text-neutral-400 font-medium">Time:</span>
+            <select
+              value={duration || 5}
+              onChange={(e) => onUpdateDuration(Number(e.target.value))}
+              className="bg-transparent font-bold text-neutral-900 outline-none cursor-pointer pr-0.5"
+            >
+              <option value={2}>2s</option>
+              <option value={3}>3s</option>
+              <option value={4}>4s</option>
+              <option value={5}>5s</option>
+              <option value={7}>7s</option>
+              <option value={8}>8s</option>
+              <option value={10}>10s</option>
+              <option value={15}>15s</option>
+              <option value={20}>20s</option>
+              <option value={30}>30s</option>
+              <option value={45}>45s</option>
+              <option value={60}>60s</option>
+            </select>
+          </div>
+        ) : (
+          <span className="truncate">{dateModified}</span>
+        )}
+      </div>
+
+      {/* Column 4: Actions (Reorder buttons, toggle switch, edit, delete) */}
+      <div
+        className="flex items-center gap-1.5 shrink-0 pl-2"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Step-by-step Move Up / Down Buttons */}
         {(onMoveUp || onMoveDown) && (
-          <div className="flex items-center border border-neutral-200 rounded-full p-0.5 bg-white shadow-2xs mr-1">
+          <div className="flex items-center border border-neutral-200 rounded-lg p-0.5 bg-white shadow-2xs mr-1">
             {onMoveUp && (
               <button
                 type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onMoveUp();
-                }}
+                onClick={onMoveUp}
                 disabled={!canMoveUp}
-                className="w-7 h-7 rounded-full flex items-center justify-center text-black hover:bg-neutral-100 disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors"
-                title="Move up in playlist order"
+                className="w-6 h-6 rounded flex items-center justify-center text-neutral-700 hover:bg-neutral-100 disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors"
+                title="Move up"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 15l7-7 7 7" />
@@ -182,13 +232,10 @@ export default function Listitem({
             {onMoveDown && (
               <button
                 type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onMoveDown();
-                }}
+                onClick={onMoveDown}
                 disabled={!canMoveDown}
-                className="w-7 h-7 rounded-full flex items-center justify-center text-black hover:bg-neutral-100 disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors"
-                title="Move down in playlist order"
+                className="w-6 h-6 rounded flex items-center justify-center text-neutral-700 hover:bg-neutral-100 disabled:opacity-20 disabled:hover:bg-transparent disabled:cursor-not-allowed transition-colors"
+                title="Move down"
               >
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7" />
@@ -198,38 +245,32 @@ export default function Listitem({
           </div>
         )}
 
-        {/* Enable / Disable Toggle Switch */}
+        {/* Active Toggle Switch */}
         {onToggleActive && (
           <button
             type="button"
             role="switch"
             aria-checked={isActive}
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleActive();
-            }}
-            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+            onClick={onToggleActive}
+            className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none mr-1 ${
               isActive ? 'bg-black' : 'bg-neutral-200'
             }`}
-            title={isActive ? 'Active on mirror (click to disable)' : 'Disabled on mirror (click to enable)'}
+            title={isActive ? 'Active (click to disable)' : 'Disabled (click to enable)'}
           >
             <span
-              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
-                isActive ? 'translate-x-5' : 'translate-x-0'
+              className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out ${
+                isActive ? 'translate-x-4' : 'translate-x-0'
               }`}
             />
           </button>
         )}
 
-        {/* Edit Icon */}
+        {/* Edit Button */}
         {onEdit && (
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onEdit();
-            }}
-            className="w-8 h-8 rounded-lg bg-neutral-100 hover:bg-neutral-200 text-neutral-800 hover:text-black border border-neutral-300 transition-colors cursor-pointer flex items-center justify-center shrink-0"
+            onClick={onEdit}
+            className="w-7 h-7 rounded-lg text-neutral-500 hover:text-black hover:bg-neutral-100 transition-colors flex items-center justify-center"
             title="Edit"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -238,15 +279,12 @@ export default function Listitem({
           </button>
         )}
 
-        {/* Delete / Remove Icon */}
+        {/* Delete Button */}
         {onDelete && (
           <button
             type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDelete();
-            }}
-            className="w-8 h-8 rounded-lg bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 transition-colors cursor-pointer flex items-center justify-center shrink-0"
+            onClick={onDelete}
+            className="w-7 h-7 rounded-lg text-neutral-400 hover:text-red-600 hover:bg-red-50 transition-colors flex items-center justify-center"
             title={deleteLabel}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -258,3 +296,4 @@ export default function Listitem({
     </div>
   );
 }
+

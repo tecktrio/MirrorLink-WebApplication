@@ -88,20 +88,44 @@ export default function ManageContents() {
             </p>
           </div>
         ) : (
-          <div className='space-y-2'>
-            {visibleContents.map((data, key) => {
-              return (
-                <Listitem
-                  key={data._id || key}
-                  title={data.content_title}
-                  description={data.content_description || 'Shared library content'}
-                  imageUrl={data.content_url}
-                  contentFormat={data.content_format}
-                  onDelete={() => deleteContent(data._id)}
-                  badge={data.content_format?.toUpperCase() || "IMG"}
-                />
-              )
-            })}
+          <div className='bg-white rounded-2xl border border-neutral-200/90 shadow-2xs overflow-hidden'>
+            {/* Google Drive Table Header */}
+            <div className='flex items-center justify-between py-2.5 px-3 sm:px-4 border-b border-neutral-200/90 bg-neutral-50/70 text-[11px] font-bold text-neutral-500 uppercase tracking-wider select-none'>
+              <div className='flex items-center gap-1.5 flex-1'>
+                <span>Media Name</span>
+                <svg className='w-3.5 h-3.5 text-neutral-400' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M19 9l-7 7-7-7' />
+                </svg>
+              </div>
+              <div className='hidden md:block w-28'>
+                <span>Owner</span>
+              </div>
+              <div className='hidden sm:block w-32'>
+                <span>Type</span>
+              </div>
+              <div className='w-20 text-right'>
+                <span>Actions</span>
+              </div>
+            </div>
+
+            {/* Google Drive Table Rows */}
+            <div className='divide-y divide-neutral-100'>
+              {visibleContents.map((data, key) => {
+                return (
+                  <Listitem
+                    key={data._id || key}
+                    title={data.content_title}
+                    description={data.content_description || 'Shared library media'}
+                    imageUrl={data.content_url}
+                    contentFormat={data.content_format}
+                    owner="me"
+                    dateModified={data.content_format?.toUpperCase() || (tab === 'videos' ? 'MP4' : 'IMAGE')}
+                    onDelete={() => deleteContent(data._id)}
+                    badge={data.content_format?.toUpperCase() || (tab === 'videos' ? 'VIDEO' : 'IMAGE')}
+                  />
+                )
+              })}
+            </div>
           </div>
         )}
       </div>

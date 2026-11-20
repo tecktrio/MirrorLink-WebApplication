@@ -148,93 +148,140 @@ export default function MirrorListing({ site_id, site_name = "Selected Site", on
           </div>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {mirrorlist.map((mirror, idx) => (
-            <div
-              key={idx}
-              onClick={() => handleConfigureMirror(mirror._id)}
-              className="group bg-white hover:bg-neutral-50/50 border border-neutral-200 hover:border-black rounded-2xl p-5 shadow-2xs hover:shadow-xs transition-all duration-200 cursor-pointer flex flex-col justify-between"
-            >
-              <div>
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-2xl bg-white border border-neutral-200 text-black flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-2xs">
+        <div className="bg-white rounded-2xl border border-neutral-200/90 shadow-2xs overflow-hidden">
+          {/* Google Drive Table Header */}
+          <div className="flex items-center justify-between py-2.5 px-3 sm:px-4 border-b border-neutral-200/90 bg-neutral-50/70 text-[11px] font-bold text-neutral-500 uppercase tracking-wider select-none">
+            <div className="flex items-center gap-1.5 flex-1">
+              <span>Display Screen</span>
+              <svg className="w-3.5 h-3.5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </div>
+            <div className="hidden md:block w-28">
+              <span>Owner</span>
+            </div>
+            <div className="hidden sm:block w-36">
+              <span>Resolution / Items</span>
+            </div>
+            <div className="w-48 text-right">
+              <span>Stream Link & Actions</span>
+            </div>
+          </div>
+
+          {/* Google Drive Rows */}
+          <div className="divide-y divide-neutral-100">
+            {mirrorlist.map((mirror, idx) => {
+              const viewerBase = (process.env.REACT_APP_VIEWER_URL || 'https://screen.bigburry.com').replace(/\/+$/, '');
+              const streamUrl = `${viewerBase}?mirror_name=${encodeURIComponent(mirror.mirror_name)}`;
+              const isInactive = mirror.is_active === false || String(mirror.status).toLowerCase() === 'inactive';
+              const isPaused = mirror.playback_state === 'paused';
+
+              return (
+                <div
+                  key={mirror._id || idx}
+                  onClick={() => handleConfigureMirror(mirror._id)}
+                  className="group w-full flex items-center justify-between py-3 px-3 sm:px-4 hover:bg-neutral-50/90 transition-colors cursor-pointer select-none"
+                  title="Configure this mirror's playlist and settings"
+                >
+                  {/* Name / Display Icon */}
+                  <div className="flex items-center gap-3 min-w-0 flex-1 pr-4">
+                    <div className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-700 shrink-0">
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                        <rect x="2" y="3" width="20" height="14" rx="2" strokeWidth="2" />
+                        <line x1="8" y1="21" x2="16" y2="21" strokeWidth="2" strokeLinecap="round" />
+                        <line x1="12" y1="17" x2="12" y2="21" strokeWidth="2" strokeLinecap="round" />
                       </svg>
                     </div>
-                    <div>
-                      <h4 className="text-base font-black text-black group-hover:text-black">{mirror.mirror_name}</h4>
-                      <p className="text-xs text-neutral-500 mt-0.5 line-clamp-1 font-medium">{mirror.mirror_description || "Mirror Display Screen"}</p>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="font-semibold text-neutral-900 group-hover:text-black text-sm truncate">
+                          {mirror.mirror_name}
+                        </span>
+                        <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full shrink-0 ${
+                          isInactive
+                            ? 'bg-neutral-100 text-neutral-500 border border-neutral-200'
+                            : isPaused
+                            ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                            : 'bg-black text-white'
+                        }`}>
+                          {isInactive ? 'Inactive' : isPaused ? 'Paused' : 'Active'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-neutral-500 truncate max-w-md mt-0.5">
+                        {mirror.mirror_description || "Mirror Display Screen"}
+                      </p>
                     </div>
                   </div>
 
-                  {/* Active / Inactive / Paused Status Badge synced from DB */}
-                  <span className={`text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full shrink-0 ${mirror.is_active === false || String(mirror.status).toLowerCase() === 'inactive'
-                      ? 'bg-white text-neutral-500 border border-neutral-200'
-                      : mirror.playback_state === 'paused'
-                        ? 'bg-white text-black border border-black'
-                        : 'bg-black text-white'
-                    }`}>
-                    {mirror.is_active === false || String(mirror.status).toLowerCase() === 'inactive'
-                      ? 'Inactive'
-                      : mirror.playback_state === 'paused'
-                        ? 'Paused'
-                        : 'Active'}
-                  </span>
-                </div>
-
-                {/* Mirror Meta info & Stream URL */}
-                <div className="mt-4 pt-3 border-t border-neutral-100 space-y-2 text-[11px] text-neutral-500">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <div>
-                      <span className="font-bold text-black">Stream Name: </span>
-                      <span className="font-mono bg-white border border-neutral-200 px-1.5 py-0.5 rounded-lg text-black break-words">{mirror.mirror_name}</span>
+                  {/* Owner */}
+                  <div className="hidden md:flex items-center gap-2 w-28 shrink-0 text-xs text-neutral-600">
+                    <div className="w-5 h-5 rounded-full bg-black text-white flex items-center justify-center text-[9px] font-bold shrink-0 shadow-2xs">
+                      <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                      </svg>
                     </div>
-                    <div>
-                      <span className="font-bold text-black">Resolution: </span>
-                      <span className="font-semibold text-black">{mirror.mirror_width || 1920} × {mirror.mirror_height || 1080}</span>
-                    </div>
+                    <span>me</span>
                   </div>
 
-                  {/* Direct Stream URL Bar */}
-                  <div className="flex items-center justify-between gap-1.5 bg-white px-3 py-2 rounded-xl border border-neutral-200 shadow-2xs">
-                    <span className="font-mono text-[11px] text-neutral-800 truncate select-all">
-                      {`${(process.env.REACT_APP_VIEWER_URL || 'https://screen.bigburry.com').replace(/\/+$/, '')}?mirror_name=${encodeURIComponent(mirror.mirror_name)}`}
-                    </span>
+                  {/* Resolution & playlist count */}
+                  <div className="hidden sm:flex flex-col justify-center w-36 shrink-0 text-xs text-neutral-500">
+                    <span className="font-mono text-neutral-700 text-[11px] font-semibold">{mirror.mirror_width || 1920} × {mirror.mirror_height || 1080}</span>
+                    <span className="text-[10px] text-neutral-400">{mirror.contents?.length || 0} playlist items</span>
+                  </div>
+
+                  {/* Stream URL copy & Action buttons */}
+                  <div
+                    className="flex items-center justify-end gap-2 w-48 shrink-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <button
                       type="button"
                       onClick={(e) => {
                         e.stopPropagation();
-                        const viewerBase = (process.env.REACT_APP_VIEWER_URL || 'https://screen.bigburry.com').replace(/\/+$/, '');
-                        const targetUrl = `${viewerBase}?mirror_name=${encodeURIComponent(mirror.mirror_name)}`;
-                        navigator.clipboard.writeText(targetUrl);
+                        navigator.clipboard.writeText(streamUrl);
                         setStatusMsg(`Stream URL copied for "${mirror.mirror_name}"`);
                         setTimeout(() => setStatusMsg(''), 2500);
                       }}
-                      className="px-2.5 py-1 bg-white hover:bg-black hover:text-white border border-neutral-200 rounded-lg text-[10px] font-bold text-black shrink-0 transition-colors cursor-pointer shadow-2xs"
-                      title="Copy direct stream URL"
+                      className="px-2.5 py-1 bg-white hover:bg-neutral-100 text-black border border-neutral-200 rounded-lg text-[10px] font-bold shrink-0 transition-colors cursor-pointer shadow-2xs flex items-center gap-1"
+                      title="Copy stream link"
                     >
-                      Copy URL
+                      <svg className="w-3 h-3 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                      </svg>
+                      <span>Copy URL</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => handleConfigureMirror(mirror._id)}
+                      className="px-2.5 py-1 bg-black hover:bg-neutral-800 text-white rounded-lg text-[10px] font-bold shrink-0 transition-colors shadow-2xs flex items-center gap-1"
+                      title="Configure Playlist"
+                    >
+                      <span>Playlist</span>
+                      <span>→</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteMirror(mirror._id, mirror.mirror_name);
+                      }}
+                      className="w-7 h-7 rounded-lg text-neutral-400 hover:text-red-600 hover:bg-red-50 flex items-center justify-center transition-colors shrink-0"
+                      title="Delete screen"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
                     </button>
                   </div>
                 </div>
-              </div>
-
-              {/* Action Footer */}
-              <div className="mt-4 pt-3 border-t border-neutral-100 flex items-center justify-between gap-2">
-                <span className="text-xs text-neutral-400 font-medium">
-                  {mirror.contents?.length || 0} media playlist items
-                </span>
-
-                <span className="text-xs font-black text-black flex items-center gap-1 group-hover:translate-x-1 transition-transform">
-                  <span>Setup Playlist</span>
-                  <span>→</span>
-                </span>
-              </div>
-            </div>
-          ))}
+              );
+            })}
+          </div>
         </div>
+      )}
       )}
 
       {/* Modal to register a new mirror screen directly */}

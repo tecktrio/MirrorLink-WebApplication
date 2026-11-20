@@ -287,7 +287,7 @@ export default function Setup() {
             </div>
           )}
 
-          {/* Sites Grid */}
+          {/* Sites Grid converted to Google Drive style table */}
           {filteredSites.length === 0 ? (
             <div className="p-12 bg-white rounded-2xl border border-dashed border-neutral-300 text-center flex flex-col items-center justify-center">
               <div className="w-14 h-14 rounded-2xl bg-neutral-100 text-black flex items-center justify-center mb-3">
@@ -319,45 +319,83 @@ export default function Setup() {
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredSites.map((site) => {
-                const mirrorCount = allMirrors.filter(
-                  (m) => String(m.site_id) === String(site._id)
-                ).length;
+            <div className="bg-white rounded-2xl border border-neutral-200/90 shadow-2xs overflow-hidden">
+              {/* Google Drive Table Header */}
+              <div className="flex items-center justify-between py-2.5 px-3 sm:px-4 border-b border-neutral-200/90 bg-neutral-50/70 text-[11px] font-bold text-neutral-500 uppercase tracking-wider select-none">
+                <div className="flex items-center gap-1.5 flex-1">
+                  <span>Site Name</span>
+                  <svg className="w-3.5 h-3.5 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+                <div className="hidden md:block w-28">
+                  <span>Owner</span>
+                </div>
+                <div className="hidden sm:block w-32">
+                  <span>Assigned Displays</span>
+                </div>
+                <div className="w-24 text-right">
+                  <span>Actions</span>
+                </div>
+              </div>
 
-                return (
-                  <div
-                    key={site._id}
-                    onClick={() => handleSelectSite(site._id)}
-                    className="group bg-white hover:bg-neutral-50/70 border border-neutral-200/90 hover:border-black rounded-2xl p-5 shadow-2xs hover:shadow-xs transition-all duration-200 cursor-pointer flex flex-col justify-between"
-                  >
-                    <div>
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-neutral-100 border border-neutral-200 text-black flex items-center justify-center group-hover:scale-105 transition-transform">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              {/* Google Drive Rows */}
+              <div className="divide-y divide-neutral-100">
+                {filteredSites.map((site) => {
+                  const mirrorCount = allMirrors.filter(
+                    (m) => String(m.site_id) === String(site._id)
+                  ).length;
+
+                  return (
+                    <div
+                      key={site._id}
+                      onClick={() => handleSelectSite(site._id)}
+                      className="group w-full flex items-center justify-between py-3 px-3 sm:px-4 hover:bg-neutral-50/90 transition-colors cursor-pointer select-none"
+                    >
+                      {/* Name / Icon */}
+                      <div className="flex items-center gap-3 min-w-0 flex-1 pr-4">
+                        <div className="w-8 h-8 rounded-lg flex items-center justify-center text-neutral-600 shrink-0">
+                          <svg className="w-6 h-6 fill-neutral-600" viewBox="0 0 24 24">
+                            <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z" />
                           </svg>
                         </div>
-                        <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded-full bg-neutral-100 border border-neutral-200 text-black">
-                          {mirrorCount} {mirrorCount === 1 ? "Mirror" : "Mirrors"}
-                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-neutral-900 group-hover:text-black text-sm truncate">
+                              {site.site_name}
+                            </span>
+                            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full bg-neutral-100 border border-neutral-200 text-neutral-700 shrink-0">
+                              {mirrorCount} {mirrorCount === 1 ? "Screen" : "Screens"}
+                            </span>
+                          </div>
+                          {site.site_description && (
+                            <p className="text-xs text-neutral-500 truncate max-w-md mt-0.5">
+                              {site.site_description}
+                            </p>
+                          )}
+                        </div>
                       </div>
 
-                      <h3 className="text-base font-bold text-black mt-3 group-hover:text-black transition-colors">
-                        {site.site_name}
-                      </h3>
-                      <p className="text-xs text-neutral-500 mt-1 line-clamp-2">
-                        {site.site_description || "No description provided"}
-                      </p>
-                    </div>
+                      {/* Owner Column */}
+                      <div className="hidden md:flex items-center gap-2 w-28 shrink-0 text-xs text-neutral-600">
+                        <div className="w-5 h-5 rounded-full bg-black text-white flex items-center justify-center text-[9px] font-bold shrink-0 shadow-2xs">
+                          <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                          </svg>
+                        </div>
+                        <span>me</span>
+                      </div>
 
-                    <div className="mt-5 pt-3 border-t border-neutral-100 flex items-center justify-between">
-                      <span className="text-xs font-semibold text-black flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-                        <span>View Mirrors</span>
-                        <span>→</span>
-                      </span>
+                      {/* Assigned Displays Column */}
+                      <div className="hidden sm:flex items-center w-32 shrink-0 text-xs text-neutral-500">
+                        <span>{mirrorCount} {mirrorCount === 1 ? "Mirror linked" : "Mirrors linked"}</span>
+                      </div>
 
-                      <div className="flex items-center gap-1">
+                      {/* Actions Column */}
+                      <div
+                        className="flex items-center justify-end gap-1.5 w-24 shrink-0"
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -382,9 +420,9 @@ export default function Setup() {
                         </button>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>
