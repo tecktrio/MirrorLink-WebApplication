@@ -137,7 +137,8 @@ export default function Addcontentpage() {
       })
       .catch((err) => {
         console.error("Upload error:", err)
-        setErrorMessage("Upload failed. Supported formats: MP4, JPG, PNG, WEBP.")
+        const msg = err?.message || "Upload failed. Supported formats: MP4, JPG, PNG, WEBP."
+        setErrorMessage(msg)
         setStatusText('')
         setIsSubmitting(false)
         setUploadProgress(0)
