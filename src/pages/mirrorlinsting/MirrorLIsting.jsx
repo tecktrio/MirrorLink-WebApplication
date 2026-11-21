@@ -3,7 +3,7 @@ import {
   GET_AVAILABLE_MIRRORS_ON_SITE,
   DELETE_MIRROR,
 } from "../../serverRequests/ServerRequests";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import {
   Navigate_To_Contentlist,
 } from "../../constants";
@@ -16,6 +16,9 @@ export default function MirrorListing({ site_id, site_name = "Selected Site", on
   const [mirrorlist, setMirrorlist] = useState([]);
   const [loading, setLoading] = useState(false);
   const [statusMsg, setStatusMsg] = useState("");
+  const [maxMirrors, setMaxMirrors] = useState(1);
+  const [totalMirrors, setTotalMirrors] = useState(0);
+  const [isLimitReached, setIsLimitReached] = useState(false);
   const { getCookie, setCookie } = useContext(CookieContext);
   const navigate = useNavigate();
 
@@ -31,7 +34,13 @@ export default function MirrorListing({ site_id, site_name = "Selected Site", on
       setLoading(true);
       GET_AVAILABLE_MIRRORS_ON_SITE(login_key, site_id)
         .then((res) => {
-          setMirrorlist(res.data || []);
+          const list = res.data || [];
+          const max = res?.max_mirrors || res?.limits?.max_mirrors || 1;
+          const total = res?.total_mirrors_count != null ? res.total_mirrors_count : list.length;
+          setMirrorlist(list);
+          setMaxMirrors(max);
+          setTotalMirrors(total);
+          setIsLimitReached(Boolean(res?.limit_reached || total >= max));
           setLoading(false);
         })
         .catch((error) => {
@@ -94,14 +103,24 @@ export default function MirrorListing({ site_id, site_name = "Selected Site", on
 
         <div className="flex items-center gap-2">
           <button
-            onClick={() => setIsAddMirrorModalOpen(true)}
-            className="inline-flex items-center gap-2 px-4 py-2.5 bg-black hover:bg-neutral-800 text-white text-xs font-bold rounded-full shadow-2xs transition-all cursor-pointer"
-            title="Register a new mirror display directly to this site"
+            onClick={() => !isLimitReached && setIsAddMirrorModalOpen(true)}
+            disabled={isLimitReached}
+            className={`inline-flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-full shadow-2xs transition-all ${
+              isLimitReached
+                ? 'bg-neutral-200 text-neutral-400 cursor-not-allowed border border-neutral-300 shadow-none'
+                : 'bg-black hover:bg-neutral-800 text-white cursor-pointer'
+            }`}
+            title={isLimitReached ? `Plan limit reached (${totalMirrors}/${maxMirrors} screens). Upgrade plan to add more mirrors.` : "Register a new mirror display directly to this site"}
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
             </svg>
             <span>Add Mirror</span>
+            {isLimitReached && (
+              <span className="text-[9px] uppercase font-black px-1.5 py-0.5 rounded bg-neutral-300 text-neutral-700">
+                Limit reached
+              </span>
+            )}
           </button>
           <button
             onClick={openModal}
@@ -112,6 +131,13 @@ export default function MirrorListing({ site_id, site_name = "Selected Site", on
           </button>
         </div>
       </div>
+
+      {isLimitReached && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between text-xs text-amber-900 gap-3">
+          <span><b>Plan limit reached:</b> Your plan allows up to {maxMirrors} mirror screen{maxMirrors > 1 ? 's' : ''}. Upgrade to connect more displays.</span>
+          <Link to="/pricing" className="font-bold underline hover:text-amber-950 shrink-0">Upgrade Plan →</Link>
+        </div>
+      )}
 
       {/* Mirrors Grid / List */}
       {loading ? (
@@ -131,8 +157,14 @@ export default function MirrorListing({ site_id, site_name = "Selected Site", on
           </p>
           <div className="flex items-center gap-2.5 flex-wrap justify-center">
             <button
-              onClick={() => setIsAddMirrorModalOpen(true)}
-              className="px-4 py-2.5 bg-black hover:bg-neutral-800 text-white text-xs font-semibold rounded-xl shadow-xs transition-colors cursor-pointer flex items-center gap-2"
+              onClick={() => !isLimitReached && setIsAddMirrorModalOpen(true)}
+              disabled={isLimitReached}
+              className={`px-4 py-2.5 text-xs font-semibold rounded-xl shadow-xs transition-colors flex items-center gap-2 ${
+                isLimitReached
+                  ? 'bg-neutral-200 text-neutral-400 cursor-not-allowed border border-neutral-300 shadow-none'
+                  : 'bg-black hover:bg-neutral-800 text-white cursor-pointer'
+              }`}
+              title={isLimitReached ? `Plan limit reached (${totalMirrors}/${maxMirrors} screens).` : "Add Mirror Screen"}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" />
@@ -289,6 +321,8 @@ export default function MirrorListing({ site_id, site_name = "Selected Site", on
         onClose={() => setIsAddMirrorModalOpen(false)}
         siteId={site_id}
         siteName={site_name}
+        disabled={isLimitReached}
+        disabledMessage={`Your plan allows up to ${maxMirrors} mirror screen${maxMirrors > 1 ? 's' : ''}. Upgrade your plan to add more mirrors.`}
         onMirrorAdded={(mirrorName) => {
           fetchMirrors();
           if (onCountChange) onCountChange();

@@ -1,15 +1,17 @@
 import React, { useContext, useEffect, useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import Addbutton from '../../components/addbutton/Addbutton'
 import SearchBar from '../../components/SearchBar/SearchBar'
 import Listitem from '../../components/listitem/Listitem'
 import { DELETE_MIRROR, GET_ALL_MIRRORS } from '../../serverRequests/ServerRequests'
 import { CookieContext } from '../../Contexts/CookieContext'
-import { useNavigate } from 'react-router-dom'
 
 export default function ManageMirrors() {
   const [mirrorlist, setMirrorlist] = useState([])
   const [filteredList, setFilteredList] = useState([])
   const [loading, setLoading] = useState(true)
+  const [maxMirrors, setMaxMirrors] = useState(1)
+  const [isLimitReached, setIsLimitReached] = useState(false)
   const { getCookie, setCookie } = useContext(CookieContext)
   const navigate = useNavigate()
 
@@ -19,8 +21,11 @@ export default function ManageMirrors() {
     GET_ALL_MIRRORS(login_key)
       .then((res) => {
         const data = res?.data || []
+        const max = res?.max_mirrors || res?.limits?.max_mirrors || 1
         setMirrorlist(data)
         setFilteredList(data)
+        setMaxMirrors(max)
+        setIsLimitReached(Boolean(res?.limit_reached || data.length >= max))
         setLoading(false)
       })
       .catch((err) => {
@@ -63,8 +68,21 @@ export default function ManageMirrors() {
             Configure physical screens, view screen credentials, and monitor display clients
           </p>
         </div>
-        <Addbutton label='Add New Mirror' goto='/addmirror' className='w-full sm:w-auto justify-center' />
+        <Addbutton
+          label='Add New Mirror'
+          goto='/addmirror'
+          disabled={isLimitReached}
+          disabledTooltip={`Plan limit reached (${mirrorlist.length}/${maxMirrors} screens). Upgrade your plan to add more mirrors.`}
+          className='w-full sm:w-auto justify-center'
+        />
       </div>
+
+      {isLimitReached && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between text-xs text-amber-900 gap-3">
+          <span><b>Plan limit reached:</b> Your current plan allows up to {maxMirrors} mirror screen{maxMirrors > 1 ? 's' : ''}. Upgrade to connect more displays.</span>
+          <Link to="/pricing" className="font-bold underline hover:text-amber-950 shrink-0">Upgrade Plan →</Link>
+        </div>
+      )}
 
       {/* Search & Stats Filter */}
       <div className='flex items-stretch sm:items-center justify-between gap-4 flex-col sm:flex-row'>
@@ -92,7 +110,12 @@ export default function ManageMirrors() {
               {mirrorlist.length === 0 ? "You have not registered any mirror screens yet." : "No mirror matches your search keyword."}
             </p>
             {mirrorlist.length === 0 && (
-              <Addbutton label='Create Your First Mirror' goto='/addmirror' />
+              <Addbutton
+                label='Create Your First Mirror'
+                goto='/addmirror'
+                disabled={isLimitReached}
+                disabledTooltip={`Plan limit reached (${mirrorlist.length}/${maxMirrors} screens). Upgrade your plan to add more mirrors.`}
+              />
             )}
           </div>
         ) : (

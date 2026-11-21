@@ -1,8 +1,8 @@
-import React, { useContext, useState } from 'react'
+import React, { useContext, useEffect, useState } from 'react'
 import Inputtextbox from '../../components/inputtextbox/Inputtextbox'
 import Submitbutton from '../../components/submitbutton/Submitbutton'
-import { CREATE_MIRROR } from '../../serverRequests/ServerRequests'
-import { useNavigate } from 'react-router-dom'
+import { CREATE_MIRROR, GET_ALL_MIRRORS } from '../../serverRequests/ServerRequests'
+import { Link, useNavigate } from 'react-router-dom'
 import { CookieContext } from '../../Contexts/CookieContext'
 
 export default function Addmirrorpage() {
@@ -17,9 +17,32 @@ export default function Addmirrorpage() {
   const [message, setMessage] = useState('')
   const [isError, setIsError] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [maxMirrors, setMaxMirrors] = useState(1)
+  const [currentMirrorsCount, setCurrentMirrorsCount] = useState(0)
+  const [isLimitReached, setIsLimitReached] = useState(false)
+
+  useEffect(() => {
+    let login_key = getCookie('login_key') || 'adminpassword'
+    GET_ALL_MIRRORS(login_key)
+      .then((res) => {
+        const data = res?.data || []
+        const max = res?.max_mirrors || res?.limits?.max_mirrors || 1
+        setCurrentMirrorsCount(data.length)
+        setMaxMirrors(max)
+        setIsLimitReached(Boolean(res?.limit_reached || data.length >= max))
+      })
+      .catch((err) => {
+        console.error("Error checking mirror limits:", err)
+      })
+  }, [])
 
   const HandleSubmit = (e) => {
     e.preventDefault()
+    if (isLimitReached) {
+      setIsError(true)
+      setMessage(`Plan limit reached (${currentMirrorsCount}/${maxMirrors} screens). Please upgrade your plan to register more screens.`)
+      return
+    }
     if (!name.trim() || !username.trim() || !password.trim()) {
       setIsError(true)
       setMessage('Mirror Name, Screen ID/Username, and Password are required.')
@@ -39,7 +62,7 @@ export default function Addmirrorpage() {
       .catch((err) => {
         console.error("Create mirror error:", err)
         setIsError(true)
-        setMessage('Failed to register mirror. Please check credentials and try again.')
+        setMessage(err?.response?.data?.message || 'Failed to register mirror. Please check credentials and try again.')
         setIsSubmitting(false)
       })
   }
@@ -52,6 +75,21 @@ export default function Addmirrorpage() {
           Configure physical display credentials for your digital signage viewer application.
         </p>
       </div>
+
+      {/* Plan limit warning */}
+      {isLimitReached && (
+        <div className='p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between gap-4 text-amber-800 text-xs sm:text-sm font-medium'>
+          <div className='flex items-center gap-2'>
+            <svg className='w-5 h-5 text-amber-600 shrink-0' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+              <path strokeLinecap='round' strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <span>You have reached the maximum allowed mirror screens ({currentMirrorsCount}/${maxMirrors}) on your current plan.</span>
+          </div>
+          <Link to='/pricing' className='px-3 py-1.5 bg-black hover:bg-neutral-800 text-white rounded-lg text-xs font-semibold whitespace-nowrap transition-colors'>
+            Upgrade Plan
+          </Link>
+        </div>
+      )}
 
       {message && (
         <div className={`p-4 rounded-xl text-xs font-semibold ${isError ? 'bg-red-50 text-red-700 border border-red-200' : 'bg-emerald-50 text-emerald-700 border border-emerald-200'}`}>
@@ -147,8 +185,8 @@ export default function Addmirrorpage() {
         >
           Cancel
         </button>
-        <div className='w-40'>
-          <Submitbutton text={isSubmitting ? "Registering..." : "Register Screen"} disabled={isSubmitting} />
+        <div className='w-44'>
+          <Submitbutton text={isSubmitting ? "Registering..." : isLimitReached ? "Plan Limit Reached" : "Register Screen"} disabled={isSubmitting || isLimitReached} />
         </div>
       </div>
     </form>

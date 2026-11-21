@@ -11,14 +11,19 @@ import Addbutton from '../../components/addbutton/Addbutton'
 export default function Sitelistingpage() {
 
   const [sitelist, setSitelist] = useState([])
+  const [maxSites, setMaxSites] = useState(1)
+  const [isLimitReached, setIsLimitReached] = useState(false)
   const {setCookie,getCookie} = useContext(CookieContext)
   const navigate = useNavigate()
 
   useEffect(()=>{
     let login_key = getCookie('login_key')
     GET_AVAILABLE_SITES(login_key).then((res)=>{
-      console.log(res.data)
-      setSitelist(res.data)
+      const data = res?.data || []
+      const max = res?.max_sites || res?.limits?.sites || 1
+      setSitelist(data)
+      setMaxSites(max)
+      setIsLimitReached(Boolean(res?.limit_reached || data.length >= max))
     }).catch((err)=>{
       console.log(err)
     })
@@ -35,7 +40,12 @@ export default function Sitelistingpage() {
     <div className='flex justify-center'>
       <div className='w-full'>
         <div className='flex justify-end m-2'>
-        <Addbutton label={'Add Site'} goto={"/addsite"}/>
+        <Addbutton
+          label={'Add Site'}
+          goto={"/addsite"}
+          disabled={isLimitReached}
+          disabledTooltip={`Plan limit reached (${sitelist.length}/${maxSites} sites). Upgrade your plan to add more sites.`}
+        />
 
         </div>
 

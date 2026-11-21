@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { SERVER_URL } from "../../serverRequests/ServerRequests";
 
 export default function VirtualScreen({
@@ -8,11 +8,17 @@ export default function VirtualScreen({
   currentIndex = 0,
   playbackState = "playing",
   isOnline = true,
+  isLiveSyncEnabled = false,
+  transitions = [],
+  onToggleLiveSync,
   onSelectSlide,
+  onTogglePlayPause,
   onStartPresentation,
 }) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [internalIndex, setInternalIndex] = useState(currentIndex);
+  const [activeTransitionClass, setActiveTransitionClass] = useState("");
+  const prevContentIdRef = useRef(null);
   const videoRef = useRef(null);
   const fullscreenVideoRef = useRef(null);
 
@@ -27,7 +33,7 @@ export default function VirtualScreen({
   const isSquare = mirrorW === mirrorH;
   const orientation = isPortrait ? "Portrait" : (isSquare ? "Square" : "Landscape");
   const displayResolution = `${mirrorW} × ${mirrorH} px`;
-  const screenTitle = mirror?.mirror_name || "Mirror Display Screen";
+  const screenTitle = mirror?.mirror_name || "Program Monitor";
   const isVideoContent = (item) => {
     const format = String(item?.content_format || "").toLowerCase();
     const url = String(item?.content_url || "").toLowerCase().split("?")[0];
@@ -45,21 +51,27 @@ export default function VirtualScreen({
     ? (playableList[internalIndex] || playableList[0])
     : null;
 
-  const handlePrevSlide = useCallback((isAuto = false) => {
-    if (totalCount === 0) return;
-    const prevIdx = (internalIndex - 1 + totalCount) % totalCount;
-    if (onSelectSlide) {
-      onSelectSlide(prevIdx, playableList[prevIdx]?._id, isAuto);
+  // Trigger transition effect when slide advances if a transition rule exists
+  useEffect(() => {
+    const currentId = resolvedContent?._id;
+    const prevId = prevContentIdRef.current;
+    if (prevId && currentId && prevId !== currentId) {
+      const match = (transitions || []).find(
+        (t) => String(t.left_content_id) === String(prevId) && String(t.right_content_id) === String(currentId)
+      );
+      if (match && match.transition_id && match.transition_id !== 'none') {
+        const effect = match.transition_id; // 'fade' | 'slide' | 'zoom'
+        setActiveTransitionClass(`sp-anim-${effect}`);
+        const timer = setTimeout(() => {
+          setActiveTransitionClass("");
+        }, 650);
+        prevContentIdRef.current = currentId;
+        return () => clearTimeout(timer);
+      }
     }
-  }, [totalCount, internalIndex, onSelectSlide, playableList]);
+    prevContentIdRef.current = currentId;
+  }, [resolvedContent?._id, transitions]);
 
-  const handleNextSlide = useCallback((isAuto = false) => {
-    if (totalCount === 0) return;
-    const nextIdx = (internalIndex + 1) % totalCount;
-    if (onSelectSlide) {
-      onSelectSlide(nextIdx, playableList[nextIdx]?._id, isAuto);
-    }
-  }, [totalCount, internalIndex, onSelectSlide, playableList]);
 
   // Explicitly pause/play HTML5 video element when playbackState changes
   useEffect(() => {
@@ -109,31 +121,87 @@ export default function VirtualScreen({
       });
   };
 
-  // Automatically start mirror presentation session on mount
+  // Only connect/start live presentation session when explicitly enabled by user
   useEffect(() => {
-    if (mirror?.mirror_name || mirror?.mirror_id) {
+    if (isLiveSyncEnabled && (mirror?.mirror_name || mirror?.mirror_id)) {
       startPresentationSession();
     }
-  }, [mirror?.mirror_name, mirror?.mirror_id]);
+  }, [isLiveSyncEnabled, mirror?.mirror_name, mirror?.mirror_id]);
 
   return (
     <>
-      <div className="bg-white border border-neutral-200/90 rounded-2xl p-4 sm:p-5 shadow-2xs space-y-4">
-        {/* Virtual Screen Card Header */}
+      <div className="bg-white border border-neutral-200/90 rounded-xl p-3 shadow-2xs space-y-2 font-['Uber_Move_Text']">
+        {/* Virtual Screen Header */}
+        <div className="flex items-center justify-between gap-2 border-b border-neutral-100 pb-1.5 text-xs">
+          <div className="flex items-center gap-2 min-w-0">
+            <div className={`w-2.5 h-2.5 rounded-full shadow-xs ${
+              isLiveSyncEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-neutral-300'
+            }`} />
+            <h4 className="font-['Uber_Move'] font-bold uppercase tracking-wider text-black text-xs truncate">
+              {screenTitle}
+            </h4>
+            <span className={`text-[9px] font-mono font-bold uppercase px-1.5 py-0.5 rounded border ${
+              isLiveSyncEnabled
+                ? 'bg-emerald-100 text-emerald-800 border-emerald-200'
+                : 'bg-neutral-100 text-neutral-500 border-neutral-200'
+            }`}>
+              {isLiveSyncEnabled ? 'Live Synced' : 'Local Preview'}
+            </span>
+          </div>
 
+          <div className="flex items-center gap-2">
+            {/* Enable Live / Live Synced Button */}
+            {onToggleLiveSync && (
+              <button
+                type="button"
+                onClick={onToggleLiveSync}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-xs font-bold transition-all cursor-pointer shadow-2xs ${
+                  isLiveSyncEnabled
+                    ? 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300'
+                    : 'bg-black hover:bg-neutral-800 text-white'
+                }`}
+                title={
+                  isLiveSyncEnabled
+                    ? 'Live MQTT broadcast sync is ON. Click to disconnect.'
+                    : 'Disconnected from MQTT. Click to enable live broadcast sync with physical mirrors.'
+                }
+              >
+                <span
+                  className={`w-2 h-2 rounded-full ${
+                    isLiveSyncEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-neutral-400'
+                  }`}
+                />
+                <span>{isLiveSyncEnabled ? 'Live Synced' : 'Enable Live'}</span>
+              </button>
+            )}
 
-        {/* Physical TV / Monitor Frame */}
-        <div className="bg-[#111111] border border-[#262626] rounded-2xl p-2.5 sm:p-3 shadow-xl relative overflow-hidden flex flex-col items-center">
-          {/* Subtle Screen Bezel Reflection */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-white/10 to-transparent pointer-events-none" />
+            <span className="hidden sm:inline font-mono text-[10px] px-2 py-0.5 rounded-md bg-neutral-100 text-neutral-600 font-bold border border-neutral-200">
+              {displayResolution} • {orientation}
+            </span>
 
-          {/* Screen Display Container styled to mirror's native aspect ratio (Width / Height) */}
+            <button
+              type="button"
+              onClick={() => setIsFullscreen(true)}
+              className="p-1 hover:bg-neutral-100 text-neutral-500 hover:text-black rounded transition-colors cursor-pointer"
+              title="Expand to Fullscreen Monitor"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        {/* Physical TV / Screen Frame */}
+        <div className="bg-[#111111] border border-[#262626] rounded-xl p-2 shadow-xl relative overflow-hidden flex flex-col items-center">
+          {/* Screen Display Container styled strictly to mirror's native aspect ratio */}
           <div
             style={{
               aspectRatio: `${mirrorW} / ${mirrorH}`,
-              maxHeight: isPortrait ? "520px" : "360px",
             }}
-            className="w-full bg-black rounded-xl relative overflow-hidden flex items-center justify-center select-none shadow-inner border border-black/60 mx-auto"
+            className={`bg-black rounded-lg relative overflow-hidden flex items-center justify-center select-none shadow-inner border border-black/80 mx-auto ${
+              isPortrait ? "h-[320px] w-auto max-w-full" : "w-full max-w-full"
+            }`}
           >
             {!mirrorActive ? (
               <div className="text-center p-6 flex flex-col items-center justify-center text-neutral-300 space-y-2">
@@ -142,8 +210,8 @@ export default function VirtualScreen({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M12 9v4m0 4h.01M10.3 3.9 2.8 17a2 2 0 0 0 1.7 3h15a2 2 0 0 0 1.7-3l-7.5-13.1a2 2 0 0 0-3.4 0Z" />
                   </svg>
                 </div>
-                <h5 className="text-xs font-bold uppercase tracking-wider font-mono">Mirror inactive</h5>
-                <p className="text-[11px] text-neutral-500 max-w-xs">Playback is stopped. Reactivate this mirror to resume MQTT content updates.</p>
+                <h5 className="text-xs font-bold uppercase tracking-wider font-mono text-neutral-300">Screen Inactive</h5>
+                <p className="text-[11px] text-neutral-500 max-w-xs">Playback is paused. Reactivate this screen in the top toolbar to resume broadcasting.</p>
               </div>
             ) : totalCount === 0 || !resolvedContent ? (
               /* Standby / No Media Screen */
@@ -153,14 +221,39 @@ export default function VirtualScreen({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <h5 className="text-xs font-bold text-neutral-300 uppercase tracking-wider font-mono">No content available to show</h5>
+                <h5 className="text-xs font-bold text-neutral-300 uppercase tracking-wider font-mono">No sequence media loaded</h5>
                 <p className="text-[11px] text-neutral-500 max-w-xs">
-                  There is no active media scheduled for the current timeslot.
+                  Drag media from the Available Library onto the timeline below.
                 </p>
               </div>
             ) : (
               <>
-                {/* Active Media Renderer (Image or Video) */}
+                {/* Lightweight CSS Transitions: Fade, Slide, Zoom */}
+                <style>{`
+                  @keyframes spAnimFade {
+                    0% { opacity: 0; }
+                    100% { opacity: 1; }
+                  }
+                  @keyframes spAnimSlide {
+                    0% { transform: translateX(100%); }
+                    100% { transform: translateX(0); }
+                  }
+                  @keyframes spAnimZoom {
+                    0% { transform: scale(1.12); opacity: 0; }
+                    100% { transform: scale(1); opacity: 1; }
+                  }
+                  .sp-anim-fade {
+                    animation: spAnimFade 0.6s cubic-bezier(0.25, 1, 0.5, 1) both;
+                  }
+                  .sp-anim-slide {
+                    animation: spAnimSlide 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+                  }
+                  .sp-anim-zoom {
+                    animation: spAnimZoom 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+                  }
+                `}</style>
+
+                {/* Active Media Renderer in native resolution */}
                 {isVideoContent(resolvedContent) ? (
                   <video
                     ref={videoRef}
@@ -170,36 +263,36 @@ export default function VirtualScreen({
                     loop={totalCount === 1}
                     muted
                     playsInline
-                    className="w-full h-full object-cover bg-black"
+                    className={`w-full h-full object-contain bg-black ${activeTransitionClass}`}
                   />
                 ) : (
                   <img
                     key={resolvedContent.content_url || resolvedContent._id}
                     src={resolvedContent.content_url}
                     alt={resolvedContent.content_title || "Screen slide"}
-                    className="w-full h-full object-cover bg-black"
+                    className={`w-full h-full object-contain bg-black ${activeTransitionClass}`}
                   />
                 )}
 
-                {/* Paused Floating Badge (keeps frozen frame clearly visible) */}
+                {/* Paused Floating Watermark */}
                 {isPaused && (
-                  <div className="absolute inset-0 bg-black/25 flex flex-col items-center justify-center pointer-events-none z-10 animate-fadeIn">
-                    <div className="px-4 py-2 rounded-full bg-black/85 backdrop-blur-md border border-amber-500/60 shadow-xl flex items-center gap-2 text-amber-300">
-                      <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                  <div className="absolute inset-0 bg-black/30 flex flex-col items-center justify-center pointer-events-none z-10">
+                    <div className="px-3.5 py-1.5 rounded-full bg-black/85 backdrop-blur-md border border-neutral-700 shadow-xl flex items-center gap-2 text-white">
+                      <svg className="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
                         <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
                       </svg>
-                      <span className="text-[11px] font-mono tracking-widest uppercase font-bold text-amber-200">
-                        PAUSED ON MIRROR
+                      <span className="text-[10px] font-mono tracking-widest uppercase font-bold">
+                        PLAYHEAD PAUSED
                       </span>
                     </div>
                   </div>
                 )}
 
-
-
-                {/* Bottom Overlay Info Banner */}
-                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-3 pt-6 flex items-end justify-between gap-3 text-white z-20 pointer-events-none">
-
+                {/* Bottom Overlay Resolution Tag */}
+                <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent p-2.5 pt-5 flex items-end justify-between gap-3 text-white z-20 pointer-events-none">
+                  <span className="text-[10px] font-mono font-bold text-neutral-300 truncate">
+                    {resolvedContent?.content_title || `Slide #${internalIndex + 1}`}
+                  </span>
                   <span className="text-[10px] font-mono text-neutral-400 shrink-0 font-medium">
                     {displayResolution}
                   </span>
@@ -207,109 +300,37 @@ export default function VirtualScreen({
               </>
             )}
           </div>
-
-          {/* Bezel Bottom Chin */}
-          <div className="pt-2 px-1 w-full flex items-center justify-between text-[9px] font-mono tracking-widest text-neutral-400 uppercase select-none">
-
-          </div>
-        </div>
-
-
-        {/* Screen Controller Toolbar */}
-        <div className="space-y-3 pt-1">
-          {/* Quick Step Buttons and Slide Counter */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={handlePrevSlide}
-                disabled={totalCount <= 1}
-                className="p-2 bg-neutral-100 hover:bg-neutral-200 text-black border border-neutral-200 rounded-lg text-xs font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center"
-                title="Preview previous slide"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" />
-                </svg>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleNextSlide}
-                disabled={totalCount <= 1}
-                className="p-2 bg-neutral-100 hover:bg-neutral-200 text-black border border-neutral-200 rounded-lg text-xs font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center"
-                title="Preview next slide"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" />
-                </svg>
-              </button>
-
-              <span className="text-xs font-mono font-medium text-neutral-600 ml-1">
-                Slide {totalCount > 0 ? currentIndex + 1 : 0} of {totalCount}
-              </span>
-            </div>
-          </div>
-
-          {/* Quick Slide Navigation Dots / Pills */}
-          {totalCount > 1 && (
-            <div className="pt-2 border-t border-neutral-100">
-              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
-                {playableList.map((item, idx) => {
-                  const isCurrent = idx === currentIndex;
-                  return (
-                    <button
-                      key={item._id || idx}
-                      type="button"
-                      onClick={() => onSelectSlide && onSelectSlide(idx, item._id)}
-                      className={`h-7 px-2.5 rounded-md text-xs font-mono font-bold transition-all shrink-0 cursor-pointer flex items-center gap-1.5 ${isCurrent
-                        ? "bg-black text-white shadow-xs"
-                        : "bg-neutral-100 hover:bg-neutral-200 text-neutral-600 border border-neutral-200"
-                        }`}
-                      title={`Jump virtual screen to #${idx + 1}: ${item.content_title || 'Media'}`}
-                    >
-                      <span>#{idx + 1}</span>
-                      <span className="text-[10px] font-normal truncate max-w-[80px]">
-                        {item.content_format?.toUpperCase() || 'IMG'}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
-      {/* Fullscreen Modal View */}
+      {/* Fullscreen Monitor View */}
       {isFullscreen && (
-        <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col p-4 sm:p-8 animate-fadeIn">
-          <div className="flex items-center justify-between text-white pb-4 border-b border-neutral-800">
-            <div>
-              <div className="flex items-center gap-2">
-                <span className={`w-2 h-2 rounded-full ${isPaused ? 'bg-amber-400' : 'bg-emerald-400'}`} />
-                <h4 className="text-base font-bold text-white tracking-tight">{screenTitle}</h4>
-                <span className="text-xs font-mono text-neutral-400">({displayResolution})</span>
-              </div>
-              <p className="text-xs text-neutral-400 mt-0.5">
-                Always-active default virtual mirror broadcast simulation
-              </p>
+        <div className="fixed inset-0 z-50 bg-black/95 backdrop-blur-md flex flex-col p-4 sm:p-6 animate-fadeIn">
+          <div className="flex items-center justify-between text-white pb-3 border-b border-neutral-800">
+            <div className="flex items-center gap-3">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
+              <h4 className="text-sm font-bold text-white tracking-tight uppercase font-['Uber_Move']">
+                Fullscreen Monitor: {screenTitle}
+              </h4>
+              <span className="text-xs font-mono text-neutral-400 bg-neutral-800 px-2 py-0.5 rounded">
+                {displayResolution}
+              </span>
             </div>
 
             <div className="flex items-center gap-3">
-              <span className="text-xs font-mono text-neutral-300">
-                Slide {currentIndex + 1} of {totalCount}
+              <span className="text-xs font-mono text-neutral-400">
+                Slide {internalIndex + 1} of {totalCount}
               </span>
               <button
                 type="button"
                 onClick={() => setIsFullscreen(false)}
-                className="px-3.5 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-white text-xs font-semibold cursor-pointer transition-colors"
+                className="px-3 py-1.5 rounded-lg bg-neutral-800 hover:bg-neutral-700 text-white text-xs font-bold cursor-pointer transition-colors"
               >
                 Close (Esc) ✕
               </button>
             </div>
           </div>
 
-          {/* Fullscreen Video / Image Viewport matching Mirror Dimensions */}
           <div className="flex-1 flex items-center justify-center p-4 min-h-0 relative">
             <div
               style={{
@@ -329,50 +350,17 @@ export default function VirtualScreen({
                     loop={totalCount === 1}
                     muted
                     playsInline
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                 ) : (
                   <img
                     src={resolvedContent.content_url}
                     alt={resolvedContent.content_title}
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-contain"
                   />
                 )
               )}
-
-              {isPaused && (
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10 bg-black/30">
-                  <div className="px-5 py-2.5 rounded-full bg-black/85 backdrop-blur-md border border-amber-500/60 text-amber-300 font-mono font-bold text-xs shadow-2xl flex items-center gap-2">
-                    <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24">
-                      <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-                    </svg>
-                    <span>PAUSED ON SCREEN</span>
-                  </div>
-                </div>
-              )}
             </div>
-          </div>
-
-          {/* Fullscreen Footer Navigation Bar */}
-          <div className="flex items-center justify-between pt-3 border-t border-neutral-800 text-white">
-            <button
-              onClick={handlePrevSlide}
-              disabled={totalCount <= 1}
-              className="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 rounded-lg text-xs font-medium cursor-pointer disabled:opacity-30"
-            >
-              ◀ Previous Slide
-            </button>
-            <div className="text-center text-xs text-neutral-400">
-              <span className="font-semibold text-white">{resolvedContent?.content_title}</span>
-              {resolvedContent?.content_description && ` — ${resolvedContent.content_description}`}
-            </div>
-            <button
-              onClick={handleNextSlide}
-              disabled={totalCount <= 1}
-              className="px-4 py-2 bg-neutral-900 hover:bg-neutral-800 rounded-lg text-xs font-medium cursor-pointer disabled:opacity-30"
-            >
-              Next Slide ▶
-            </button>
           </div>
         </div>
       )}

@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import Addbutton from '../../components/addbutton/Addbutton'
 import SearchBar from '../../components/SearchBar/SearchBar'
 import Listitem from '../../components/listitem/Listitem'
@@ -11,6 +12,8 @@ export default function ManageSites() {
   const [sitelist, setSitelist] = useState([])
   const [filteredList, setFilteredList] = useState([])
   const [loading, setLoading] = useState(true)
+  const [maxSites, setMaxSites] = useState(1)
+  const [isLimitReached, setIsLimitReached] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [siteToEdit, setSiteToEdit] = useState(null)
   const { getCookie } = useContext(CookieContext)
@@ -22,8 +25,11 @@ export default function ManageSites() {
     GET_AVAILABLE_SITES(login_key)
       .then((res) => {
         const data = res?.data || []
+        const max = res?.max_sites || res?.limits?.sites || 1
         setSitelist(data)
         setFilteredList(data)
+        setMaxSites(max)
+        setIsLimitReached(Boolean(res?.limit_reached || data.length >= max))
         setLoading(false)
       })
       .catch((err) => {
@@ -61,8 +67,21 @@ export default function ManageSites() {
             Organize mirror screens and media distributions by location or branch
           </p>
         </div>
-        <Addbutton label='Add New Site' goto='/addsite' className='w-full sm:w-auto justify-center' />
+        <Addbutton
+          label='Add New Site'
+          goto='/addsite'
+          disabled={isLimitReached}
+          disabledTooltip={`Plan limit reached (${sitelist.length}/${maxSites} sites). Upgrade your plan to add more sites.`}
+          className='w-full sm:w-auto justify-center'
+        />
       </div>
+
+      {isLimitReached && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between text-xs text-amber-900 gap-3">
+          <span><b>Plan limit reached:</b> Your current plan allows up to {maxSites} site{maxSites > 1 ? 's' : ''}. Upgrade to add more locations.</span>
+          <Link to="/pricing" className="font-bold underline hover:text-amber-950 shrink-0">Upgrade Plan →</Link>
+        </div>
+      )}
 
       {/* Search & Stats Filter */}
       <div className='flex items-stretch sm:items-center justify-between gap-4 flex-col sm:flex-row'>
@@ -90,7 +109,12 @@ export default function ManageSites() {
               {sitelist.length === 0 ? "You have not added any site yet." : "No site matches your search keyword."}
             </p>
             {sitelist.length === 0 && (
-              <Addbutton label='Create Your First Site' goto='/addsite' />
+              <Addbutton
+                label='Create Your First Site'
+                goto='/addsite'
+                disabled={isLimitReached}
+                disabledTooltip={`Plan limit reached (${sitelist.length}/${maxSites} sites). Upgrade your plan to add more sites.`}
+              />
             )}
           </div>
         ) : (

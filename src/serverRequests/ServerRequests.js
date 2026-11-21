@@ -834,7 +834,7 @@ function ASSIGN_MIRROR_TO_SITE(login_key,mirrors,site_id) {
         })
 }
 
-function ASSIGN_CONTENT_TO_MIRROR(login_key, content_ids, mirror_id, timeslot_ids = ['default']) {
+function ASSIGN_CONTENT_TO_MIRROR(login_key, content_ids, mirror_id, timeslot_ids = ['default'], insert_index = null) {
     return new Promise((resolve, reject) => {
         const slot_ids = Array.isArray(timeslot_ids) ? timeslot_ids : [timeslot_ids]
         const request_data = {
@@ -844,6 +844,9 @@ function ASSIGN_CONTENT_TO_MIRROR(login_key, content_ids, mirror_id, timeslot_id
             "timeslot_ids": slot_ids,
             "timeslot_id": slot_ids[0] || 'default',
             "login_key": login_key
+        }
+        if (insert_index !== null && insert_index !== undefined) {
+            request_data.insert_index = insert_index
         }
         try {
             fetch(ADMINISTRATOR_ROOT_URL, {
@@ -1252,6 +1255,37 @@ function UPDATE_PHOTO_SPEED(login_key, mirror_id, photo_duration, content_id = n
     });
 }
 
+function UPDATE_MIRROR_TRANSITIONS(login_key, mirror_id, transitions) {
+    return new Promise((resolve, reject) => {
+        try {
+            fetch(ADMINISTRATOR_ROOT_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    service: 'UpdateMirrorTransitions',
+                    login_key: login_key || 'adminpassword',
+                    mirror_id: mirror_id,
+                    transitions: transitions
+                })
+            }).then(response => response.json())
+                .then((data) => {
+                    if (data.status_code && data.status_code >= 400) {
+                        reject(new Error(data.status_text || 'Failed to update transitions'));
+                    } else {
+                        resolve(data);
+                    }
+                }).catch((error) => {
+                    console.error("UpdateMirrorTransitions error:", error);
+                    reject(error);
+                });
+        } catch (e) {
+            reject(e);
+        }
+    });
+}
+
 export {
     MAKE_LOGIN,
     ESTABLISH_WEBSOCKET_CONNECTION,
@@ -1283,5 +1317,6 @@ export {
     SAVE_TIMESLOT,
     DELETE_TIMESLOT,
     UPDATE_TIMESLOT_ORDER,
-    UPDATE_MIRROR_TIMEZONE
+    UPDATE_MIRROR_TIMEZONE,
+    UPDATE_MIRROR_TRANSITIONS
 }

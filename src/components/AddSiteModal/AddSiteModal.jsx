@@ -2,7 +2,15 @@ import React, { useContext, useEffect, useState } from "react";
 import { CookieContext } from "../../Contexts/CookieContext";
 import { ADD_SITE_IN_ACCOUNT, UPDATE_SITE } from "../../serverRequests/ServerRequests";
 
-export default function AddSiteModal({ isOpen, onClose, onSiteAdded, onSiteUpdated, siteToEdit = null }) {
+export default function AddSiteModal({
+  isOpen,
+  onClose,
+  onSiteAdded,
+  onSiteUpdated,
+  siteToEdit = null,
+  disabled = false,
+  disabledMessage = "",
+}) {
   const { getCookie } = useContext(CookieContext);
   const [siteName, setSiteName] = useState("");
   const [description, setDescription] = useState("");
@@ -32,6 +40,10 @@ export default function AddSiteModal({ isOpen, onClose, onSiteAdded, onSiteUpdat
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!isEditMode && disabled) {
+      setErrorMessage(disabledMessage || "Plan limit reached for locations/sites.");
+      return;
+    }
     if (!siteName.trim()) {
       setErrorMessage("Location Name is required.");
       return;
@@ -111,6 +123,12 @@ export default function AddSiteModal({ isOpen, onClose, onSiteAdded, onSiteUpdat
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-5 sm:p-6 space-y-4">
+          {!isEditMode && disabled && (
+            <div className="p-3 bg-amber-50 border border-amber-200 text-amber-900 text-xs rounded-xl font-medium flex items-center justify-between gap-2">
+              <span>{disabledMessage || "Plan limit reached: You cannot add more locations under your current plan."}</span>
+              <a href="/pricing" className="font-bold underline shrink-0">Upgrade →</a>
+            </div>
+          )}
           {errorMessage && (
             <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl font-medium flex items-center gap-2">
               <svg className="w-4 h-4 shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -163,8 +181,13 @@ export default function AddSiteModal({ isOpen, onClose, onSiteAdded, onSiteUpdat
             </button>
             <button
               type="submit"
-              disabled={isSubmitting}
-              className="px-5 py-2.5 rounded-xl bg-black hover:bg-neutral-800 disabled:opacity-50 text-white text-xs font-semibold shadow-xs flex items-center gap-2 transition-colors cursor-pointer"
+              disabled={isSubmitting || (!isEditMode && disabled)}
+              title={(!isEditMode && disabled) ? (disabledMessage || "Plan limit reached") : ""}
+              className={`px-5 py-2.5 rounded-xl text-xs font-semibold shadow-xs flex items-center gap-2 transition-colors ${
+                (isSubmitting || (!isEditMode && disabled))
+                  ? "bg-neutral-200 text-neutral-400 cursor-not-allowed border border-neutral-300"
+                  : "bg-black hover:bg-neutral-800 text-white cursor-pointer"
+              }`}
             >
               {isSubmitting ? (
                 <>
@@ -174,6 +197,8 @@ export default function AddSiteModal({ isOpen, onClose, onSiteAdded, onSiteUpdat
                   </svg>
                   <span>{isEditMode ? "Saving Changes..." : "Creating Location..."}</span>
                 </>
+              ) : (!isEditMode && disabled) ? (
+                <span>Plan Limit Reached</span>
               ) : (
                 <>
                   {isEditMode ? (

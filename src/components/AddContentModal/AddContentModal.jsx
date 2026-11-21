@@ -14,6 +14,7 @@ export default function AddContentModal({
   mirrorHeight = 1080,
   timeslots = [],
   activeTimeslotId = 'default',
+  insertIndex = null,
   onContentAdded,
   onTimeslotsUpdated
 }) {
@@ -116,8 +117,8 @@ export default function AddContentModal({
         setCrop({ menu: selectedMenu, preview: preview.preview_url, width: preview.width, height: preview.height })
         return
       }
-      await ASSIGN_CONTENT_TO_MIRROR(loginKey, selected, mirrorId, targetTimeslotIds)
-      onContentAdded?.(selected.length === 1 ? items.find(x => x._id === selected[0])?.content_title : `${selected.length} items`)
+      await ASSIGN_CONTENT_TO_MIRROR(loginKey, selected, mirrorId, targetTimeslotIds, insertIndex)
+      onContentAdded?.(selected.length === 1 ? items.find(x => x._id === selected[0])?.content_title : `${selected.length} items`, selected, insertIndex)
       onClose()
     } catch (e) { setError(e.message || 'Could not import selected content') } finally { setSaving(false) }
   }
@@ -127,7 +128,7 @@ export default function AddContentModal({
     setSaving(true); setError('')
     try {
       await CREATE_CONTENT(loginKey, crop.menu.title, 'Menu template image', file, mirrorId, null, crop.width, crop.height)
-      onContentAdded?.(crop.menu.title); setCrop(null); onClose()
+      onContentAdded?.(crop.menu.title, null, insertIndex); setCrop(null); onClose()
     } catch (e) { setError(e.message || 'Could not import menu image') } finally { setSaving(false) }
   }
 
@@ -143,12 +144,21 @@ export default function AddContentModal({
       <section className="bg-white rounded-2xl w-full max-w-3xl max-h-[88vh] flex flex-col border border-neutral-200" onClick={e => e.stopPropagation()}>
         <header className="p-5 border-b border-neutral-200 flex justify-between gap-4">
           <div>
-            <h2 className="text-lg font-bold text-black font-['Uber_Move']">
-              {step === 1 ? 'Import Content' : 'Select Target Timeslot'}
-            </h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-bold text-black font-['Uber_Move']">
+                {step === 1 ? (insertIndex !== null ? `Insert Content (Position #${insertIndex + 1})` : 'Import Content') : 'Select Target Timeslot'}
+              </h2>
+              {insertIndex !== null && step === 1 && (
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-black text-white">
+                  Timeline Slot #{insertIndex + 1}
+                </span>
+              )}
+            </div>
             <p className="text-xs text-neutral-500 font-['Uber_Move_Text']">
               {step === 1 
-                ? `Choose library content or a saved menu to add to ${mirrorName}.`
+                ? (insertIndex !== null 
+                    ? `Choose library media or a menu template to insert directly at position #${insertIndex + 1} in the timeline.`
+                    : `Choose library content or a saved menu to add to ${mirrorName}.`)
                 : `Choose the timeslot schedule to import ${selected.length} selected item${selected.length > 1 ? 's' : ''} into.`
               }
             </p>
