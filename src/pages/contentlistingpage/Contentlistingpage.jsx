@@ -625,8 +625,28 @@ export default function Contentlistingpage() {
     fetchContents()
   }, [mirror_id])
 
-  // Derive active slide index and content object for Virtual Screen preview
-  const activeContents = contentlist.filter((c) => c.is_active !== false)
+  // Derive active contents for Virtual Screen based on the currently broadcasting timeslot (or selected timeslot)
+  const activeTimeslot = useMemo(() => {
+    return timeslots.find(s => String(s.id) === String(activeNowSlotId))
+      || timeslots.find(s => s.is_default || s.id === 'default')
+      || timeslots[0]
+  }, [timeslots, activeNowSlotId])
+
+  const activeContents = useMemo(() => {
+    if (!activeTimeslot) {
+      return contentlist.filter((c) => c.is_active !== false)
+    }
+    if (activeTimeslot.is_default || activeTimeslot.id === 'default') {
+      if (Array.isArray(activeTimeslot.contents) && activeTimeslot.contents.length > 0) {
+        const slotCids = new Set(activeTimeslot.contents.map(String))
+        return contentlist.filter((c) => slotCids.has(String(c._id)) && c.is_active !== false)
+      }
+      return contentlist.filter((c) => c.is_active !== false)
+    }
+    const slotCids = new Set((activeTimeslot.contents || []).map(String))
+    return contentlist.filter((c) => slotCids.has(String(c._id)) && c.is_active !== false)
+  }, [contentlist, activeTimeslot])
+
   const activeContentIndex = activeContents.findIndex((c) =>
     (liveStatus.active_content_id && String(c._id) === String(liveStatus.active_content_id))
   )

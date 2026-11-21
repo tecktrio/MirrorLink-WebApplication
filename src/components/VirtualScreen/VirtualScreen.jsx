@@ -153,9 +153,9 @@ export default function VirtualScreen({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                   </svg>
                 </div>
-                <h5 className="text-xs font-bold text-neutral-300 uppercase tracking-wider font-mono">Standby • No Content</h5>
+                <h5 className="text-xs font-bold text-neutral-300 uppercase tracking-wider font-mono">No content available to show</h5>
                 <p className="text-[11px] text-neutral-500 max-w-xs">
-                  Assign active media slides ({displayResolution}) to start broadcasting.
+                  There is no active media scheduled for the current timeslot.
                 </p>
               </div>
             ) : (

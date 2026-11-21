@@ -198,13 +198,12 @@ export default function MirrorListing({ site_id, site_name = "Selected Site", on
                         <span className="font-semibold text-neutral-900 group-hover:text-black text-sm truncate">
                           {mirror.mirror_name}
                         </span>
-                        <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full shrink-0 ${
-                          isInactive
+                        <span className={`text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full shrink-0 ${isInactive
                             ? 'bg-neutral-100 text-neutral-500 border border-neutral-200'
                             : isPaused
-                            ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                            : 'bg-black text-white'
-                        }`}>
+                              ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                              : 'bg-black text-white'
+                          }`}>
                           {isInactive ? 'Inactive' : isPaused ? 'Paused' : 'Active'}
                         </span>
                       </div>
@@ -282,7 +281,7 @@ export default function MirrorListing({ site_id, site_name = "Selected Site", on
           </div>
         </div>
       )}
-      )}
+
 
       {/* Modal to register a new mirror screen directly */}
       <AddMirrorModal
