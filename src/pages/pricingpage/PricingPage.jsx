@@ -8,7 +8,7 @@ import PublicAccountActions from "../../components/PublicAccountActions";
 const freeBenefits = [
   "1 site",
   "1 mirror",
-  "3 contents",
+  "Unlimited content on mirror",
   "Unlimited logins for mirror",
   "Menus, streaming, queue displays and ad management",
   "All core features included",
@@ -284,11 +284,11 @@ export default function PricingPage() {
   const billingPeriod = plan?.period === "monthly" ? "month" : (plan?.period || "month");
   const isForeign = conversion && conversion.currency !== "INR";
 
-  const isFreePlanActive = currentSubscription?.status === "active" && currentSubscription?.plan_id === "mirrorlink-free-monthly";
   const isBusinessPlanActive = currentSubscription?.status === "active" && (
     currentSubscription?.plan_id === "mirrorlink-business-monthly" ||
     (!currentSubscription?.plan_id && currentSubscription?.plan_name?.toLowerCase().includes("business"))
   );
+  const isFreePlanActive = !isBusinessPlanActive;
 
   return (
     <div className="ml-pricing-page">
@@ -306,7 +306,7 @@ export default function PricingPage() {
         <div className="ml-price-heading">
           <span>SIMPLE, TRANSPARENT PRICING</span>
           <h1>Plans built for every stage.</h1>
-          <p>Start completely free with 1 site, 1 mirror, and 3 contents, or scale up to Business across your whole display network.</p>
+          <p>Start completely free with 1 site, 1 mirror, and unlimited content, or scale up to Business across your whole display network.</p>
         </div>
 
         {message && (

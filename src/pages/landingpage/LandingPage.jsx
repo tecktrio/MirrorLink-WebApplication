@@ -251,7 +251,7 @@ export default function LandingPage() {
           <div className="ml-plan-intro">
             <div className="ml-eyebrow"><span /> TRANSPARENT PLANS. EVERYTHING INCLUDED.</div>
             <h2>Room to grow,<br />built right in.</h2>
-            <p>Start free with 1 site, 1 mirror, and 3 contents, or choose Business for your entire display network.</p>
+            <p>Start free with 1 site, 1 mirror, and unlimited content, or choose Business for your entire display network.</p>
           </div>
           <div className="ml-plan-label">
             <Link className="ml-button ml-button-dark" to="/pricing">
