@@ -51,7 +51,7 @@ export default function SubscriptionPage() {
           <article className={`ml-subscription-status ${active ? "is-active" : "is-inactive"}`}>
             <span className="ml-subscription-status-icon" aria-hidden="true">{active ? "✓" : "!"}</span>
             <div><span>ACCOUNT STATUS</span><strong>{active ? "Active" : (subscription.status ? subscription.status.replaceAll("_", " ") : "No active subscription")}</strong></div>
-            {!active && <Link to="/pricing">View plans <span aria-hidden="true">→</span></Link>}
+            <Link to="/pricing">{active ? "Change or upgrade plan" : "View plans"} <span aria-hidden="true">→</span></Link>
           </article>
 
           <article className="ml-subscription-card">

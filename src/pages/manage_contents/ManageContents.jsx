@@ -65,8 +65,16 @@ export default function ManageContents() {
       {tab === 'menus' ? <ManageMenus embedded /> : <>
       <div className='flex flex-wrap items-center justify-between gap-3'>
         <div><h3 className='text-lg font-bold'>{tab === 'videos' ? 'Videos' : 'Images'}</h3><p className='text-sm text-neutral-500'>Browse and manage your {tab} library.</p></div>
-        <Addbutton label='Upload Content' goto='/addcontent' className='justify-center' />
+        <Addbutton label={tab === 'videos' ? 'Upload Images' : 'Upload Content'} goto='/addcontent' className='justify-center' />
       </div>
+      {tab === 'videos' && (
+        <div className='p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center justify-between gap-3 text-xs text-amber-900'>
+          <div className='flex items-center gap-2'>
+            <span className='w-2 h-2 rounded-full bg-amber-500 shrink-0'></span>
+            <span>Video uploading is temporarily paused for streaming optimization. Existing videos will continue to display normally.</span>
+          </div>
+        </div>
+      )}
       <input value={query} onChange={e=>setQuery(e.target.value)} placeholder={`Search ${tab}...`} className='w-full bg-white border rounded-xl px-4 py-3'/>
 
       {/* List */}

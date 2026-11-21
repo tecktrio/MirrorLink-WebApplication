@@ -36,6 +36,16 @@ export default function Addcontentpage() {
   const HandleFile = (e) => {
     const file = e.target.files && e.target.files[0]
     if (file) {
+      // Temporarily block video uploads
+      const isVideoFile = file.type.startsWith('video/') || /\.(mp4|mov|webm|m4v|avi|mkv)$/i.test(file.name)
+      if (isVideoFile) {
+        setErrorMessage('Video uploading is temporarily disabled for streaming optimization and maintenance. Please upload image files (JPG, PNG, WEBP).')
+        setcontent(null)
+        setPreviewUrl('')
+        setFileDimensions(null)
+        return
+      }
+
       setcontent(file)
       setErrorMessage('')
 
@@ -92,7 +102,12 @@ export default function Addcontentpage() {
       return
     }
     const isImage = content?.type.startsWith('image/')
-    const isVideo = content?.type.startsWith('video/')
+    const isVideo = content?.type.startsWith('video/') || (content?.name && /\.(mp4|mov|webm|m4v|avi|mkv)$/i.test(content.name))
+
+    if (isVideo) {
+      setErrorMessage('Video uploading is temporarily disabled for streaming optimization and maintenance. Please upload image files (JPG, PNG, WEBP).')
+      return
+    }
 
     if (isImage && fileDimensions && !isExactMatch) {
       setErrorMessage(`Uploaded image dimensions (${fileDimensions.width} × ${fileDimensions.height} px) do not match the library image size (${targetWidth} × ${targetHeight} px). Please use the image cropper.`)
@@ -154,8 +169,26 @@ export default function Addcontentpage() {
           <div>
             <h2 className='text-lg sm:text-xl font-bold text-slate-800 tracking-tight'>Upload / Create Content</h2>
             <p className='text-xs text-slate-500 mt-1'>
-              Add a video or image to your shared content library, then import it into any mirror.
+              Add an image to your shared content library, then import it into any mirror.
             </p>
+          </div>
+
+          {/* Video Upload Temporarily Disabled Notice Banner */}
+          <div className='p-4 bg-blue-50 border border-blue-200 rounded-2xl flex items-start gap-3'>
+            <div className='w-8 h-8 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center shrink-0 mt-0.5'>
+              <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' />
+              </svg>
+            </div>
+            <div className='text-xs space-y-1'>
+              <div className='font-bold text-blue-950 flex items-center gap-1.5 flex-wrap'>
+                <span>Video Uploads Temporarily Paused</span>
+                <span className='bg-blue-200/80 text-blue-900 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider'>Notice</span>
+              </div>
+              <p className='text-blue-900/80 leading-relaxed text-[11px]'>
+                Video uploading is temporarily disabled while we optimize streaming performance across low-bandwidth displays. Image uploads (JPG, PNG, WEBP) and template menus remain fully enabled.
+              </p>
+            </div>
           </div>
 
           {/* Mirror Resolution Warning Banner */}
@@ -269,7 +302,7 @@ export default function Addcontentpage() {
             <label className='text-sm font-semibold text-slate-800'>
               Media File <span className='text-red-500 font-bold'>*</span>
             </label>
-            <Uploadbutton label='Upload File' update={HandleFile} accept='.mp4,.jpg,.jpeg,.png,.webp,.gif' />
+            <Uploadbutton label='Upload Image' update={HandleFile} accept='.jpg,.jpeg,.png,.webp,.gif,image/*' />
 
             {/* Thumbnail Preview with Resolution Comparison */}
             {previewUrl && (
