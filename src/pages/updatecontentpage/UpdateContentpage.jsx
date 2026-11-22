@@ -59,7 +59,7 @@ export default function UpdateContentpage() {
         <div className="bg-white rounded-2xl border border-neutral-200/90 shadow-2xs overflow-hidden">
           {/* Media Player Theater */}
           <div className="bg-black flex items-center justify-center min-h-[220px] sm:min-h-[360px] max-h-[580px] overflow-hidden">
-            {content.content_format?.toLowerCase() === "mp4" ? (
+            {['mp4', 'mov', 'webm', 'm4v', 'avi', 'mkv'].includes((content.content_format || '').toLowerCase()) || (content.content_url || '').match(/\.(mp4|mov|webm|m4v|avi|mkv)(\?|$)/i) ? (
               <video
                 className="w-full max-h-[560px] object-contain"
                 src={content.content_url}

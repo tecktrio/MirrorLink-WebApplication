@@ -39,7 +39,7 @@ export default function Listitem({
     if (goto) navigate(goto);
   };
 
-  const isVideo = contentFormat?.toLowerCase() === 'mp4' || (typeof imageUrl === 'string' && imageUrl.toLowerCase().endsWith('.mp4'));
+  const isVideo = ['mp4', 'mov', 'webm', 'm4v', 'avi', 'mkv'].includes((contentFormat || '').toLowerCase()) || (typeof imageUrl === 'string' && !!imageUrl.match(/\.(mp4|mov|webm|m4v|avi|mkv)(\?|$)/i));
 
   // Render Google Drive styled folder / file icon
   const renderDriveIcon = () => {

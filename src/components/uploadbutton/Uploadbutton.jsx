@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react'
 
-export default function Uploadbutton({ label = 'Upload Content', update, accept = '.mp4,.jpg,.jpeg,.png' }) {
+export default function Uploadbutton({ label = 'Upload Content', update, accept = '.mp4,.mov,.webm,.m4v,.jpg,.jpeg,.png,.webp,.gif,image/*,video/*' }) {
   const fileInputRef = useRef(null)
   const [selectedFileName, setSelectedFileName] = useState('')
   const [isDragging, setIsDragging] = useState(false)
@@ -60,7 +60,7 @@ export default function Uploadbutton({ label = 'Upload Content', update, accept 
             <p className='text-sm font-semibold text-neutral-800'>
               <span className='text-black font-bold underline underline-offset-2'>Click to choose file</span> or drag & drop
             </p>
-            <p className='text-xs text-neutral-500 mt-1'>Supports MP4 video, JPG, PNG images</p>
+            <p className='text-xs text-neutral-500 mt-1'>Supports MP4, WebM, MOV videos & JPG, PNG, WEBP images</p>
           </div>
         )}
       </div>

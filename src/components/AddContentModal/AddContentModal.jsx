@@ -207,8 +207,8 @@ export default function AddContentModal({
                                 setSelected(s => e.target.checked ? [...s, item._id] : s.filter(id => id !== item._id))
                               }}
                             />
-                            {item.content_format === 'mp4' ? (
-                              <div className="w-14 h-10 bg-neutral-100 rounded-lg flex items-center justify-center text-xs shrink-0">▶</div>
+                            {['mp4', 'mov', 'webm', 'm4v', 'avi', 'mkv'].includes((item.content_format || '').toLowerCase()) || (item.content_url || '').match(/\.(mp4|mov|webm|m4v|avi|mkv)(\?|$)/i) ? (
+                              <div className="w-14 h-10 bg-neutral-900 text-white rounded-lg flex items-center justify-center text-xs shrink-0">▶</div>
                             ) : (
                               <img src={item.content_url} alt="" className="w-14 h-10 rounded-lg object-cover bg-neutral-100 shrink-0"/>
                             )}

@@ -36,16 +36,6 @@ export default function Addcontentpage() {
   const HandleFile = (e) => {
     const file = e.target.files && e.target.files[0]
     if (file) {
-      // Temporarily block video uploads
-      const isVideoFile = file.type.startsWith('video/') || /\.(mp4|mov|webm|m4v|avi|mkv)$/i.test(file.name)
-      if (isVideoFile) {
-        setErrorMessage('Video uploading is temporarily disabled for streaming optimization and maintenance. Please upload image files (JPG, PNG, WEBP).')
-        setcontent(null)
-        setPreviewUrl('')
-        setFileDimensions(null)
-        return
-      }
-
       setcontent(file)
       setErrorMessage('')
 
@@ -68,11 +58,14 @@ export default function Addcontentpage() {
           }
         }
         img.src = fileUrl
-      } else if (file.type.startsWith('video/')) {
+      } else if (file.type.startsWith('video/') || /\.(mp4|mov|webm|m4v|avi|mkv)$/i.test(file.name)) {
         setOriginalContent(null)
         const vid = document.createElement('video')
         vid.onloadedmetadata = () => {
           setFileDimensions({ width: vid.videoWidth, height: vid.videoHeight })
+          if (vid.duration && !isNaN(vid.duration)) {
+            setDuration(Math.max(2, Math.round(vid.duration)))
+          }
         }
         vid.src = fileUrl
       } else {
@@ -103,11 +96,6 @@ export default function Addcontentpage() {
     }
     const isImage = content?.type.startsWith('image/')
     const isVideo = content?.type.startsWith('video/') || (content?.name && /\.(mp4|mov|webm|m4v|avi|mkv)$/i.test(content.name))
-
-    if (isVideo) {
-      setErrorMessage('Video uploading is temporarily disabled for streaming optimization and maintenance. Please upload image files (JPG, PNG, WEBP).')
-      return
-    }
 
     if (isImage && fileDimensions && !isExactMatch) {
       setErrorMessage(`Uploaded image dimensions (${fileDimensions.width} × ${fileDimensions.height} px) do not match the library image size (${targetWidth} × ${targetHeight} px). Please use the image cropper.`)
@@ -169,29 +157,11 @@ export default function Addcontentpage() {
           <div>
             <h2 className='text-lg sm:text-xl font-bold text-slate-800 tracking-tight'>Upload / Create Content</h2>
             <p className='text-xs text-slate-500 mt-1'>
-              Add an image to your shared content library, then import it into any mirror.
+              Add an image or video to your shared content library, then import it into any mirror.
             </p>
           </div>
 
-          {/* Video Upload Temporarily Disabled Notice Banner */}
-          <div className='p-4 bg-blue-50 border border-blue-200 rounded-2xl flex items-start gap-3'>
-            <div className='w-8 h-8 rounded-xl bg-blue-100 text-blue-800 flex items-center justify-center shrink-0 mt-0.5'>
-              <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' />
-              </svg>
-            </div>
-            <div className='text-xs space-y-1'>
-              <div className='font-bold text-blue-950 flex items-center gap-1.5 flex-wrap'>
-                <span>Video Uploads Temporarily Paused</span>
-                <span className='bg-blue-200/80 text-blue-900 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider'>Notice</span>
-              </div>
-              <p className='text-blue-900/80 leading-relaxed text-[11px]'>
-                Video uploading is temporarily disabled while we optimize streaming performance across low-bandwidth displays. Image uploads (JPG, PNG, WEBP) and template menus remain fully enabled.
-              </p>
-            </div>
-          </div>
-
-          {/* Mirror Resolution Warning Banner */}
+          {/* Mirror Resolution / Media Info Banner */}
           <div className='p-4 bg-amber-50/90 border border-amber-200 rounded-2xl flex items-start gap-3'>
             <div className='w-8 h-8 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 mt-0.5'>
               <svg className='w-4 h-4' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
@@ -200,14 +170,14 @@ export default function Addcontentpage() {
             </div>
             <div className='text-xs space-y-1'>
               <div className='font-bold text-amber-950 flex items-center gap-1.5 flex-wrap'>
-                <span>Library Image Size:</span>
+                <span>Library Media Target:</span>
                 <span className='font-mono bg-amber-200/70 text-amber-950 px-2 py-0.5 rounded-md font-bold text-[11px]'>
                   {targetWidth} × {targetHeight} px
                 </span>
                 <span className='text-[11px] font-medium text-amber-800'>({orientationText})</span>
               </div>
               <p className='text-amber-900/80 leading-relaxed text-[11px]'>
-                Images are saved at this landscape size by default. You can crop menu imports to each mirror's exact resolution.
+                Recommended 16:9 HD standard. Videos (MP4, WebM, MOV) stream natively with +faststart TV optimization. Images can be cropped to fit.
               </p>
             </div>
           </div>
@@ -259,50 +229,57 @@ export default function Addcontentpage() {
             />
           </div>
 
-          {/* Duration Selector for Images */}
-          {(!content || !content.type.startsWith('video/')) && (
-            <div>
-              <label className='block text-xs font-bold text-black mb-1.5'>
-                Time to Stay on Screen
-              </label>
-              <div className='flex items-center gap-2'>
-                <div className='inline-flex items-center gap-1.5 px-3 py-2 bg-neutral-50 border border-neutral-300 rounded-xl text-xs font-medium'>
-                  <svg className='w-3.5 h-3.5 text-neutral-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
-                    <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' />
-                  </svg>
-                  <span className='text-neutral-500'>Time to stay:</span>
-                  <select
-                    value={duration}
-                    onChange={(e) => setDuration(Number(e.target.value))}
-                    className='bg-transparent font-bold text-black outline-none cursor-pointer pr-1'
-                  >
-                    <option value={2}>2s (Fast)</option>
-                    <option value={3}>3s</option>
-                    <option value={4}>4s</option>
-                    <option value={5}>5s (Default)</option>
-                    <option value={7}>7s</option>
-                    <option value={8}>8s</option>
-                    <option value={10}>10s</option>
-                    <option value={15}>15s</option>
-                    <option value={20}>20s</option>
-                    <option value={30}>30s</option>
-                    <option value={45}>45s</option>
-                    <option value={60}>60s</option>
-                  </select>
-                </div>
-                <span className='text-[11px] text-neutral-400'>
-                  Duration this slide stays on screen before advancing
-                </span>
+          {/* Duration Selector for Media */}
+          <div>
+            <label className='block text-xs font-bold text-black mb-1.5'>
+              {content?.type?.startsWith('video/') || (content?.name && /\.(mp4|mov|webm|m4v|avi|mkv)$/i.test(content.name)) ? 'Video Playback Duration' : 'Time to Stay on Screen'}
+            </label>
+            <div className='flex items-center gap-2'>
+              <div className='inline-flex items-center gap-1.5 px-3 py-2 bg-neutral-50 border border-neutral-300 rounded-xl text-xs font-medium'>
+                <svg className='w-3.5 h-3.5 text-neutral-500' fill='none' stroke='currentColor' viewBox='0 0 24 24'>
+                  <path strokeLinecap='round' strokeLinejoin='round' strokeWidth='2' d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' />
+                </svg>
+                <span className='text-neutral-500'>Time to stay:</span>
+                <select
+                  value={duration}
+                  onChange={(e) => setDuration(Number(e.target.value))}
+                  className='bg-transparent font-bold text-black outline-none cursor-pointer pr-1'
+                >
+                  <option value={2}>2s (Fast)</option>
+                  <option value={3}>3s</option>
+                  <option value={4}>4s</option>
+                  <option value={5}>5s (Default)</option>
+                  <option value={7}>7s</option>
+                  <option value={8}>8s</option>
+                  <option value={10}>10s</option>
+                  <option value={15}>15s</option>
+                  <option value={20}>20s</option>
+                  <option value={30}>30s</option>
+                  <option value={45}>45s</option>
+                  <option value={60}>60s</option>
+                  <option value={90}>90s</option>
+                  <option value={120}>120s (2 min)</option>
+                  <option value={180}>180s (3 min)</option>
+                  <option value={300}>300s (5 min)</option>
+                  {duration > 0 && ![2, 3, 4, 5, 7, 8, 10, 15, 20, 30, 45, 60, 90, 120, 180, 300].includes(duration) && (
+                    <option value={duration}>{duration}s (Video Length)</option>
+                  )}
+                </select>
               </div>
+              <span className='text-[11px] text-neutral-400'>
+                {content?.type?.startsWith('video/') || (content?.name && /\.(mp4|mov|webm|m4v|avi|mkv)$/i.test(content.name))
+                  ? 'Auto-detected from video duration or customize playback time'
+                  : 'Duration this slide stays on screen before advancing'}
+              </span>
             </div>
-          )}
+          </div>
 
           {/* Upload Zone */}
           <div className='space-y-2 pt-2'>
             <label className='text-sm font-semibold text-slate-800'>
               Media File <span className='text-red-500 font-bold'>*</span>
             </label>
-            <Uploadbutton label='Upload Image' update={HandleFile} accept='.jpg,.jpeg,.png,.webp,.gif,image/*' />
+            <Uploadbutton label='Upload Media' update={HandleFile} accept='.jpg,.jpeg,.png,.webp,.gif,.mp4,.mov,.webm,.m4v,.avi,.mkv,image/*,video/*' />
 
             {/* Thumbnail Preview with Resolution Comparison */}
             {previewUrl && (
