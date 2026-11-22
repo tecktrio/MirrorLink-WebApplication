@@ -122,6 +122,7 @@ export default function LandingPage() {
   return (
     <div className="ml-landing">
       <header className="ml-nav">
+        <a className="ml-brand" href="#top" aria-label="ScreenPilot home"><img src="/logo.png" alt="ScreenPilot" className="h-12 sm:h-14 md:h-16 w-auto max-w-[280px] sm:max-w-[340px] md:max-w-[400px] object-contain" /></a>
         <a className="ml-brand" href="#top" aria-label="ScreenPilot by Bigburry home"><img src="/logo.png" alt="ScreenPilot by Bigburry - Cloud Screen Management" className="h-12 sm:h-14 md:h-16 w-auto max-w-[280px] sm:max-w-[340px] md:max-w-[400px] object-contain" /></a>
         <nav className="ml-nav-links" aria-label="Main navigation">
           <Link to="/pricing">Subscription plans</Link>
