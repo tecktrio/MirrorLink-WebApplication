@@ -1,25 +1,16 @@
 {
   "short_name": "ScreenPilot",
-  "name": "ScreenPilot Cloud Screen Management",
+  "name": "ScreenPilot by Bigburry | Cloud Screen Management",
+  "description": "Cloud digital signage and multi-screen management platform by Bigburry. Broadcast live menus, ads, video transitions, and queue boards across any screen.",
   "icons": [
     {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    },
-    {
-      "src": "logo192.png",
+      "src": "logo.png",
       "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "logo512.png",
-      "type": "image/png",
-      "sizes": "512x512"
+      "sizes": "192x192 512x512"
     }
   ],
-  "start_url": ".",
+  "start_url": "/",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#2A1810",
+  "background_color": "#FAF6F0"
 }
