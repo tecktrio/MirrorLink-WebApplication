@@ -36,7 +36,12 @@ export default function TimelineEditor({
     { id: 'none', label: 'None (Cut)', icon: '✕', desc: 'Instant cut' },
     { id: 'fade', label: 'Fade', icon: '✨', desc: 'Smooth crossfade' },
     { id: 'slide', label: 'Slide', icon: '⇄', desc: 'Slide push' },
-    { id: 'zoom', label: 'Zoom', icon: '⤢', desc: 'Zoom dissolve' }
+    { id: 'zoom', label: 'Zoom', icon: '⤢', desc: 'Zoom dissolve' },
+    { id: 'wipe', label: 'Wipe', icon: '⫸', desc: 'Curtain reveal wipe' },
+    { id: 'flip', label: '3D Flip', icon: '↻', desc: 'Perspective card flip' },
+    { id: 'neon', label: 'Neon Glow', icon: '⚡', desc: 'Cyber cyan & magenta glow', tag: 'Colorful' },
+    { id: 'rainbow', label: 'Rainbow Prism', icon: '🌈', desc: 'Full spectrum color sweep', tag: 'Colorful' },
+    { id: 'amber', label: 'Amber Flare', icon: '🔥', desc: 'Warm sunset fire flare', tag: 'Colorful' }
   ]
 
   // Close transition popover when clicking outside or scrolling
@@ -593,16 +598,25 @@ export default function TimelineEditor({
                                     })
                                   }
                                 }}
-                                className={`h-6 px-2 rounded-full border transition-all flex items-center gap-1 shadow-2xs cursor-pointer z-10 text-[10px] font-bold ${
+                                className={`h-6 px-2.5 rounded-full border transition-all flex items-center gap-1 shadow-2xs cursor-pointer z-10 text-[10px] font-bold ${
                                   isPopoverOpen
-                                    ? 'bg-black text-white border-black scale-105 ring-2 ring-black/20'
+                                    ? 'ring-2 ring-black/20 scale-105'
+                                    : 'hover:scale-105'
+                                } ${
+                                  activeTransId === 'neon'
+                                    ? 'bg-gradient-to-r from-cyan-600 to-pink-600 text-white border-cyan-300'
+                                    : activeTransId === 'rainbow'
+                                    ? 'bg-gradient-to-r from-violet-600 via-pink-600 to-amber-500 text-white border-pink-300'
+                                    : activeTransId === 'amber'
+                                    ? 'bg-gradient-to-r from-amber-600 to-rose-600 text-white border-amber-300'
                                     : 'bg-black text-white border-black hover:bg-neutral-800'
                                 }`}
                                 title={`Transition: ${activeTransId.toUpperCase()} (${hasNext ? 'Next Slide' : 'Loop to Start'}). Click to change.`}
                               >
-                                {activeTransId === 'fade' && <span>✨ Fade</span>}
-                                {activeTransId === 'slide' && <span>⇄ Slide</span>}
-                                {activeTransId === 'zoom' && <span>⤢ Zoom</span>}
+                                {(() => {
+                                  const opt = TRANSITION_OPTIONS.find((o) => o.id === activeTransId)
+                                  return <span>{opt ? `${opt.icon} ${opt.label.split(' ')[0]}` : activeTransId}</span>
+                                })()}
                               </button>
                             ) : (
                               <button
@@ -682,7 +696,7 @@ export default function TimelineEditor({
             </button>
           </div>
 
-          <div className="space-y-1">
+          <div className="space-y-1 max-h-72 overflow-y-auto pr-0.5">
             {TRANSITION_OPTIONS.map((opt) => {
               const isCurrent =
                 activeTransitionPopover.activeTransId === opt.id ||
@@ -716,7 +730,14 @@ export default function TimelineEditor({
                   <div className="flex items-center gap-2">
                     <span className="text-base">{opt.icon}</span>
                     <div>
-                      <p className="font-bold leading-none">{opt.label}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-bold leading-none">{opt.label}</p>
+                        {opt.tag && (
+                          <span className="text-[9px] px-1.5 py-0.5 rounded-full font-extrabold uppercase tracking-wider bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 text-white shadow-2xs">
+                            {opt.tag}
+                          </span>
+                        )}
+                      </div>
                       <p
                         className={`text-[10px] mt-0.5 leading-none ${
                           isCurrent ? 'text-neutral-300' : 'text-neutral-400'

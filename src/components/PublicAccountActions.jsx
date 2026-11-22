@@ -19,7 +19,6 @@ export default function PublicAccountActions({ className = "" }) {
   const initials = (name || "M").trim().split(/[\s@._-]+/).filter(Boolean).slice(0, 2).map((part) => part[0].toUpperCase()).join("") || "M";
   return (
     <div className={`ml-account-actions ${className}`}>
-      <Link className="ml-account-panel" to="/setup">Control panel</Link>
       <span className="ml-account-avatar" aria-hidden="true">{initials}</span>
       <span className="ml-account-name" title={name || "ScreenPilot account"}>{name || "ScreenPilot account"}</span>
       <button className="ml-account-signout" type="button" onClick={signOut}>Sign out</button>

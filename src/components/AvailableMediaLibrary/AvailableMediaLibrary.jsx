@@ -74,7 +74,7 @@ export default function AvailableMediaLibrary({
               </span>
             </div>
             <p className="text-[10px] text-neutral-500">
-              Drag or click <strong className="text-black font-bold">+ Add</strong> to insert media onto timeline.
+              Drag or click media to insert onto timeline.
             </p>
           </div>
         </div>
@@ -152,7 +152,7 @@ export default function AvailableMediaLibrary({
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2.5">
+          <div className="grid grid-cols-4 gap-1.5 sm:gap-2">
             {filteredItems.map((item) => {
               const isAssigned = assignedIds.has(String(item._id))
               const video = isVideo(item)
@@ -164,60 +164,48 @@ export default function AvailableMediaLibrary({
                   draggable={true}
                   onDragStart={(e) => handleDragStart(e, item)}
                   onDragEnd={handleDragEnd}
-                  className="group relative bg-neutral-50 hover:bg-white rounded-xl border border-neutral-200 hover:border-black hover:shadow-xs transition-all duration-150 p-2 flex flex-col justify-between overflow-hidden cursor-grab active:cursor-grabbing select-none"
-                  title={`${item.content_title || 'Media'} (Drag or click + Add to place on timeline)`}
+                  onClick={() => onAddContent && onAddContent(item)}
+                  className="group relative w-full aspect-video bg-neutral-900 rounded-lg sm:rounded-xl border border-neutral-200 hover:border-black hover:ring-2 hover:ring-black/20 hover:shadow-xs transition-all duration-150 overflow-hidden cursor-pointer select-none flex items-center justify-center"
+                  title={`${item.content_title || 'Media'} (Click or drag to place on timeline)`}
                 >
-                  {/* Thumbnail */}
-                  <div className="relative w-full aspect-video bg-neutral-900 rounded-lg overflow-hidden mb-2 flex items-center justify-center pointer-events-none">
-                    {video ? (
-                      <div className="w-full h-full relative flex items-center justify-center bg-black">
-                        <video src={item.content_url} className="w-full h-full object-cover pointer-events-none select-none" muted playsInline draggable={false} />
-                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none">
-                          <div className="w-6 h-6 rounded-full bg-white/80 text-black flex items-center justify-center text-[10px] font-bold">
-                            ▶
-                          </div>
+                  {/* Media Content */}
+                  {video ? (
+                    <div className="w-full h-full relative flex items-center justify-center bg-black">
+                      <video src={item.content_url} className="w-full h-full object-cover pointer-events-none select-none" muted playsInline draggable={false} />
+                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none">
+                        <div className="w-5 h-5 rounded-full bg-white/80 text-black flex items-center justify-center text-[8px] font-bold">
+                          ▶
                         </div>
                       </div>
-                    ) : (
-                      <img
-                        src={item.content_url}
-                        alt={item.content_title || 'Media'}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200 pointer-events-none select-none"
-                        draggable={false}
-                        onError={(e) => { e.target.style.display = 'none' }}
-                      />
-                    )}
+                    </div>
+                  ) : (
+                    <img
+                      src={item.content_url}
+                      alt={item.content_title || 'Media'}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200 pointer-events-none select-none"
+                      draggable={false}
+                      onError={(e) => { e.target.style.display = 'none' }}
+                    />
+                  )}
 
-                    {/* Format Badge */}
-                    <span className="absolute top-1 left-1 px-1.5 py-0.5 rounded text-[8px] font-mono font-bold uppercase bg-black/75 text-white backdrop-blur-xs">
-                      {format}
+                  {/* Format Badge */}
+                  <span className="absolute top-1 left-1 px-1 py-0.2 rounded text-[7px] sm:text-[8px] font-mono font-bold uppercase bg-black/75 text-white backdrop-blur-xs pointer-events-none">
+                    {format}
+                  </span>
+
+                  {/* Assigned Indicator */}
+                  {isAssigned && (
+                    <span className="absolute top-1 right-1 px-1 py-0.2 rounded text-[7px] sm:text-[8px] font-bold bg-emerald-500 text-white shadow-2xs pointer-events-none">
+                      <span className="hidden sm:inline">In Timeline</span>
+                      <span className="sm:hidden">✓</span>
                     </span>
+                  )}
 
-                    {/* Assigned Indicator */}
-                    {isAssigned && (
-                      <span className="absolute top-1 right-1 px-1.5 py-0.5 rounded text-[8px] font-bold bg-emerald-500 text-white shadow-2xs">
-                        In Timeline
-                      </span>
-                    )}
-                  </div>
-
-                  {/* Title and Quick Add Button */}
-                  <div className="flex items-center justify-between gap-1.5">
-                    <p className="text-[11px] font-bold text-black truncate flex-1" title={item.content_title}>
-                      {item.content_title || 'Untitled Media'}
-                    </p>
-
-                    <button
-                      type="button"
-                      onClick={() => onAddContent && onAddContent(item)}
-                      className="px-2 py-1 bg-black hover:bg-neutral-800 text-white text-[10px] font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer shrink-0 shadow-2xs"
-                      title="Add this media to timeline"
-                    >
-                      <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M12 4v16m8-8H4" />
-                      </svg>
-                      <span>Add</span>
-                    </button>
+                  {/* Quick hover add hint */}
+                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
+                    <div className="w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-white text-black flex items-center justify-center font-black text-xs shadow-md">
+                      +
+                    </div>
                   </div>
                 </div>
               )

@@ -242,6 +242,66 @@ export default function VirtualScreen({
                     0% { transform: scale(1.12); opacity: 0; }
                     100% { transform: scale(1); opacity: 1; }
                   }
+                  @keyframes spAnimWipe {
+                    0% { clip-path: inset(0 100% 0 0); opacity: 0.8; }
+                    100% { clip-path: inset(0 0 0 0); opacity: 1; }
+                  }
+                  @keyframes spAnimFlip {
+                    0% { transform: perspective(800px) rotateY(-90deg); opacity: 0; }
+                    50% { opacity: 0.7; }
+                    100% { transform: perspective(800px) rotateY(0deg); opacity: 1; }
+                  }
+                  @keyframes spAnimNeon {
+                    0% {
+                      opacity: 0.2;
+                      filter: drop-shadow(0 0 30px #06b6d4) drop-shadow(0 0 60px #ec4899) saturate(2.5) brightness(1.3);
+                      transform: scale(0.97);
+                    }
+                    50% {
+                      opacity: 0.9;
+                      filter: drop-shadow(0 0 45px #3b82f6) drop-shadow(0 0 70px #d946ef) saturate(2) brightness(1.2);
+                      transform: scale(1.01);
+                    }
+                    100% {
+                      opacity: 1;
+                      filter: drop-shadow(0 0 0px transparent) saturate(1) brightness(1);
+                      transform: scale(1);
+                    }
+                  }
+                  @keyframes spAnimRainbow {
+                    0% {
+                      opacity: 0.3;
+                      filter: hue-rotate(180deg) saturate(3) drop-shadow(0 0 40px #8b5cf6) drop-shadow(0 0 60px #ec4899);
+                      transform: scale(1.04);
+                    }
+                    50% {
+                      opacity: 0.85;
+                      filter: hue-rotate(90deg) saturate(2.2) drop-shadow(0 0 40px #10b981) drop-shadow(0 0 60px #f59e0b);
+                      transform: scale(1.01);
+                    }
+                    100% {
+                      opacity: 1;
+                      filter: hue-rotate(0deg) saturate(1) drop-shadow(0 0 0px transparent);
+                      transform: scale(1);
+                    }
+                  }
+                  @keyframes spAnimAmber {
+                    0% {
+                      opacity: 0.2;
+                      filter: drop-shadow(0 0 35px #f97316) drop-shadow(0 0 70px #ef4444) brightness(1.5) sepia(0.6);
+                      transform: scale(1.04);
+                    }
+                    50% {
+                      opacity: 0.85;
+                      filter: drop-shadow(0 0 40px #f97316) drop-shadow(0 0 60px #f59e0b) brightness(1.2) sepia(0.3);
+                      transform: scale(1.01);
+                    }
+                    100% {
+                      opacity: 1;
+                      filter: drop-shadow(0 0 0px transparent) brightness(1) sepia(0);
+                      transform: scale(1);
+                    }
+                  }
                   .sp-anim-fade {
                     animation: spAnimFade 0.6s cubic-bezier(0.25, 1, 0.5, 1) both;
                   }
@@ -250,6 +310,21 @@ export default function VirtualScreen({
                   }
                   .sp-anim-zoom {
                     animation: spAnimZoom 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+                  }
+                  .sp-anim-wipe {
+                    animation: spAnimWipe 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+                  }
+                  .sp-anim-flip {
+                    animation: spAnimFlip 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+                  }
+                  .sp-anim-neon {
+                    animation: spAnimNeon 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+                  }
+                  .sp-anim-rainbow {
+                    animation: spAnimRainbow 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
+                  }
+                  .sp-anim-amber {
+                    animation: spAnimAmber 0.65s cubic-bezier(0.16, 1, 0.3, 1) both;
                   }
                 `}</style>
 

@@ -386,7 +386,17 @@ export default function Contentlistingpage() {
     setTransitions(nextTransitions)
     UPDATE_MIRROR_TRANSITIONS(login_key, mirror_id, nextTransitions)
       .then(() => {
-        const effectName = transitionId === 'fade' ? 'Crossfade' : (transitionId === 'slide' ? 'Slide Push' : (transitionId === 'zoom' ? 'Zoom Dissolve' : 'None'))
+        const TRANSITION_NAMES = {
+          fade: 'Crossfade',
+          slide: 'Slide Push',
+          zoom: 'Zoom Dissolve',
+          wipe: 'Curtain Wipe',
+          flip: '3D Flip',
+          neon: 'Neon Glow (Colorful)',
+          rainbow: 'Rainbow Prism (Colorful)',
+          amber: 'Amber Flare (Colorful)'
+        }
+        const effectName = TRANSITION_NAMES[transitionId] || (transitionId && transitionId !== 'none' ? transitionId : 'None')
         setMessage(transitionId && transitionId !== 'none'
           ? `Transition effect set to "${effectName}".`
           : 'Transition effect removed.')

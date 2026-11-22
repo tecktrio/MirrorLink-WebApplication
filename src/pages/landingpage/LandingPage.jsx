@@ -11,31 +11,59 @@ const viewerUrl = (process.env.REACT_APP_VIEWER_URL || "https://screen.bigburry.
 const applications = [
   {
     number: "01",
-    title: "Menus that stay in sync",
-    text: "Update daily specials, prices and promotions once. Keep every screen across your restaurant or hotel current.",
-    icon: "☷",
-    tag: "HOSPITALITY",
+    tag: "EVENTS & WEDDINGS",
+    title: "Bride & groom photos and videos",
+    text: "Show brides and grooms high-definition photos, romantic reels, and celebration videos live for guests during weddings and receptions.",
+    icon: "♡",
   },
   {
     number: "02",
-    title: "Stream content to any display",
-    text: "Turn TVs and connected displays into digital signage for campaigns, announcements, videos and branded content.",
-    icon: "▶",
-    tag: "CONTENT STREAMING",
+    tag: "RESTAURANTS & CAFETERIA",
+    title: "Showing ads and dynamic menus",
+    text: "Display chef specials, combo discounts, real-time prices, and mouth-watering promo ads across counters and dining areas.",
+    icon: "☷",
   },
   {
     number: "03",
-    title: "Keep waiting rooms moving",
-    text: "Show queue tickets, now-serving numbers and helpful updates wirelessly on screens throughout your hospital or clinic.",
-    icon: "＋",
-    tag: "HEALTHCARE",
+    tag: "PUBLIC LED SCREENS",
+    title: "Public ad LED billboard screens",
+    text: "Broadcast high-impact commercial campaigns, scheduled sponsor ads, and community notices on outdoor and indoor LED displays.",
+    icon: "↗",
   },
   {
     number: "04",
-    title: "Manage ads and promotions",
-    text: "Keep campaigns fresh across your displays, from retail promotions to lobby notices, classroom updates and office announcements.",
-    icon: "↗",
-    tag: "AD MANAGEMENT",
+    tag: "ANNUAL DAY & STAGE",
+    title: "Annual day program bg displays",
+    text: "Run captivating backdrop loops, event schedules, ceremony visual themes, and speaker intros for school or corporate annual day programs.",
+    icon: "★",
+  },
+  {
+    number: "05",
+    tag: "CORPORATE & CONFERENCES",
+    title: "Wireless presentations",
+    text: "Stream keynote pitch decks, team slides, live briefings, and training materials cleanly to meeting room TVs without HDMI cables.",
+    icon: "▶",
+  },
+  {
+    number: "06",
+    tag: "MANUFACTURING & LOGISTICS",
+    title: "Manufacturing & logistics warnings",
+    text: "Show real-time safety warnings, hazard alerts, shift dispatch quotas, forklift zone alerts, and factory floor KPI stats instantly.",
+    icon: "⚠",
+  },
+  {
+    number: "07",
+    tag: "HEALTHCARE & CLINICS",
+    title: "Healthcare for showing next ticket",
+    text: "Display live queue numbers, next patient calling alerts, doctor room allocations, and waiting lounge guides in real time.",
+    icon: "＋",
+  },
+  {
+    number: "08",
+    tag: "RETAIL & SHOWROOMS",
+    title: "In-store product promos & flash sales",
+    text: "Highlight trending collections, limited-time discount banners, brand video lookbooks, and new arrivals directly at the point of sale.",
+    icon: "✦",
   },
 ];
 
@@ -109,7 +137,13 @@ export default function LandingPage() {
             <p className="ml-hero-description">Put the right content on every screen, wherever your business happens. Manage it all from one simple control panel.</p>
             <div className="ml-hero-actions">
               <Link className="ml-button ml-button-dark" to={controlPanelPath}>Open control panel <Arrow /></Link>
-              <a className="ml-button ml-button-light" href={demoScreenUrl} target="_blank" rel="noreferrer">Try in your screen <Arrow diagonal /></a>
+              <a className="ml-button ml-button-light" href={demoScreenUrl} target="_blank" rel="noreferrer">
+                <div className="ml-hero-btn-col">
+                  <span className="ml-hero-btn-title">Try in your screen</span>
+                  <span className="ml-hero-btn-free">Free</span>
+                </div>
+                <Arrow diagonal />
+              </a>
             </div>
             <div className="ml-hero-note"><span className="ml-note-line" /> One place to manage. Any screen to share.</div>
           </div>
@@ -148,7 +182,10 @@ export default function LandingPage() {
                 <div className="ml-tv-neck" />
                 <div className="ml-tv-base" />
               </div>
-              <div className="ml-mock-caption">1 Large TV · Video Wall & Main Stage</div>
+              <div className="ml-mock-caption">
+                <strong>Large TV</strong>
+                <span>Video Wall</span>
+              </div>
             </div>
 
             {/* 2. Small TV / Secondary Display (Landscape 16:9, e.g. 32" Display) */}
@@ -169,7 +206,10 @@ export default function LandingPage() {
                 <div className="ml-tv-neck ml-tv-neck-sm" />
                 <div className="ml-tv-base ml-tv-base-sm" />
               </div>
-              <div className="ml-mock-caption">1 Small TV · Counter / Booth</div>
+              <div className="ml-mock-caption">
+                <strong>Small TV</strong>
+                <span>Counter / Booth</span>
+              </div>
             </div>
 
             {/* 3. Mobile Device in Landscape with Desktop/Desk Cradle Stand */}
@@ -191,60 +231,62 @@ export default function LandingPage() {
                 <div className="ml-mobile-cradle-neck" />
                 <div className="ml-mobile-cradle-base" />
               </div>
-              <div className="ml-mock-caption">1 Mobile · Remote / Handheld</div>
+              <div className="ml-mock-caption">
+                <strong>Mobile</strong>
+                <span>Handheld</span>
+              </div>
             </div>
           </div>
 
-          {/* Try in your screen Button */}
+          {/* Actions: Copy Link & Try It Now */}
           <div className="ml-sim-actions-container">
+            <button
+              type="button"
+              onClick={handleCopy}
+              className="ml-demo-copy-btn"
+              aria-label="Copy screen unique link"
+            >
+              <span>{copied ? "Link Copied!" : "Copy Link"}</span>
+              <span className="ml-copy-icon">{copied ? "✓" : "⎘"}</span>
+            </button>
             <a
               href={demoScreenUrl}
               target="_blank"
               rel="noreferrer"
-              className="ml-button ml-button-dark ml-try-screen-btn"
+              className="ml-demo-launch-btn"
             >
-              <span>Try in your screen</span>
+              <div className="ml-launch-text-col">
+                <span className="ml-launch-title">Try it now</span>
+                <span className="ml-launch-free">Free</span>
+              </div>
               <Arrow diagonal />
             </a>
-          </div>
-
-          {/* How it works: Demo display copy link card */}
-          <div className="ml-demo-url-card">
-            <div className="ml-demo-url-left">
-              <span className="ml-demo-live-badge">HOW IT WORKS</span>
-              <p className="ml-demo-url-desc">
-                Copy your screen unique link and search it on any of the browsers in your screens:
-              </p>
-              <div className="ml-demo-link-box">
-                <code className="ml-demo-url-text">{demoScreenUrl}</code>
-              </div>
-            </div>
-            <div className="ml-demo-url-actions">
-              <button
-                type="button"
-                onClick={handleCopy}
-                className="ml-demo-copy-btn"
-                aria-label="Copy screen unique link"
-              >
-                <span>{copied ? "Link Copied!" : "Copy Link"}</span>
-                <span className="ml-copy-icon">{copied ? "✓" : "⎘"}</span>
-              </button>
-              <a
-                href={demoScreenUrl}
-                target="_blank"
-                rel="noreferrer"
-                className="ml-demo-launch-btn"
-              >
-                <span>Try in your screen</span>
-                <Arrow diagonal />
-              </a>
-            </div>
           </div>
         </section>
 
         <section className="ml-applications" id="applications">
-          <div className="ml-section-head"><div><div className="ml-eyebrow"><span /> ONE PLATFORM, MANY POSSIBILITIES</div><h2>Make every screen<br />work harder.</h2></div><p>From the front desk to the dining room, ScreenPilot helps you share useful, timely information on the displays you already have.</p></div>
-          <div className="ml-app-grid">{applications.map((item) => <article className="ml-app-card" key={item.number}><div className="ml-card-top"><span className="ml-card-number">{item.number}</span><span className="ml-card-icon">{item.icon}</span></div><div className="ml-card-tag">{item.tag}</div><h3>{item.title}</h3><p>{item.text}</p><a href="#how-it-works" aria-label={`Learn how ${item.title.toLowerCase()} works`}>See how it works <Arrow /></a></article>)}</div>
+          <div className="ml-section-head">
+            <div>
+              <div className="ml-eyebrow"><span /> REAL-WORLD VERSATILITY</div>
+              <h2>Usecases</h2>
+            </div>
+          </div>
+          <div className="ml-app-grid">
+            {applications.map((item) => (
+              <article className="ml-app-card" key={item.number}>
+                <div className="ml-card-top">
+                  <span className="ml-card-number">{item.number}</span>
+                  <span className="ml-card-icon">{item.icon}</span>
+                </div>
+                <div className="ml-card-tag">{item.tag}</div>
+                <h3>{item.title}</h3>
+                <p>{item.text}</p>
+                <a href="#how-it-works" aria-label={`Learn how ${item.title.toLowerCase()} works`}>
+                  See how it works <Arrow />
+                </a>
+              </article>
+            ))}
+          </div>
         </section>
 
         <section className="ml-plan" id="pricing">

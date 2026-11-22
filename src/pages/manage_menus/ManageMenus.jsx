@@ -261,12 +261,129 @@ export default function ManageMenus({ embedded = false }) {
           Loading menus...
         </div>
       ) : (
-        <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">{menus.map(menu => {
-          const assigned = (menu.mirror_ids || []).some(id => String(id) === String(selectedMirror));
-          const bg = menu.template_background || templates.find(t => t._id === menu.template_id)?.background || '#ffffff';
-          const tName = menu.template_name || templates.find(t => t._id === menu.template_id)?.name || 'Menu';
-          return <article key={menu._id} className="bg-white border rounded-2xl p-5"><div className="h-32 rounded-xl mb-4 overflow-hidden flex items-center justify-center bg-neutral-50" style={{ background: bg }}>{menu.image_url ? <img src={menu.image_url} alt={`${menu.title} menu preview`} className="w-full h-full object-contain" /> : <span className="text-xl font-bold">{menu.title}</span>}</div><p className="text-xs text-neutral-500">{tName}</p><div className="mt-3 flex items-center justify-between gap-3"><label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={menu.is_active !== false} onChange={() => toggleActive(menu)} />Active in menu QR</label><label className="flex items-center gap-2 text-sm"><input type="checkbox" disabled={!selectedMirror} checked={assigned} onChange={e => toggleMirror(menu, e.target.checked)} />Show on {mirrors.find(m => String(m._id) === String(selectedMirror))?.mirror_name || 'mirror'}</label></div><div className="flex gap-2 mt-4"><button onClick={() => start(menu)} className="border rounded-lg px-3 py-2 text-sm">Edit</button><button onClick={() => deleteMenu(menu._id)} className="text-red-600 px-2">Delete</button></div></article>
-        })}</div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
+          {menus.map(menu => {
+            const assigned = (menu.mirror_ids || []).some(id => String(id) === String(selectedMirror));
+            const bg = menu.template_background || templates.find(t => t._id === menu.template_id)?.background || '#1e1b4b';
+            const tName = menu.template_name || templates.find(t => t._id === menu.template_id)?.name || 'Menu';
+
+            return (
+              <div
+                key={menu._id}
+                onClick={() => start(menu)}
+                className="group relative w-full aspect-[3/4] sm:aspect-[4/5] bg-neutral-900 rounded-2xl overflow-hidden border border-neutral-200/80 shadow-xs hover:shadow-lg transition-all duration-200 cursor-pointer select-none flex items-center justify-center"
+              >
+                {/* Menu Image / Thumbnail */}
+                {menu.image_url ? (
+                  <img
+                    src={menu.image_url}
+                    alt={`${menu.title || 'Menu'} preview`}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                ) : (
+                  <div
+                    className="w-full h-full flex flex-col items-center justify-center p-4 text-center group-hover:scale-105 transition-transform duration-300"
+                    style={{ background: bg }}
+                  >
+                    <div className="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center text-white mb-2 shadow-xs">
+                      <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-white font-bold text-sm line-clamp-2 font-['Uber_Move'] drop-shadow-sm">
+                      {menu.title || 'Custom Menu'}
+                    </h3>
+                    <span className="text-[10px] text-white/70 mt-1 uppercase font-mono tracking-wider">
+                      {tName}
+                    </span>
+                  </div>
+                )}
+
+                {/* Action Icons Floating Directly on the Image */}
+                <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 z-20">
+                  {/* Edit Icon Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      start(menu);
+                    }}
+                    className="w-8 h-8 rounded-full bg-black/65 hover:bg-black text-white backdrop-blur-md border border-white/25 shadow-md flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
+                    title="Edit this menu"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                    </svg>
+                  </button>
+
+                  {/* Delete Icon Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteMenu(menu._id);
+                    }}
+                    className="w-8 h-8 rounded-full bg-red-600/80 hover:bg-red-600 text-white backdrop-blur-md border border-white/25 shadow-md flex items-center justify-center transition-all hover:scale-110 cursor-pointer"
+                    title="Delete this menu"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Active QR Badge (Top-Left on Image) */}
+                <div className="absolute top-2.5 left-2.5 z-20">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleActive(menu);
+                    }}
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold backdrop-blur-md border border-white/20 shadow-xs flex items-center gap-1 cursor-pointer transition-all ${
+                      menu.is_active !== false
+                        ? 'bg-emerald-500/90 hover:bg-emerald-600 text-white'
+                        : 'bg-black/60 hover:bg-black/80 text-neutral-300'
+                    }`}
+                    title="Click to toggle Active status in Menu QR"
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full ${menu.is_active !== false ? 'bg-white' : 'bg-neutral-400'}`} />
+                    <span>{menu.is_active !== false ? 'Active' : 'Inactive'}</span>
+                  </button>
+                </div>
+
+                {/* Title & Metadata Overlay (Bottom of Image) */}
+                <div className="absolute inset-x-0 bottom-0 p-3 bg-gradient-to-t from-black/90 via-black/50 to-transparent flex flex-col justify-end pointer-events-none z-10">
+                  <h4 className="text-white font-bold text-xs sm:text-sm truncate font-['Uber_Move'] drop-shadow-sm">
+                    {menu.title || 'Untitled Menu'}
+                  </h4>
+                  <div className="flex items-center justify-between gap-1.5 mt-0.5 pointer-events-auto">
+                    <span className="text-[10px] text-neutral-300 truncate">
+                      {tName}
+                    </span>
+                    {selectedMirror && (
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleMirror(menu, !assigned);
+                        }}
+                        className={`text-[8px] font-bold font-mono px-1.5 py-0.2 rounded border shrink-0 transition-all cursor-pointer ${
+                          assigned
+                            ? 'text-emerald-300 bg-emerald-950/80 border-emerald-500/40 hover:bg-emerald-900'
+                            : 'text-neutral-400 bg-black/60 border-neutral-700 hover:text-white'
+                        }`}
+                        title={`Click to ${assigned ? 'remove from' : 'assign to'} ${mirrors.find(m => String(m._id) === String(selectedMirror))?.mirror_name || 'selected mirror'}`}
+                      >
+                        {assigned ? '✓ On Mirror' : '+ Mirror'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
       {!loadingMenus && !menus.length && <div className="bg-white border border-dashed rounded-2xl p-10 text-center text-neutral-500">No menus yet. Create one from a template.</div>}
     </>}
